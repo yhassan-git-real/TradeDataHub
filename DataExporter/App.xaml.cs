@@ -7,7 +7,7 @@ namespace TradeDataHub
 {
     public partial class App : Application
     {
-        public static AppSettings Settings { get; private set; }
+        public static AppSettings Settings { get; private set; } = null!;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -21,12 +21,8 @@ namespace TradeDataHub
 
                 IConfiguration configuration = builder.Build();
 
-                Settings = configuration.GetSection("AppSettings").Get<AppSettings>();
-
-                if (Settings == null)
-                {
-                    throw new NullReferenceException("AppSettings could not be loaded from appsettings.json. Please check the file.");
-                }
+                Settings = configuration.GetSection("AppSettings").Get<AppSettings>() ?? 
+                          throw new InvalidOperationException("AppSettings could not be loaded from appsettings.json. Please check the file.");
             }
             catch (Exception ex)
             {
