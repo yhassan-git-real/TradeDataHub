@@ -47,7 +47,7 @@ namespace TradeDataHub
                 int filesGenerated = 0;
                 int combinationsProcessed = 0;
 
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
                     foreach (var port in ports)
                     {
@@ -64,10 +64,10 @@ namespace TradeDataHub
                                             foreach (var name in foreignNames)
                                             {
                                                 combinationsProcessed++;
-                                                Dispatcher.Invoke(() => StatusText.Text = $"Processing combination {combinationsProcessed}...");
+                                                await Dispatcher.InvokeAsync(() => StatusText.Text = $"Processing combination {combinationsProcessed} for port '{port}'...");
 
-                                                // Step 3 & 4: Get Data and Create Report
-                                                DataTable data = _dataAccess.GetData(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
+                                                // Get Data and Create Report using the new async method
+                                                DataTable data = await _dataAccess.GetDataAsync(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
 
                                                 if (data != null && data.Rows.Count > 0)
                                                 {
