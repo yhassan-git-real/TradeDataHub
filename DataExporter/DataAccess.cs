@@ -1,40 +1,59 @@
+using System;
 using System.Data;
+using Microsoft.Data.SqlClient;
+using System.Windows;
 
 namespace TradeDataHub
 {
     public class DataAccess
     {
         /// <summary>
-        /// MOCK IMPLEMENTATION FOR TESTING.
-        /// This method simulates fetching data from the database.
-        /// In the real implementation, this would connect to SQL Server and run the stored procedure.
+        /// This method connects to the SQL Server database and executes a stored procedure
+        /// to fetch trade data based on the provided filter criteria.
         /// </summary>
         public DataTable GetData(string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port)
         {
-            // In a real implementation, you would use the settings like this:
-            // var connectionString = App.Settings.Database.ConnectionString;
-            // var storedProcName = App.Settings.Database.StoredProcedureName;
-            // using (var con = new SqlConnection(connectionString)) { ... }
-
-            System.Diagnostics.Debug.WriteLine($"Simulating call to stored procedure: {App.Settings.Database.StoredProcedureName}");
-
             var dt = new DataTable("ExportData");
-            dt.Columns.Add("sb_no", typeof(string));
-            dt.Columns.Add("sb_date", typeof(System.DateTime));
-            dt.Columns.Add("port_of_origin", typeof(string));
-            dt.Columns.Add("hs_code", typeof(string));
-            dt.Columns.Add("product", typeof(string));
-            dt.Columns.Add("quantity", typeof(decimal));
-            dt.Columns.Add("value_usd", typeof(decimal));
-            dt.Columns.Add("exporter_name", typeof(string));
-
-            dt.Rows.Add($"SB{new System.Random().Next(1000, 9999)}", System.DateTime.Now.AddDays(-10), port, hsCode, product, 150.5m, 30100.75m, exporter);
-            dt.Rows.Add($"SB{new System.Random().Next(1000, 9999)}", System.DateTime.Now.AddDays(-5), port, hsCode, product, 200.0m, 45200.00m, exporter);
-            dt.Rows.Add($"SB{new System.Random().Next(1000, 9999)}", System.DateTime.Now, port, hsCode, product, 120.75m, 28000.50m, exporter);
-
-            if (product.Contains("test_no_data", System.StringComparison.OrdinalIgnoreCase))
+            try
             {
-                dt.Clear();
+                var connectionString = App.Settings.Database.ConnectionString;
+                var storedProcName = App.Settings.Database.StoredProcedureName;
+
+                using (var con = new SqlConnection(connectionString))
+                {
+                    using (var cmd = new SqlCommand(storedProcName, con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        // Add parameters to the command
+                        cmd.Parameters.AddWithValue("@frommonth", fromMonth);
+                        cmd.Parameters.AddWithValue("@tomonth", toMonth);
+                        cmd.Parameters.AddWithValue("@Hscode", hsCode);
+                        cmd.Parameters.AddWithValue("@product", product);
+                        cmd.Parameters.AddWithValue("@iec", iec);
+                        cmd.Parameters.AddWithValue("@exporter", exporter);
+                        cmd.Parameters.AddWithValue("@forcountry", country);
+                        cmd.Parameters.AddWithValue("@forname", name);
+                        cmd.Parameters.AddWithValue("@port", port);
+
+                        con.Open();
+
+                        using (var da = new SqlDataAdapter(cmd))
+                        {
+                            da.Fill(dt);
+                        }
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception or show a more specific error message
+                MessageBox.Show($"A database error occurred: {ex.Message}", "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                // Catch other potential exceptions
+                MessageBox.Show($"An unexpected error occurred during data access: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             return dt;
