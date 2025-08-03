@@ -55,10 +55,10 @@
         <TextBox x:Name="Txt_IEC" Grid.Row="8" Grid.Column="1" Margin="5"/>
 
         <TextBlock Grid.Row="9" Grid.Column="0" Text="Type:" VerticalAlignment="Center" Margin="5"/>
-        <ComboBox x:Name="Combo2" Grid.Row="9" Grid.Column="1" Margin="5">
-            <ComboBoxItem Content="Import" IsSelected="True"/>
-            <ComboBoxItem Content="Export"/>
-        </ComboBox>
+        <StackPanel Grid.Row="9" Grid.Column="1" Orientation="Horizontal" Margin="5">
+            <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" Margin="0,0,20,0" GroupName="ProcessType"/>
+            <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" GroupName="ProcessType"/>
+        </StackPanel>
 
         <Button x:Name="GenerateButton" Content="Generate Reports" Grid.Row="10" Grid.Column="1" Margin="5" HorizontalAlignment="Right" Click="GenerateButton_Click"/>
 

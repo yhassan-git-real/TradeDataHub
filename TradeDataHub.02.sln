@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataExporter", "DataExporter\DataExporter.csproj", "{F5508499-08B5-335B-119E-3C6AAB165A73}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeDataHub", "TradeDataHub\TradeDataHub.csproj", "{F5508499-08B5-335B-119E-3C6AAB165A73}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
 using System.Windows;
+using TradeDataHub.Config;
 
 namespace TradeDataHub
 {
@@ -17,7 +18,7 @@ namespace TradeDataHub
             {
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    .AddJsonFile("Config/appsettings.json", optional: false, reloadOnChange: true);
 
                 IConfiguration configuration = builder.Build();
 

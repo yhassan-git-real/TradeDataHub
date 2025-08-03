@@ -1,4 +1,4 @@
-namespace TradeDataHub
+namespace TradeDataHub.Config
 {
     public class AppSettings
     {
@@ -17,12 +17,15 @@ namespace TradeDataHub
 
     public class FileSettings
     {
-        public required string TemplatePath { get; set; }
         public required string OutputDirectory { get; set; }
     }
 
     public class LoggingSettings
     {
-        public required string LogPath { get; set; }
+        public required string LogDirectory { get; set; }
+        public required string LogFilePrefix { get; set; }
+        public required string LogFileExtension { get; set; }
+        public int FlushIntervalSeconds { get; set; } = 1;
+        public bool EnableDebugLogging { get; set; } = true;
     }
 }
