@@ -25,7 +25,9 @@ The application uses `appsettings.json` for configuration:
   "AppSettings": {
     "Database": {
       "ConnectionString": "Server=MATRIX;Database=Raw_Process;User Id=module;Password=tcs@2015;",
-      "StoredProcedureName": "ExportData_New1"
+      "StoredProcedureName": "ExportData_New1",
+      "ViewName": "EXPDATA",
+      "OrderByColumn": "sb_DATE"
     },
     "Files": {
       "TemplatePath": "Templates/EXDPORT_Tamplate_JNPT.xlsx",

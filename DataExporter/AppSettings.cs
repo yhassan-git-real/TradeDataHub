@@ -11,6 +11,8 @@ namespace TradeDataHub
     {
         public required string ConnectionString { get; set; }
         public required string StoredProcedureName { get; set; }
+        public required string ViewName { get; set; }
+        public required string OrderByColumn { get; set; }
     }
 
     public class FileSettings

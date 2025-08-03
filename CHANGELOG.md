@@ -15,15 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configuration management with appsettings.json
 - Development environment configuration
 - Required directory structure (Templates, EXCEL_Exports, Logs)
+- **Database view and order column configuration in appsettings.json**
 
 ### Changed
 - Migrated from VB6 to C# WPF application
 - Updated AppSettings.cs with required modifiers to eliminate nullable warnings
 - Improved App.xaml.cs configuration loading with better error handling
+- **Made database view name and order column configurable instead of hardcoded**
 
 ### Fixed
 - Resolved ComboBoxItem compilation error by adding proper using statement
 - Eliminated all nullable reference warnings in the build process
+- **Improved database query configurability for different environments**
 
 ### Technical Details
 - **Target Framework**: .NET 8.0 Windows

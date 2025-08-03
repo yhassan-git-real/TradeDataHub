@@ -8,6 +8,27 @@ namespace TradeDataHub
     public class DataAccess
     {
         /// <summary>
+        /// Test the database connection
+        /// </summary>
+        public bool TestConnection()
+        {
+            try
+            {
+                var connectionString = App.Settings.Database.ConnectionString;
+                using (var con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Connection test failed: {ex.Message}", "Connection Test", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// This method connects to the SQL Server database and executes a stored procedure
         /// to fetch trade data based on the provided filter criteria.
         /// </summary>
@@ -21,23 +42,33 @@ namespace TradeDataHub
 
                 using (var con = new SqlConnection(connectionString))
                 {
+                    con.Open();
+                    
+                    // First execute the stored procedure
                     using (var cmd = new SqlCommand(storedProcName, con))
                     {
                         cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandTimeout = 300; // 5 minutes timeout
 
-                        // Add parameters to the command
-                        cmd.Parameters.AddWithValue("@frommonth", fromMonth);
-                        cmd.Parameters.AddWithValue("@tomonth", toMonth);
-                        cmd.Parameters.AddWithValue("@Hscode", hsCode);
-                        cmd.Parameters.AddWithValue("@product", product);
-                        cmd.Parameters.AddWithValue("@iec", iec);
-                        cmd.Parameters.AddWithValue("@exporter", exporter);
-                        cmd.Parameters.AddWithValue("@forcountry", country);
+                        // Add parameters to the command (matching stored procedure parameters)
+                        cmd.Parameters.AddWithValue("@fromMonth", int.Parse(fromMonth));
+                        cmd.Parameters.AddWithValue("@ToMonth", int.Parse(toMonth));
+                        cmd.Parameters.AddWithValue("@hs", hsCode);
+                        cmd.Parameters.AddWithValue("@prod", product);
+                        cmd.Parameters.AddWithValue("@Iec", iec);
+                        cmd.Parameters.AddWithValue("@ExpCmp", exporter);
+                        cmd.Parameters.AddWithValue("@forcount", country);
                         cmd.Parameters.AddWithValue("@forname", name);
                         cmd.Parameters.AddWithValue("@port", port);
 
-                        con.Open();
-
+                        cmd.ExecuteNonQuery();
+                    }
+                    
+                    // Then query the configured view to get the results
+                    var viewName = App.Settings.Database.ViewName;
+                    var orderByColumn = App.Settings.Database.OrderByColumn;
+                    using (var cmd = new SqlCommand($"SELECT * FROM {viewName} ORDER BY [{orderByColumn}]", con))
+                    {
                         using (var da = new SqlDataAdapter(cmd))
                         {
                             da.Fill(dt);
@@ -48,7 +79,15 @@ namespace TradeDataHub
             catch (SqlException ex)
             {
                 // Log the exception or show a more specific error message
-                MessageBox.Show($"A database error occurred: {ex.Message}", "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string errorMessage = ex.Number switch
+                {
+                    2 => "Cannot connect to SQL Server. Please check if the server is running and accessible.",
+                    18456 => "Login failed. Please check your username and password.",
+                    4060 => "Cannot open database. Please check if the database exists.",
+                    -2 => "Connection timeout. Please check your network connection.",
+                    _ => $"A database error occurred: {ex.Message}"
+                };
+                MessageBox.Show(errorMessage, "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
