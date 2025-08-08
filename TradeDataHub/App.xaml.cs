@@ -9,7 +9,7 @@ namespace TradeDataHub
 {
     public partial class App : Application
     {
-        public static AppSettings Settings { get; private set; } = null!;
+    // Central AppSettings removed (modular configs now used directly by services)
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -20,21 +20,11 @@ namespace TradeDataHub
                 // EPPlus license context (non-commercial as per plan)
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-                var builder = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("Config/appsettings.json", optional: false, reloadOnChange: true);
-
-                IConfiguration configuration = builder.Build();
-
-                Settings = configuration.GetSection("AppSettings").Get<AppSettings>() ?? 
-                          throw new InvalidOperationException("AppSettings could not be loaded from appsettings.json. Please check the file.");
+                // No central configuration bootstrap needed; each module loads its own JSON.
             }
             catch (Exception ex)
             {
-                // On configuration error, it's often best to fail fast.
-                MessageBox.Show($"A critical error occurred while loading configuration: {ex.Message}", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                // This will terminate the application if the configuration is missing or invalid.
-                Application.Current.Shutdown();
+                MessageBox.Show($"Startup error: {ex.Message}", "Startup", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

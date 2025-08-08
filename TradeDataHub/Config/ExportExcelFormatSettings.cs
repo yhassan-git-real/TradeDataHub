@@ -8,7 +8,7 @@ namespace TradeDataHub.Config
         public required int FontSize { get; set; }
         public required string HeaderBackgroundColor { get; set; }
         public required string BorderStyle { get; set; }
-    public int AutoFitSampleRows { get; set; } = 1000; // new configurable sample row limit for AutoFit
+        public int AutoFitSampleRows { get; set; } = 1000; 
         public required string DateFormat { get; set; }
         public required List<int> DateColumns { get; set; }
         public required List<int> TextColumns { get; set; }

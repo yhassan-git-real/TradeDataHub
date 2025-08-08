@@ -42,8 +42,10 @@
         <TextBlock Grid.Row="4" Grid.Column="0" Text="Product(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="Txt_Product" Grid.Row="4" Grid.Column="1" Margin="5"/>
 
-        <TextBlock Grid.Row="5" Grid.Column="0" Text="Exporter(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
-        <TextBox x:Name="Txt_Exporter" Grid.Row="5" Grid.Column="1" Margin="5"/>
+    <TextBlock x:Name="Lbl_Exporter" Grid.Row="5" Grid.Column="0" Text="Exporter(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
+    <TextBox x:Name="Txt_Exporter" Grid.Row="5" Grid.Column="1" Margin="5"/>
+    <TextBlock x:Name="Lbl_Importer" Grid.Row="5" Grid.Column="0" Text="Importer(s) (comma-sep):" VerticalAlignment="Center" Margin="5" Visibility="Collapsed"/>
+    <TextBox x:Name="Txt_Importer" Grid.Row="5" Grid.Column="1" Margin="5" Visibility="Collapsed"/>
 
         <TextBlock Grid.Row="6" Grid.Column="0" Text="Foreign Country(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="txt_ForCount" Grid.Row="6" Grid.Column="1" Margin="5"/>

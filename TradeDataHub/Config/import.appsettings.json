@@ -1,0 +1,19 @@
+{
+  "ImportSettings": {
+    "Database": {
+      "StoredProcedureName": "ImportJNPTData_New1",
+      "ViewName": "IMPDATA",
+      "OrderByColumn": "DATE",
+      "WorksheetName": "Import Data"
+    },
+    "Files": {
+      "OutputDirectory": "F:\\TradeDataHub.02\\IMPORT_Exports",
+      "FileSuffix": "IMP"
+    },
+    "Logging": {
+      "OperationLabel": "Excel Import Generation",
+      "LogFilePrefix": "ImportLog",
+      "LogFileExtension": ".txt"
+    }
+  }
+}

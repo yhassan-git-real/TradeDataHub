@@ -1,0 +1,6 @@
+{
+  "DatabaseConfig": {
+    "ConnectionString": "Server=MATRIX;Database=Raw_Process;User Id=module;Password=tcs@2015;TrustServerCertificate=true;Encrypt=false;Integrated Security=false;MultipleActiveResultSets=true;",
+    "LogDirectory": "F:\\TradeDataHub.02\\Logs"
+  }
+}
