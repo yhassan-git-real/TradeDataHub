@@ -6,7 +6,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TradeDataHub.Core.Helpers;
-using TradeDataHub.Core;
+using Microsoft.Extensions.Configuration;
+using System.Linq;
 
 namespace TradeDataHub.Core.Logging
 {
@@ -18,28 +19,46 @@ namespace TradeDataHub.Core.Logging
         private readonly ConcurrentQueue<LogEntry> _logQueue = new ConcurrentQueue<LogEntry>();
         private readonly Timer _flushTimer;
         private readonly SemaphoreSlim _flushSemaphore = new(1, 1);
-        private readonly string _logDirectory;
-        private readonly string _logFilePrefix;
-        private readonly string _logFileExtension;
-        private readonly int _flushIntervalSeconds;
+    private readonly string _logDirectory;
+    private string _logFilePrefix;
+    private string _logFileExtension;
+    private readonly int _flushIntervalSeconds;
         private string _currentLogFile = string.Empty;
         private DateTime _currentLogDate = DateTime.MinValue;
         private bool _disposed = false;
 
         private LoggingHelper()
         {
-            var settings = App.Settings.Logging;
-            _logDirectory = settings.LogDirectory;
-            _logFilePrefix = settings.LogFilePrefix;
-            _logFileExtension = settings.LogFileExtension;
-            _flushIntervalSeconds = settings.FlushIntervalSeconds;
-            
+            // Load shared database config for log directory
+            var basePath = Directory.GetCurrentDirectory();
+            var builder = new ConfigurationBuilder().SetBasePath(basePath)
+                .AddJsonFile("Config/database.appsettings.json", optional: false);
+
+            var cfg = builder.Build();
+
+            _logDirectory = cfg["DatabaseConfig:LogDirectory"] ?? Path.Combine(basePath, "Logs");
             Directory.CreateDirectory(_logDirectory);
+
+            // Default prefix/extension before any module sets them
+            _logFilePrefix = "AppLog";
+            _logFileExtension = ".txt";
+            _flushIntervalSeconds = 1; // fixed default; can be externalized later if needed
+
             UpdateLogFileName();
-            
-            // Use configurable flush interval
-            _flushTimer = new Timer(async _ => await FlushLogsAsync(), null, 
+            _flushTimer = new Timer(async _ => await FlushLogsAsync(), null,
                 TimeSpan.FromSeconds(_flushIntervalSeconds), TimeSpan.FromSeconds(_flushIntervalSeconds));
+        }
+
+        // Allow modules (export/import) to set their logging file naming dynamically
+        public void SetModuleLogFile(string prefix, string? extension = null)
+        {
+            if (string.IsNullOrWhiteSpace(prefix)) return;
+            _logFilePrefix = prefix.Trim();
+            if (!string.IsNullOrWhiteSpace(extension))
+            {
+                _logFileExtension = extension!.StartsWith('.') ? extension : "." + extension;
+            }
+            UpdateLogFileName();
         }
 
         public enum LogLevel

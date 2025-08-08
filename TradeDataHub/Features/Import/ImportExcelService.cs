@@ -1,0 +1,172 @@
+using System;
+using System.IO;
+using Microsoft.Extensions.Configuration;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using System.Drawing;
+using TradeDataHub.Core.Logging;
+using TradeDataHub.Core.Helpers;
+
+namespace TradeDataHub.Features.Import
+{
+    public class ImportExcelResult
+    {
+        public bool Success { get; set; }
+        public string? FileName { get; set; }
+        public long RowCount { get; set; }
+        public string? SkipReason { get; set; }
+    }
+
+    public class ImportExcelService
+    {
+        private readonly LoggingHelper _logger;
+        private readonly ImportSettings _settings;
+        private readonly ImportExcelFormatSettings _format;
+
+        public ImportExcelService()
+        {
+            _logger = LoggingHelper.Instance;
+            _settings = LoadImportSettings();
+            _format = LoadImportFormatting();
+            _logger.SetModuleLogFile(_settings.Logging.LogFilePrefix, _settings.Logging.LogFileExtension);
+        }
+
+        private ImportSettings LoadImportSettings()
+        {
+            const string json = "Config/import.appsettings.json";
+            if (!File.Exists(json)) throw new FileNotFoundException($"Missing import settings file: {json}");
+            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json, false);
+            var cfg = builder.Build();
+            var root = cfg.Get<ImportSettingsRoot>();
+            if (root == null) throw new InvalidOperationException("Failed to bind ImportSettingsRoot");
+            return root.ImportSettings;
+        }
+
+        private ImportExcelFormatSettings LoadImportFormatting()
+        {
+            const string json = "Config/importFormatting.json";
+            if (!File.Exists(json)) throw new FileNotFoundException($"Missing import formatting file: {json}");
+            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json, false);
+            var cfg = builder.Build();
+            return cfg.Get<ImportExcelFormatSettings>()!;
+        }
+
+    public ImportExcelResult CreateReport(string fromMonth, string toMonth, string hsCode, string product,
+            string iec, string importer, string country, string name, string port)
+        {
+            var processId = _logger.GenerateProcessId();
+            _logger.LogProcessStart(_settings.Logging.OperationLabel, $"fromMonth:{fromMonth}, toMonth:{toMonth}, hsCode:{hsCode}, product:{product}, iec:{iec}, importer:{importer}, country:{country}, name:{name}, port:{port}", processId);
+            using var totalTimer = _logger.StartTimer("Total Process", processId);
+
+            try
+            {
+                var dataAccess = new ImportDataAccess(_settings);
+                _logger.LogStep("Database", "Executing stored procedure", processId);
+                using var spTimer = _logger.StartTimer("Stored Procedure", processId);
+                var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port);
+                spTimer.Dispose();
+
+                try
+                {
+                    _logger.LogStep("Validation", $"Row count: {recordCount:N0}", processId);
+
+                    if (recordCount == 0)
+                    {
+                        _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, "No data - skipped", processId);
+                        return new ImportExcelResult { Success = false, RowCount = 0, SkipReason = "NoData" };
+                    }
+                    if (recordCount > 1048575)
+                    {
+                        _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, "Row limit - skipped", processId);
+                        return new ImportExcelResult { Success = false, RowCount = recordCount, SkipReason = "ExcelRowLimit" };
+                    }
+
+                    string fileName = TradeDataHub.Core.Helpers.Import_FileNameHelper.GenerateImportFileName(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, _settings.Files.FileSuffix);
+                    _logger.LogExcelFileCreationStart(fileName, processId);
+                    using var excelTimer = _logger.StartTimer("Excel Creation", processId);
+
+                    using var package = new ExcelPackage();
+                    var worksheet = package.Workbook.Worksheets.Add(_settings.Database.WorksheetName);
+                    worksheet.Cells.Style.Font.Name = _format.FontName;
+                    worksheet.Cells.Style.Font.Size = _format.FontSize;
+                    worksheet.Cells.Style.WrapText = _format.WrapText;
+
+                    int fieldCount = reader.FieldCount;
+                    foreach (int dateCol in _format.DateColumns)
+                    {
+                        if (dateCol > 0 && dateCol <= fieldCount)
+                            worksheet.Column(dateCol).Style.Numberformat.Format = _format.DateFormat;
+                    }
+                    foreach (int textCol in _format.TextColumns)
+                    {
+                        if (textCol > 0 && textCol <= fieldCount)
+                            worksheet.Column(textCol).Style.Numberformat.Format = "@";
+                    }
+
+                    for (int col = 0; col < fieldCount; col++)
+                        worksheet.Cells[1, col + 1].Value = reader.GetName(col);
+
+                    worksheet.Cells[2, 1].LoadFromDataReader(reader, false);
+                    int lastRow = (int)recordCount + 1;
+                    ApplyFormatting(worksheet, lastRow, fieldCount);
+
+                    Directory.CreateDirectory(_settings.Files.OutputDirectory);
+                    var outputPath = Path.Combine(_settings.Files.OutputDirectory, fileName);
+                    using var saveTimer = _logger.StartTimer("File Save", processId);
+                    package.SaveAs(new FileInfo(outputPath));
+                    _logger.LogFileSave("Completed", saveTimer.Elapsed, processId);
+                    saveTimer.Dispose();
+
+                    _logger.LogExcelResult(fileName, excelTimer.Elapsed, recordCount, processId);
+                    excelTimer.Dispose();
+                    _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, $"Success - {fileName}", processId);
+
+                    return new ImportExcelResult { Success = true, FileName = fileName, RowCount = recordCount };
+                }
+                finally
+                {
+                    reader.Dispose();
+                    connection.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Import process failed: {ex.Message}", ex, processId);
+                _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, "Failed with error", processId);
+                throw;
+            }
+        }
+
+        private void ApplyFormatting(OfficeOpenXml.ExcelWorksheet worksheet, int lastRow, int colCount)
+        {
+            if (lastRow <= 1) return;
+            var borderStyle = (_format.BorderStyle?.Equals("none", StringComparison.OrdinalIgnoreCase) == true)
+                ? ExcelBorderStyle.None : ExcelBorderStyle.Thin;
+
+            var headerRange = worksheet.Cells[1,1,1,colCount];
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            headerRange.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml(_format.HeaderBackgroundColor));
+            headerRange.Style.Border.Top.Style = borderStyle;
+            headerRange.Style.Border.Left.Style = borderStyle;
+            headerRange.Style.Border.Right.Style = borderStyle;
+            headerRange.Style.Border.Bottom.Style = borderStyle;
+
+            if (lastRow > 1)
+            {
+                var dataRange = worksheet.Cells[2,1,lastRow,colCount];
+                dataRange.Style.Border.Top.Style = borderStyle;
+                dataRange.Style.Border.Left.Style = borderStyle;
+                dataRange.Style.Border.Right.Style = borderStyle;
+                dataRange.Style.Border.Bottom.Style = borderStyle;
+            }
+
+            if (_format.AutoFitColumns)
+            {
+                int sampleLimit = _format.AutoFitSampleRows > 0 ? _format.AutoFitSampleRows : 1000;
+                int sampleEndRow = Math.Min(lastRow, sampleLimit);
+                worksheet.Cells[1,1,sampleEndRow,colCount].AutoFitColumns();
+            }
+        }
+    }
+}

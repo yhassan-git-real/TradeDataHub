@@ -1,0 +1,12 @@
+{
+  "FontName": "Times New Roman",
+  "FontSize": 10,
+  "HeaderBackgroundColor": "#4F81BD",
+  "BorderStyle": "thin",
+  "DateFormat": "dd-MMM-yy",
+  "DateColumns": [2],
+  "TextColumns": [],
+  "WrapText": false,
+  "AutoFitColumns": true,
+  "AutoFitSampleRows": 1000
+}

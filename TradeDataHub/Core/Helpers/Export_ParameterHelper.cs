@@ -49,18 +49,6 @@ namespace TradeDataHub.Core.Helpers
             };
         }
 
-        // Future Import Operation Parameters (placeholder)
-        public static class ImportParameters
-        {
-            public const string FILE_PATH = "filePath";
-            public const string IMPORT_TYPE = "importType";
-            public const string TARGET_TABLE = "targetTable";
-            public const string VALIDATION_MODE = "validationMode";
-
-            public static readonly string[] ALL_PARAMETERS = {
-                FILE_PATH, IMPORT_TYPE, TARGET_TABLE, VALIDATION_MODE
-            };
-        }
 
         // Validation Methods
         public static bool IsValidDateFormat(string dateString)
@@ -181,27 +169,5 @@ namespace TradeDataHub.Core.Helpers
             return result;
         }
 
-        // Future Import Parameter Validation (placeholder for future development)
-        public static ValidationResult ValidateImportParameters(string filePath, string importType, string targetTable, string validationMode)
-        {
-            var result = new ValidationResult();
-
-            // File existence validation
-            if (string.IsNullOrWhiteSpace(filePath))
-                result.Errors.Add("File path is required for import operations.");
-            else if (!System.IO.File.Exists(filePath))
-                result.Errors.Add($"Import file not found: {filePath}");
-
-            // Import type validation
-            if (string.IsNullOrWhiteSpace(importType))
-                result.Errors.Add("Import type must be specified.");
-
-            // Target table validation
-            if (string.IsNullOrWhiteSpace(targetTable))
-                result.Errors.Add("Target table must be specified.");
-
-            result.IsValid = result.Errors.Count == 0;
-            return result;
-        }
     }
 }

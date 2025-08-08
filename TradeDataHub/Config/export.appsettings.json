@@ -1,0 +1,18 @@
+{
+  "ExportSettings": {
+    "Operation": {
+      "StoredProcedureName": "ExportData_New1",
+      "ViewName": "EXPDATA",
+      "OrderByColumn": "sb_DATE",
+      "WorksheetName": "Export Data"
+    },
+    "Files": {
+      "OutputDirectory": "F:\\TradeDataHub.02\\EXCEL_Exports"
+    },
+    "Logging": {
+      "OperationLabel": "Excel Export Generation",
+      "LogFilePrefix": "ExportLog",
+      "LogFileExtension": ".txt"
+    }
+  }
+}

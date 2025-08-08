@@ -1,32 +1,56 @@
 using System;
 using System.IO;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace TradeDataHub.Core.Logging
 {
     public static class SkippedDatasetLogger
     {
-        private static readonly string LogDirectory = "Logs";
-        private static readonly string LogFileName = $"SkippedDatasets_{DateTime.Now:yyyyMMdd}.log";
-        
-        public static void LogSkippedDataset(int combinationNumber, long rowCount, string fromMonth, string toMonth, 
-            string hsCode, string product, string iec, string exporter, string country, string name, string port)
+        private static readonly Lazy<string> _logDirectory = new Lazy<string>(() =>
         {
             try
             {
-                Directory.CreateDirectory(LogDirectory);
-                var logPath = Path.Combine(LogDirectory, LogFileName);
+                var basePath = Directory.GetCurrentDirectory();
+                var cfg = new ConfigurationBuilder().SetBasePath(basePath)
+                    .AddJsonFile("Config/database.appsettings.json", optional: false)
+                    .Build();
+                var dir = cfg["DatabaseConfig:LogDirectory"];
+                if (string.IsNullOrWhiteSpace(dir)) return Path.Combine(basePath, "Logs");
+                Directory.CreateDirectory(dir);
+                return dir;
+            }
+            catch
+            {
+                return "Logs";
+            }
+        });
+
+        private static string CurrentLogFileName => $"SkippedDatasets_{DateTime.Now:yyyyMMdd}.log";
+        
+        public static void LogSkippedDataset(int combinationNumber, long rowCount, string fromMonth, string toMonth, 
+            string hsCode, string product, string iec, string exporterOrImporter, string country, string name, string port, string reason = "RowLimit")
+        {
+            try
+            {
+                var logPath = Path.Combine(_logDirectory.Value, CurrentLogFileName);
                 
                 var logEntry = new StringBuilder();
                 logEntry.AppendLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] SKIPPED DATASET");
                 logEntry.AppendLine($"Combination Number: {combinationNumber}");
-                logEntry.AppendLine($"Row Count: {rowCount:N0} (Exceeds Excel limit of 1,048,576)");
+                if (string.Equals(reason, "RowLimit", StringComparison.OrdinalIgnoreCase))
+                    logEntry.AppendLine($"Row Count: {rowCount:N0} (Exceeds Excel limit of 1,048,576)");
+                else if (string.Equals(reason, "NoData", StringComparison.OrdinalIgnoreCase))
+                    logEntry.AppendLine("Row Count: 0 (No data returned)");
+                else
+                    logEntry.AppendLine($"Row Count: {rowCount:N0}");
+                logEntry.AppendLine($"Reason: {reason}");
                 logEntry.AppendLine($"Period: {fromMonth} to {toMonth}");
                 logEntry.AppendLine($"Filters:");
                 logEntry.AppendLine($"  HS Code: {hsCode}");
                 logEntry.AppendLine($"  Product: {product}");
                 logEntry.AppendLine($"  IEC: {iec}");
-                logEntry.AppendLine($"  Exporter: {exporter}");
+                logEntry.AppendLine($"  Party: {exporterOrImporter}");
                 logEntry.AppendLine($"  Country: {country}");
                 logEntry.AppendLine($"  Name: {name}");
                 logEntry.AppendLine($"  Port: {port}");
@@ -45,8 +69,7 @@ namespace TradeDataHub.Core.Logging
         {
             try
             {
-                Directory.CreateDirectory(LogDirectory);
-                var logPath = Path.Combine(LogDirectory, LogFileName);
+                var logPath = Path.Combine(_logDirectory.Value, CurrentLogFileName);
                 
                 var summary = new StringBuilder();
                 summary.AppendLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] PROCESSING SUMMARY");
