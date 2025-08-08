@@ -7,11 +7,11 @@
       "WorksheetName": "Export Data"
     },
     "Files": {
-      "OutputDirectory": "F:\\TradeDataHub.02\\EXCEL_Exports"
+      "OutputDirectory": "F:\\TradeDataHub.02\\EXPORT_Excel"
     },
     "Logging": {
       "OperationLabel": "Excel Export Generation",
-      "LogFilePrefix": "ExportLog",
+      "LogFilePrefix": "Export_Log",
       "LogFileExtension": ".txt"
     }
   }

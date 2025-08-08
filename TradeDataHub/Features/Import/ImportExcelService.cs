@@ -19,16 +19,15 @@ namespace TradeDataHub.Features.Import
 
     public class ImportExcelService
     {
-        private readonly LoggingHelper _logger;
+        private readonly ModuleLogger _logger;
         private readonly ImportSettings _settings;
         private readonly ImportExcelFormatSettings _format;
 
         public ImportExcelService()
         {
-            _logger = LoggingHelper.Instance;
+            _logger = ModuleLoggerFactory.GetImportLogger();
             _settings = LoadImportSettings();
             _format = LoadImportFormatting();
-            _logger.SetModuleLogFile(_settings.Logging.LogFilePrefix, _settings.Logging.LogFileExtension);
         }
 
         private ImportSettings LoadImportSettings()
@@ -72,11 +71,13 @@ namespace TradeDataHub.Features.Import
 
                     if (recordCount == 0)
                     {
+                        ModuleSkippedDatasetLogger.LogImportSkippedDataset(0, 0, fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, "NoData");
                         _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, "No data - skipped", processId);
                         return new ImportExcelResult { Success = false, RowCount = 0, SkipReason = "NoData" };
                     }
                     if (recordCount > 1048575)
                     {
+                        ModuleSkippedDatasetLogger.LogImportSkippedDataset(0, recordCount, fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, "ExcelRowLimit");
                         _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, "Row limit - skipped", processId);
                         return new ImportExcelResult { Success = false, RowCount = recordCount, SkipReason = "ExcelRowLimit" };
                     }

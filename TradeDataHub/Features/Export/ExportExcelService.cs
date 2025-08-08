@@ -33,17 +33,16 @@ public class ExcelResult
 public class ExportExcelService
 {
 	private readonly ExcelFormatSettings _formatSettings;
-	private readonly LoggingHelper _logger;
+	private readonly ModuleLogger _logger;
 	private readonly ExportSettings _exportSettings;
 	private readonly SharedDatabaseSettings _dbSettings;
 
 	public ExportExcelService()
 	{
 		_formatSettings = LoadExcelFormatSettings();
-		_logger = LoggingHelper.Instance;
+		_logger = ModuleLoggerFactory.GetExportLogger();
 		_exportSettings = LoadExportSettings();
 		_dbSettings = LoadSharedDatabaseSettings();
-		_logger.SetModuleLogFile(_exportSettings.Logging.LogFilePrefix, _exportSettings.Logging.LogFileExtension);
 	}
 
 	private ExcelFormatSettings LoadExcelFormatSettings()
@@ -77,12 +76,10 @@ public class ExportExcelService
 	public ExcelResult CreateReport(int combinationNumber, string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port)
 	{
 		var processId = _logger.GenerateProcessId();
-		_logger.SetModuleLogFile(_exportSettings.Logging.LogFilePrefix, _exportSettings.Logging.LogFileExtension); // idempotent
 
 		var parameterSet = ParameterHelper.CreateExportParameterSet(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
 		var parameterDisplay = ParameterHelper.FormatParametersForDisplay(parameterSet);
 		_logger.LogProcessStart("Excel Export Generation", parameterDisplay, processId);
-		_logger.LogDetailedParameters(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, processId);
 
 		using var reportTimer = _logger.StartTimer("Total Process", processId);
 		var dataAccess = new ExportDataAccess();
@@ -91,26 +88,20 @@ public class ExportExcelService
 			_logger.LogStep("Database", "Executing stored procedure", processId);
 			using var spTimer = _logger.StartTimer("Stored Procedure", processId);
 			var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
-			var configuredSpName = _exportSettings.Operation.StoredProcedureName;
-			var configuredViewName = _exportSettings.Operation.ViewName;
-			var configuredOrderColumn = _exportSettings.Operation.OrderByColumn;
-			var spParams = ParameterHelper.FormatStoredProcedureParameters(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
-			_logger.LogStoredProcedure(configuredSpName, spParams, spTimer.Elapsed, processId);
 			spTimer.Dispose();
 			try
 			{
 				_logger.LogStep("Validation", $"Row count: {recordCount:N0}", processId);
-				_logger.LogDataReader(configuredViewName, configuredOrderColumn, recordCount, processId);
 				if (recordCount == 0)
 				{
-					SkippedDatasetLogger.LogSkippedDataset(combinationNumber, 0, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, "NoData");
+					ModuleSkippedDatasetLogger.LogExportSkippedDataset(combinationNumber, 0, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, "NoData");
 					_logger.LogProcessComplete("Excel Export Generation", reportTimer.Elapsed, "No data - skipped", processId);
 					return new ExcelResult { Success = false, SkipReason = SkipReason.NoData, RowCount = 0 };
 				}
 				if (recordCount > 1_048_575)
 				{
 					string skippedFileName = FileNameHelper.GenerateExportFileName(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
-					SkippedDatasetLogger.LogSkippedDataset(combinationNumber, recordCount, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, "RowLimit");
+					ModuleSkippedDatasetLogger.LogExportSkippedDataset(combinationNumber, recordCount, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, "RowLimit");
 					_logger.LogSkipped(skippedFileName, recordCount, "Excel row limit exceeded", processId);
 					_logger.LogProcessComplete("Excel Export Generation", reportTimer.Elapsed, "Skipped - too many rows", processId);
 					return new ExcelResult { Success = false, SkipReason = SkipReason.ExcelRowLimit, FileName = skippedFileName, RowCount = (int)recordCount };

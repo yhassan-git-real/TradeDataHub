@@ -7,12 +7,12 @@
       "WorksheetName": "Import Data"
     },
     "Files": {
-      "OutputDirectory": "F:\\TradeDataHub.02\\IMPORT_Exports",
+      "OutputDirectory": "F:\\TradeDataHub.02\\IMPORT_Excel",
       "FileSuffix": "IMP"
     },
     "Logging": {
       "OperationLabel": "Excel Import Generation",
-      "LogFilePrefix": "ImportLog",
+      "LogFilePrefix": "Import_Log",
       "LogFileExtension": ".txt"
     }
   }
