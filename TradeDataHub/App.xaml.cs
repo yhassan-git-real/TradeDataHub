@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Windows;
 using TradeDataHub.Config;
+using OfficeOpenXml; // EPPlus license context
 
 namespace TradeDataHub
 {
@@ -16,6 +17,9 @@ namespace TradeDataHub
 
             try
             {
+                // EPPlus license context (non-commercial as per plan)
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("Config/appsettings.json", optional: false, reloadOnChange: true);

@@ -13,6 +13,7 @@ namespace TradeDataHub.Config
         public required string StoredProcedureName { get; set; }
         public required string ViewName { get; set; }
         public required string OrderByColumn { get; set; }
+        public required string WorksheetName { get; set; } 
     }
 
     public class FileSettings
