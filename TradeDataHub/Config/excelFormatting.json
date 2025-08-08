@@ -3,6 +3,7 @@
   "FontSize": 10,
   "HeaderBackgroundColor": "#4F81BD",
   "BorderStyle": "Thin",
+  "AutoFitSampleRows": 1000,
   "DateFormat": "dd-mmm-yy",
   "DateColumns": [3],
   "TextColumns": [1, 2, 4],
