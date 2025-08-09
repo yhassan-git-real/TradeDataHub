@@ -14,6 +14,9 @@ using System.Threading;
 using TradeDataHub.Core.Cancellation;
 using System.Windows.Input;
 using System.Windows.Media;
+using TradeDataHub.Features.Monitoring.Services;
+using TradeDataHub.Features.Monitoring.Models;
+using MonitoringLogLevel = TradeDataHub.Features.Monitoring.Models.LogLevel;
 
 namespace TradeDataHub
 {
@@ -22,6 +25,7 @@ namespace TradeDataHub
     private readonly ExportExcelService _excelService;
     private readonly ImportExcelService _importService;
     private readonly ICancellationManager _cancellationManager;
+    private readonly MonitoringService _monitoringService;
     private CancellationTokenSource? _currentCancellationSource;
 
         public MainWindow()
@@ -30,9 +34,13 @@ namespace TradeDataHub
             _excelService = new ExportExcelService();
             _importService = new ImportExcelService();
             _cancellationManager = new CancellationManager();
+            _monitoringService = MonitoringService.Instance;
             
             // Initialize to Basic mode (hide advanced parameters)
             AdvancedParametersGrid.Visibility = Visibility.Collapsed;
+            
+            // Set initial status
+            _monitoringService.UpdateStatus(StatusType.Idle, "Application ready");
             
             ApplyModeUI();
             rbExport.Checked += (_,__) => { ApplyModeUI(); };
@@ -94,7 +102,7 @@ namespace TradeDataHub
             _currentCancellationSource?.Dispose();
             _currentCancellationSource = new CancellationTokenSource();
 
-            StatusText.Text = "Processing...";
+            _monitoringService.UpdateStatus(StatusType.Running, "Processing...");
             GenerateButton.IsEnabled = false;
 
             try
@@ -113,21 +121,22 @@ namespace TradeDataHub
             }
             catch (OperationCanceledException)
             {
-                Dispatcher.Invoke(() => StatusText.Text = "Operation cancelled by user");
+                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Cancelled, "Operation cancelled by user"));
                 MessageBox.Show("Operation was cancelled by user.", "Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() => StatusText.Text = "An error occurred.");
+                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Error, "An error occurred"));
+                _monitoringService.AddLog(MonitoringLogLevel.Error, $"Unexpected error: {ex.Message}", "GenerateButton");
                 MessageBox.Show($"An unexpected error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
                 Dispatcher.Invoke(() => {
                     GenerateButton.IsEnabled = true;
-                    if (StatusText.Text == "Processing..." || StatusText.Text == "Cancelling operation...")
+                    if (_monitoringService.CurrentStatus.CurrentStatus == StatusType.Running)
                     {
-                        StatusText.Text = "Ready";
+                        _monitoringService.UpdateStatus(StatusType.Idle, "Ready");
                     }
                 });
 
@@ -191,7 +200,7 @@ namespace TradeDataHub
                                             }
 
                                             combinationsProcessed++;
-                                            Dispatcher.Invoke(() => StatusText.Text = $"Processing combination {combinationsProcessed}...");
+                                            Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Running, $"Processing combination {combinationsProcessed}...", "Export"));
 
                                             try
                                             {
@@ -231,7 +240,8 @@ namespace TradeDataHub
                                             {
                                                 // Log individual combination errors but continue processing
                                                 var errorMsg = $"Error processing combination {combinationsProcessed}: {ex.Message}";
-                                                Dispatcher.Invoke(() => StatusText.Text = errorMsg);
+                                                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Error, errorMsg, "Export"));
+                                                _monitoringService.AddLog(MonitoringLogLevel.Error, errorMsg, "Export");
                                                 System.Diagnostics.Debug.WriteLine($"ERROR: {errorMsg}");
                                                 System.Diagnostics.Debug.WriteLine($"Filters - HSCode:{hsCode}, Product:{product}, IEC:{iec}, Exporter:{exporter}, Country:{country}, Name:{name}, Port:{port}");
                                             }
@@ -247,7 +257,7 @@ namespace TradeDataHub
             // Check if operation was cancelled
             if (cancellationToken.IsCancellationRequested)
             {
-                Dispatcher.Invoke(() => StatusText.Text = $"Export cancelled - {filesGenerated} files generated before cancellation");
+                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Cancelled, $"Export cancelled - {filesGenerated} files generated before cancellation"));
                 return;
             }
 
@@ -302,7 +312,7 @@ namespace TradeDataHub
                 summaryMessage += "\n\nSuggestion: Consider adding more specific filters to reduce row counts for large datasets.";
             }
 
-            Dispatcher.Invoke(() => StatusText.Text = GetStatusSummary(filesGenerated, skippedNoData, skippedRowLimit));
+            Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Completed, GetStatusSummary(filesGenerated, skippedNoData, skippedRowLimit)));
             MessageBox.Show(summaryMessage, messageTitle, MessageBoxButton.OK, messageType);
         }
 
@@ -385,7 +395,7 @@ namespace TradeDataHub
 
                                             combinationsProcessed++;
                                             var comboNumber = combinationsProcessed; // capture for closure
-                                            Dispatcher.Invoke(() => StatusText.Text = $"Processing (Import) combination {comboNumber}...");
+                                            Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Running, $"Processing (Import) combination {comboNumber}...", "Import"));
 
                                             try
                                             {
@@ -422,7 +432,8 @@ namespace TradeDataHub
                                             catch (Exception ex)
                                             {
                                                 var errorMsg = $"Import error combination {comboNumber}: {ex.Message}";
-                                                Dispatcher.Invoke(() => StatusText.Text = errorMsg);
+                                                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Error, errorMsg, "Import"));
+                                                _monitoringService.AddLog(MonitoringLogLevel.Error, errorMsg, "Import");
                                                 System.Diagnostics.Debug.WriteLine($"ERROR: {errorMsg}");
                                                 System.Diagnostics.Debug.WriteLine($"Filters - HSCode:{hsCode}, Product:{product}, IEC:{iec}, Importer:{importer}, Country:{country}, Name:{name}, Port:{port}");
                                             }
@@ -438,7 +449,7 @@ namespace TradeDataHub
             // Check if operation was cancelled
             if (cancellationToken.IsCancellationRequested)
             {
-                Dispatcher.Invoke(() => StatusText.Text = $"Import cancelled - {filesGenerated} files generated before cancellation");
+                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Cancelled, $"Import cancelled - {filesGenerated} files generated before cancellation"));
                 return;
             }
 
@@ -478,11 +489,13 @@ namespace TradeDataHub
                 summaryMessage += "\n\nSuggestion: Consider adding more specific filters to reduce row counts for large datasets.";
             }
 
-            Dispatcher.Invoke(() => StatusText.Text = filesGenerated == 0
+            var importStatusMessage = filesGenerated == 0
                 ? (skippedNoData > 0 && skippedRowLimit == 0 ? "Import complete: All combinations had no data" :
                    skippedRowLimit > 0 && skippedNoData == 0 ? "Import complete: All combinations exceeded row limits" :
                    (skippedNoData > 0 && skippedRowLimit > 0 ? $"Import complete: 0 files - {skippedNoData} no data, {skippedRowLimit} over limits" : "Import complete: No files"))
-                : (combinationsSkipped == 0 ? $"Import complete: {filesGenerated} files" : $"Import complete: {filesGenerated} files, {combinationsSkipped} skipped"));
+                : (combinationsSkipped == 0 ? $"Import complete: {filesGenerated} files" : $"Import complete: {filesGenerated} files, {combinationsSkipped} skipped");
+
+            Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Completed, importStatusMessage));
 
             MessageBox.Show(summaryMessage, messageTitle, MessageBoxButton.OK, messageType);
         }
@@ -494,7 +507,7 @@ namespace TradeDataHub
                 if (_currentCancellationSource != null && !_currentCancellationSource.IsCancellationRequested)
                 {
                     _currentCancellationSource.Cancel();
-                    StatusText.Text = "Cancelling operation...";
+                    _monitoringService.UpdateStatus(StatusType.Running, "Cancelling operation...");
                     CancelButton.IsEnabled = false;
                 }
                 else
@@ -527,7 +540,7 @@ namespace TradeDataHub
 
                 
                 // Update status
-                StatusText.Text = "All input fields have been cleared. Ready.";
+                _monitoringService.UpdateStatus(StatusType.Idle, "All input fields have been cleared. Ready.");
 
                 MessageBox.Show("All input fields have been cleared.", "Reset Complete", MessageBoxButton.OK, MessageBoxImage.Information);
             }
