@@ -6,6 +6,8 @@ using TradeDataHub.Core.Helpers;
 using TradeDataHub.Core.Database;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using System.Threading;
+using TradeDataHub.Core.Cancellation;
 
 namespace TradeDataHub.Features.Import
 {
@@ -32,19 +34,25 @@ namespace TradeDataHub.Features.Import
         }
 
         public (SqlConnection connection, SqlDataReader reader, long recordCount) GetDataReader(
-            string fromMonth, string toMonth, string hsCode, string product, string iec, string importer, string country, string name, string port)
+            string fromMonth, string toMonth, string hsCode, string product, string iec, string importer, string country, string name, string port, CancellationToken cancellationToken = default)
         {
             SqlConnection? con = null;
             SqlDataReader? reader = null;
+            SqlCommand? currentCommand = null;
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 con = new SqlConnection(_dbSettings.ConnectionString);
                 con.Open();
+
+                cancellationToken.ThrowIfCancellationRequested();
 
                 // Execute stored procedure once
                 using (var cmd = new SqlCommand(_settings.Database.StoredProcedureName, con))
                 {
+                    currentCommand = cmd;
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandTimeout = 50000;
 
@@ -58,22 +66,55 @@ namespace TradeDataHub.Features.Import
                     cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_FOREIGN_NAME, name);
                     cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_PORT, port);
 
+                    // Register cancellation callback to cancel the command
+                    using var registration = cancellationToken.Register(() => 
+                    {
+                        CancellationCleanupHelper.SafeCancelCommand(currentCommand);
+                    });
+
                     cmd.ExecuteNonQuery();
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
+
+                currentCommand = null; // Command completed successfully
 
                 // Row count
                 long recordCount = 0;
                 using (var countCmd = new SqlCommand($"SELECT COUNT(*) FROM {_settings.Database.ViewName}", con))
                 {
+                    currentCommand = countCmd;
+                    countCmd.CommandTimeout = 50000;
+
+                    using var registration = cancellationToken.Register(() => 
+                    {
+                        CancellationCleanupHelper.SafeCancelCommand(currentCommand);
+                    });
+
                     recordCount = Convert.ToInt64(countCmd.ExecuteScalar());
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
 
                 // Open streaming reader
                 var dataCmd = new SqlCommand($"SELECT * FROM {_settings.Database.ViewName} ORDER BY [{_settings.Database.OrderByColumn}]", con);
+                currentCommand = dataCmd;
                 dataCmd.CommandTimeout = 50000;
+
+                using var dataRegistration = cancellationToken.Register(() => 
+                {
+                    CancellationCleanupHelper.SafeCancelCommand(currentCommand);
+                });
+
                 reader = dataCmd.ExecuteReader();
+                cancellationToken.ThrowIfCancellationRequested();
 
                 return (con, reader, recordCount);
+            }
+            catch (OperationCanceledException)
+            {
+                // Handle cancellation
+                CancellationCleanupHelper.SafeDisposeReader(reader);
+                CancellationCleanupHelper.SafeDisposeConnection(con);
+                throw;
             }
             catch
             {

@@ -6,6 +6,8 @@ using OfficeOpenXml.Style;
 using System.Drawing;
 using TradeDataHub.Core.Logging;
 using TradeDataHub.Core.Helpers;
+using System.Threading;
+using TradeDataHub.Core.Cancellation;
 
 namespace TradeDataHub.Features.Import
 {
@@ -15,6 +17,7 @@ namespace TradeDataHub.Features.Import
         public string? FileName { get; set; }
         public long RowCount { get; set; }
         public string? SkipReason { get; set; }
+        public bool IsCancelled => SkipReason == "Cancelled";
     }
 
     public class ImportExcelService
@@ -51,22 +54,27 @@ namespace TradeDataHub.Features.Import
         }
 
     public ImportExcelResult CreateReport(string fromMonth, string toMonth, string hsCode, string product,
-            string iec, string importer, string country, string name, string port)
+            string iec, string importer, string country, string name, string port, CancellationToken cancellationToken = default)
         {
             var processId = _logger.GenerateProcessId();
             _logger.LogProcessStart(_settings.Logging.OperationLabel, $"fromMonth:{fromMonth}, toMonth:{toMonth}, hsCode:{hsCode}, product:{product}, iec:{iec}, importer:{importer}, country:{country}, name:{name}, port:{port}", processId);
             using var totalTimer = _logger.StartTimer("Total Process", processId);
+            string? partialFilePath = null;
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var dataAccess = new ImportDataAccess(_settings);
                 _logger.LogStep("Database", "Executing stored procedure", processId);
                 using var spTimer = _logger.StartTimer("Stored Procedure", processId);
-                var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port);
+                var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, cancellationToken);
                 spTimer.Dispose();
 
                 try
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     _logger.LogStep("Validation", $"Row count: {recordCount:N0}", processId);
 
                     if (recordCount == 0)
@@ -82,12 +90,17 @@ namespace TradeDataHub.Features.Import
                         return new ImportExcelResult { Success = false, RowCount = recordCount, SkipReason = "ExcelRowLimit" };
                     }
 
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     string fileName = TradeDataHub.Core.Helpers.Import_FileNameHelper.GenerateImportFileName(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, _settings.Files.FileSuffix);
                     _logger.LogExcelFileCreationStart(fileName, processId);
                     using var excelTimer = _logger.StartTimer("Excel Creation", processId);
 
                     using var package = new ExcelPackage();
                     var worksheet = package.Workbook.Worksheets.Add(_settings.Database.WorksheetName);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     worksheet.Cells.Style.Font.Name = _format.FontName;
                     worksheet.Cells.Style.Font.Size = _format.FontSize;
                     worksheet.Cells.Style.WrapText = _format.WrapText;
@@ -104,19 +117,32 @@ namespace TradeDataHub.Features.Import
                             worksheet.Column(textCol).Style.Numberformat.Format = "@";
                     }
 
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     for (int col = 0; col < fieldCount; col++)
                         worksheet.Cells[1, col + 1].Value = reader.GetName(col);
 
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     worksheet.Cells[2, 1].LoadFromDataReader(reader, false);
+                    
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     int lastRow = (int)recordCount + 1;
                     ApplyFormatting(worksheet, lastRow, fieldCount);
 
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     Directory.CreateDirectory(_settings.Files.OutputDirectory);
                     var outputPath = Path.Combine(_settings.Files.OutputDirectory, fileName);
+                    partialFilePath = outputPath; // Track for cleanup if cancelled
+
                     using var saveTimer = _logger.StartTimer("File Save", processId);
                     package.SaveAs(new FileInfo(outputPath));
                     _logger.LogFileSave("Completed", saveTimer.Elapsed, processId);
                     saveTimer.Dispose();
+
+                    partialFilePath = null; // File successfully created, don't clean up
 
                     _logger.LogExcelResult(fileName, excelTimer.Elapsed, recordCount, processId);
                     excelTimer.Dispose();
@@ -129,6 +155,15 @@ namespace TradeDataHub.Features.Import
                     reader.Dispose();
                     connection.Dispose();
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, "Cancelled by user", processId);
+                
+                // Clean up partial file if it exists
+                CancellationCleanupHelper.SafeDeletePartialFile(partialFilePath, processId);
+                
+                return new ImportExcelResult { Success = false, RowCount = 0, SkipReason = "Cancelled" };
             }
             catch (Exception ex)
             {
