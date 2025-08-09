@@ -7,6 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using TradeDataHub.Core.Helpers;
 using Microsoft.Extensions.Configuration;
+using TradeDataHub.Features.Monitoring.Services;
+using TradeDataHub.Features.Monitoring.Models;
 
 namespace TradeDataHub.Core.Logging
 {
@@ -184,6 +186,66 @@ namespace TradeDataHub.Core.Logging
                 StackTrace = stackTrace,
                 ProcessId = processId
             });
+
+            // Send only essential logs to MonitoringService for clean display
+            try
+            {
+                var monitoringService = MonitoringService.Instance;
+                var monitoringLevel = ConvertToMonitoringLogLevel(level);
+                
+                // Filter to only send essential information
+                bool isEssentialLog = IsEssentialLogMessage(message);
+                
+                if (isEssentialLog)
+                {
+                    monitoringService.AddLog(monitoringLevel, message, _modulePrefix, stackTrace ?? "");
+                }
+                
+                // Update status based on key process events
+                if (message.Contains("PROCESS START"))
+                {
+                    monitoringService.UpdateStatus(StatusType.Running, "Process started");
+                }
+                else if (message.Contains("PROCESS COMPLETE"))
+                {
+                    monitoringService.UpdateStatus(StatusType.Completed, "Process completed");
+                }
+                else if (message.Contains("Excel Complete"))
+                {
+                    monitoringService.UpdateStatus(StatusType.Completed, message);
+                }
+                else if (message.Contains("Process failed"))
+                {
+                    monitoringService.UpdateStatus(StatusType.Error, "Process failed");
+                }
+            }
+            catch (Exception)
+            {
+                // Don't let monitoring failures affect main logging
+                // Silently continue
+            }
+        }
+
+        private TradeDataHub.Features.Monitoring.Models.LogLevel ConvertToMonitoringLogLevel(LogLevel level)
+        {
+            return level switch
+            {
+                LogLevel.INFO => TradeDataHub.Features.Monitoring.Models.LogLevel.Info,
+                LogLevel.WARNING => TradeDataHub.Features.Monitoring.Models.LogLevel.Warning,
+                LogLevel.ERROR => TradeDataHub.Features.Monitoring.Models.LogLevel.Error,
+                _ => TradeDataHub.Features.Monitoring.Models.LogLevel.Info
+            };
+        }
+
+        private bool IsEssentialLogMessage(string message)
+        {
+            // Only show these essential log types for clean monitoring
+            return message.Contains("📋 Parameters:") ||           // Parameters info
+                   message.Contains("✅ Excel Complete:") ||       // Excel completion with filename
+                   message.Contains("⏱️  Total Time:") ||         // Total time
+                   message.Contains("➤ Validation: Row count:") || // Record count
+                   message.Contains("Process failed") ||           // Error messages
+                   message.Contains("ERROR");                      // Any error logs
         }
 
         private async Task FlushLogsAsync()
