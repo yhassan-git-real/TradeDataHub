@@ -56,15 +56,15 @@ namespace TradeDataHub.Features.Import
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandTimeout = 50000;
 
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_FROM_MONTH, int.Parse(fromMonth));
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_TO_MONTH, int.Parse(toMonth));
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_HS_CODE, hsCode);
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_PRODUCT, product);
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_IEC, iec);
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_IMPORTER, importer);
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_FOREIGN_COUNTRY, country);
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_FOREIGN_NAME, name);
-                    cmd.Parameters.AddWithValue(Core.Helpers.Import_ParameterHelper.StoredProcedureParameters.SP_PORT, port);
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_FROM_MONTH, int.Parse(fromMonth));
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_TO_MONTH, int.Parse(toMonth));
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_HS_CODE, hsCode);
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_PRODUCT, product);
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_IEC, iec);
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_IMPORTER, importer);
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_FOREIGN_COUNTRY, country);
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_FOREIGN_NAME, name);
+                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_PORT, port);
 
                     // Register cancellation callback to cancel the command
                     using var registration = cancellationToken.Register(() => 
