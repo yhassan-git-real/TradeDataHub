@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using TradeDataHub.Core.Models;
+
 namespace TradeDataHub.Features.Export
 {
     public class ExportSettingsRoot
@@ -10,6 +13,7 @@ namespace TradeDataHub.Features.Export
         public required ExportOperationSettings Operation { get; set; }
         public required ExportFileSettings Files { get; set; }
         public required ExportLoggingSettings Logging { get; set; }
+        public ExportObjectsSettings ExportObjects { get; set; }
     }
 
     public class ExportOperationSettings
@@ -30,5 +34,13 @@ namespace TradeDataHub.Features.Export
         public string OperationLabel { get; set; } = "Excel Export Generation";
         public string LogFilePrefix { get; set; } = "ExportLog";
         public string LogFileExtension { get; set; } = ".txt";
+    }
+
+    public class ExportObjectsSettings
+    {
+        public string DefaultViewName { get; set; } = "EXPDATA";
+        public string DefaultStoredProcedureName { get; set; } = "ExportData_New1";
+        public List<DbObjectOption> Views { get; set; } = new List<DbObjectOption>();
+        public List<DbObjectOption> StoredProcedures { get; set; } = new List<DbObjectOption>();
     }
 }

@@ -18,6 +18,12 @@ using TradeDataHub.Features.Monitoring.Services;
 using TradeDataHub.Features.Monitoring.Models;
 using MonitoringLogLevel = TradeDataHub.Features.Monitoring.Models.LogLevel;
 using System.IO;
+using TradeDataHub.Core.Models;
+using TradeDataHub.Features.Common.ViewModels;
+using TradeDataHub.Features.Export.Services;
+using TradeDataHub.Features.Import.Services;
+using TradeDataHub.Core.Database;
+using Microsoft.Extensions.Configuration;
 
 namespace TradeDataHub
 {
@@ -27,6 +33,11 @@ namespace TradeDataHub
     private readonly ImportExcelService _importService;
     private readonly ICancellationManager _cancellationManager;
     private readonly MonitoringService _monitoringService;
+    private readonly ExportObjectValidationService _exportObjectValidationService;
+    private readonly ImportObjectValidationService _importObjectValidationService;
+    private readonly DbObjectSelectorViewModel _exportDbObjectViewModel;
+    private readonly DbObjectSelectorViewModel _importDbObjectViewModel;
+    private readonly Core.Database.DatabaseObjectValidator _databaseObjectValidator;
     private CancellationTokenSource? _currentCancellationSource;
 
         // Thin DTO records to centralize textbox value extraction (backend-only refactor; UI unchanged)
@@ -77,6 +88,15 @@ namespace TradeDataHub
             return ImportParameterHelper.ValidateImportParameters(fromMonth, toMonth, w, w, w, w, w, w, w);
         }
 
+        private SharedDatabaseSettings LoadSharedDatabaseSettings()
+        {
+            const string json = "Config/database.appsettings.json";
+            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json, false);
+            var cfg = builder.Build();
+            var root = cfg.Get<SharedDatabaseSettingsRoot>() ?? throw new InvalidOperationException("Failed to bind SharedDatabaseSettingsRoot");
+            return root.DatabaseConfig;
+        }
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -85,6 +105,27 @@ namespace TradeDataHub
             _cancellationManager = new CancellationManager();
             _monitoringService = MonitoringService.Instance;
             
+            // Initialize validation services
+            _exportObjectValidationService = new ExportObjectValidationService(_excelService.ExportSettings);
+            _importObjectValidationService = new ImportObjectValidationService(_importService.ImportSettings);
+            
+            // Initialize database object validator
+            var dbSettings = LoadSharedDatabaseSettings();
+            _databaseObjectValidator = new Core.Database.DatabaseObjectValidator(dbSettings.ConnectionString);
+            
+            // Initialize view models for database object selection
+            _exportDbObjectViewModel = new DbObjectSelectorViewModel(
+                _exportObjectValidationService.GetAvailableViews(),
+                _exportObjectValidationService.GetAvailableStoredProcedures(),
+                _exportObjectValidationService.GetDefaultViewName(),
+                _exportObjectValidationService.GetDefaultStoredProcedureName());
+                
+            _importDbObjectViewModel = new DbObjectSelectorViewModel(
+                _importObjectValidationService.GetAvailableViews(),
+                _importObjectValidationService.GetAvailableStoredProcedures(),
+                _importObjectValidationService.GetDefaultViewName(),
+                _importObjectValidationService.GetDefaultStoredProcedureName());
+            
             // Initialize to Basic mode (hide additional parameters)
             AdvancedParametersGrid.Visibility = Visibility.Collapsed;
             
@@ -92,8 +133,6 @@ namespace TradeDataHub
             _monitoringService.UpdateStatus(StatusType.Idle, "Application ready");
             
             ApplyModeUI();
-            rbExport.Checked += (_,__) => { ApplyModeUI(); };
-            rbImport.Checked += (_,__) => { ApplyModeUI(); };
             
             // Add keyboard event handler
             this.KeyDown += MainWindow_KeyDown;
@@ -101,12 +140,26 @@ namespace TradeDataHub
 
         private void ApplyModeUI()
         {
+            // Defensive programming to handle potential null references
             if (rbExport.IsChecked == true)
             {
                 Lbl_Exporter.Visibility = Visibility.Visible;
                 Txt_Exporter.Visibility = Visibility.Visible;
                 Lbl_Importer.Visibility = Visibility.Collapsed;
                 Txt_Importer.Visibility = Visibility.Collapsed;
+                
+                // Set export database objects with null checks
+                if (_exportDbObjectViewModel != null)
+                {
+                    ViewComboBox.ItemsSource = _exportDbObjectViewModel.Views;
+                    ViewComboBox.SelectedItem = _exportDbObjectViewModel.SelectedView;
+                    StoredProcedureComboBox.ItemsSource = _exportDbObjectViewModel.StoredProcedures;
+                    StoredProcedureComboBox.SelectedItem = _exportDbObjectViewModel.SelectedStoredProcedure;
+                    
+                    // Validate selected database objects
+                    ValidateSelectedDatabaseObjects(_exportDbObjectViewModel.SelectedView?.Name, 
+                                                   _exportDbObjectViewModel.SelectedStoredProcedure?.Name);
+                }
             }
             else
             {
@@ -114,6 +167,108 @@ namespace TradeDataHub
                 Txt_Exporter.Visibility = Visibility.Collapsed;
                 Lbl_Importer.Visibility = Visibility.Visible;
                 Txt_Importer.Visibility = Visibility.Visible;
+                
+                // Set import database objects with null checks
+                if (_importDbObjectViewModel != null)
+                {
+                    ViewComboBox.ItemsSource = _importDbObjectViewModel.Views;
+                    ViewComboBox.SelectedItem = _importDbObjectViewModel.SelectedView;
+                    StoredProcedureComboBox.ItemsSource = _importDbObjectViewModel.StoredProcedures;
+                    StoredProcedureComboBox.SelectedItem = _importDbObjectViewModel.SelectedStoredProcedure;
+                    
+                    // Validate selected database objects
+                    ValidateSelectedDatabaseObjects(_importDbObjectViewModel.SelectedView?.Name, 
+                                                   _importDbObjectViewModel.SelectedStoredProcedure?.Name);
+                }
+            }
+        }
+        
+        private void ValidateSelectedDatabaseObjects(string viewName, string storedProcedureName)
+        {
+            if (string.IsNullOrEmpty(viewName) || string.IsNullOrEmpty(storedProcedureName))
+                return;
+                
+            var (viewExists, spExists) = _databaseObjectValidator.ValidateDatabaseObjects(viewName, storedProcedureName);
+            
+            if (!viewExists)
+            {
+                MessageBox.Show($"The selected view '{viewName}' does not exist in the database.", 
+                    "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _monitoringService.SetWarning($"View '{viewName}' not found in database");
+            }
+            
+            if (!spExists)
+            {
+                MessageBox.Show($"The selected stored procedure '{storedProcedureName}' does not exist in the database.", 
+                    "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _monitoringService.SetWarning($"Stored procedure '{storedProcedureName}' not found in database");
+            }
+        }
+        
+        private void ProcessType_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            ApplyModeUI();
+        }
+        
+        private void ViewComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ViewComboBox.SelectedItem is DbObjectOption selectedView)
+            {
+                if (rbExport.IsChecked == true && _exportDbObjectViewModel != null)
+                {
+                    _exportDbObjectViewModel.SelectedView = selectedView;
+                    
+                    // Validate if the view exists in the database
+                    if (!_databaseObjectValidator.ViewExists(selectedView.Name))
+                    {
+                        MessageBox.Show($"The selected view '{selectedView.Name}' does not exist in the database.", 
+                            "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        _monitoringService.SetWarning($"View '{selectedView.Name}' not found in database");
+                    }
+                }
+                else if (_importDbObjectViewModel != null)
+                {
+                    _importDbObjectViewModel.SelectedView = selectedView;
+                    
+                    // Validate if the view exists in the database
+                    if (!_databaseObjectValidator.ViewExists(selectedView.Name))
+                    {
+                        MessageBox.Show($"The selected view '{selectedView.Name}' does not exist in the database.", 
+                            "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        _monitoringService.SetWarning($"View '{selectedView.Name}' not found in database");
+                    }
+                }
+            }
+        }
+        
+        private void StoredProcedureComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (StoredProcedureComboBox.SelectedItem is DbObjectOption selectedSP)
+            {
+                if (rbExport.IsChecked == true && _exportDbObjectViewModel != null)
+                {
+                    _exportDbObjectViewModel.SelectedStoredProcedure = selectedSP;
+                    
+                    // Validate if the stored procedure exists in the database
+                    if (!_databaseObjectValidator.StoredProcedureExists(selectedSP.Name))
+                    {
+                        MessageBox.Show($"The selected stored procedure '{selectedSP.Name}' does not exist in the database.", 
+                            "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        _monitoringService.SetWarning($"Stored procedure '{selectedSP.Name}' not found in database");
+                    }
+                }
+                else if (_importDbObjectViewModel != null)
+                {
+                    _importDbObjectViewModel.SelectedStoredProcedure = selectedSP;
+                    
+                    // Validate if the stored procedure exists in the database
+                    if (!_databaseObjectValidator.StoredProcedureExists(selectedSP.Name))
+                    {
+                        MessageBox.Show($"The selected stored procedure '{selectedSP.Name}' does not exist in the database.", 
+                            "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        _monitoringService.SetWarning($"Stored procedure '{selectedSP.Name}' not found in database");
+                    }
+                }
             }
         }
 
@@ -135,11 +290,15 @@ namespace TradeDataHub
                 {
                     await RunImportProcess(_currentCancellationSource.Token);
                 }
-
-                if (rbExport.IsChecked == true)
+                else if (rbExport.IsChecked == true)
                 {
                     // Export is selected - run the existing export process
                     await RunExportProcess(_currentCancellationSource.Token);
+                }
+                else
+                {
+                    // Neither Import nor Export is selected
+                    MessageBox.Show("Please select either Import or Export mode.", "Mode Selection Required", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (OperationCanceledException)
@@ -174,6 +333,26 @@ namespace TradeDataHub
             var exportInputs = GetExportInputs();
             var fromMonth = exportInputs.FromMonth;
             var toMonth = exportInputs.ToMonth;
+            
+            // Check if view model is initialized
+            if (_exportDbObjectViewModel == null)
+            {
+                MessageBox.Show("Export database objects are not properly initialized. Please restart the application.", 
+                    "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            
+            // Get selected view and stored procedure
+            var selectedView = _exportDbObjectViewModel.SelectedView?.Name;
+            var selectedSP = _exportDbObjectViewModel.SelectedStoredProcedure?.Name;
+            
+            // Validate selected database objects
+            if (!_exportObjectValidationService.ValidateObjects(selectedView, selectedSP))
+            {
+                MessageBox.Show("The selected View or Stored Procedure is not valid. Please select valid database objects.", 
+                    "Invalid Database Objects", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             // Early guard for empty months (faster feedback before full validation call)
             if (string.IsNullOrWhiteSpace(fromMonth) || string.IsNullOrWhiteSpace(toMonth))
@@ -234,7 +413,20 @@ namespace TradeDataHub
                                             try
                                             {
                                                 // Step 1: Execute SP and get data reader with row count (single SP execution)
-                                                var result = _excelService.CreateReport(combinationsProcessed, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, cancellationToken);
+                                                var result = _excelService.CreateReport(
+                                                    combinationsProcessed, 
+                                                    fromMonth, 
+                                                    toMonth, 
+                                                    hsCode, 
+                                                    product, 
+                                                    iec, 
+                                                    exporter, 
+                                                    country, 
+                                                    name, 
+                                                    port, 
+                                                    cancellationToken,
+                                                    selectedView,
+                                                    selectedSP);
                                                 
                                                 if (result.Success)
                                                 {
@@ -373,6 +565,26 @@ namespace TradeDataHub
             var importInputs = GetImportInputs();
             var fromMonth = importInputs.FromMonth;
             var toMonth = importInputs.ToMonth;
+            
+            // Check if view model is initialized
+            if (_importDbObjectViewModel == null)
+            {
+                MessageBox.Show("Import database objects are not properly initialized. Please restart the application.", 
+                    "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            
+            // Get selected view and stored procedure
+            var selectedView = _importDbObjectViewModel.SelectedView?.Name;
+            var selectedSP = _importDbObjectViewModel.SelectedStoredProcedure?.Name;
+            
+            // Validate selected database objects
+            if (!_importObjectValidationService.ValidateObjects(selectedView, selectedSP))
+            {
+                MessageBox.Show("The selected View or Stored Procedure is not valid. Please select valid database objects.", 
+                    "Invalid Database Objects", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             if (string.IsNullOrWhiteSpace(fromMonth) || string.IsNullOrWhiteSpace(toMonth))
             {
@@ -433,7 +645,19 @@ namespace TradeDataHub
 
                                             try
                                             {
-                                                var result = _importService.CreateReport(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, cancellationToken);
+                                                var result = _importService.CreateReport(
+                                                    fromMonth, 
+                                                    toMonth, 
+                                                    hsCode, 
+                                                    product, 
+                                                    iec, 
+                                                    importer, 
+                                                    country, 
+                                                    name, 
+                                                    port, 
+                                                    cancellationToken,
+                                                    selectedView,
+                                                    selectedSP);
                                                 if (result.Success)
                                                 {
                                                     filesGenerated++;

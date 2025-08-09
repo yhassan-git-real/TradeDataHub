@@ -43,7 +43,7 @@ namespace TradeDataHub.Core.DataAccess
             return root.DatabaseConfig;
         }
 
-        public (SqlConnection connection, SqlDataReader reader, long recordCount) GetDataReader(string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port, CancellationToken cancellationToken = default)
+        public (SqlConnection connection, SqlDataReader reader, long recordCount) GetDataReader(string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port, CancellationToken cancellationToken = default, string? viewName = null, string? storedProcedureName = null)
         {
             SqlConnection? con = null;
             SqlDataReader? reader = null;
@@ -58,7 +58,21 @@ namespace TradeDataHub.Core.DataAccess
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using (var cmd = new SqlCommand(_exportSettings.Operation.StoredProcedureName, con))
+                string effectiveStoredProcedureName = storedProcedureName ?? _exportSettings.Operation.StoredProcedureName;
+                string effectiveViewName = viewName ?? _exportSettings.Operation.ViewName;
+                string effectiveOrderByColumn = _exportSettings.Operation.OrderByColumn;
+                
+                // If using a custom view from ExportObjects, get its OrderByColumn
+                if (viewName != null && _exportSettings.ExportObjects != null)
+                {
+                    var customView = _exportSettings.ExportObjects.Views?.FirstOrDefault(v => v.Name == viewName);
+                    if (customView != null && !string.IsNullOrEmpty(customView.OrderByColumn))
+                    {
+                        effectiveOrderByColumn = customView.OrderByColumn;
+                    }
+                }
+                
+                using (var cmd = new SqlCommand(effectiveStoredProcedureName, con))
                 {
                     currentCommand = cmd;
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -86,7 +100,7 @@ namespace TradeDataHub.Core.DataAccess
                 currentCommand = null; // Command completed successfully
 
                 long recordCount = 0;
-                using (var countCmd = new SqlCommand($"SELECT COUNT(*) FROM {_exportSettings.Operation.ViewName}", con))
+                using (var countCmd = new SqlCommand($"SELECT COUNT(*) FROM {effectiveViewName}", con))
                 {
                     currentCommand = countCmd;
                     countCmd.CommandTimeout = 50000;
@@ -100,7 +114,7 @@ namespace TradeDataHub.Core.DataAccess
                     cancellationToken.ThrowIfCancellationRequested();
                 }
 
-                var dataCmd = new SqlCommand($"SELECT * FROM {_exportSettings.Operation.ViewName} ORDER BY [{_exportSettings.Operation.OrderByColumn}]", con);
+                var dataCmd = new SqlCommand($"SELECT * FROM {effectiveViewName} ORDER BY [{effectiveOrderByColumn}]", con);
                 currentCommand = dataCmd;
                 dataCmd.CommandTimeout = 50000;
 

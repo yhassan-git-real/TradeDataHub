@@ -13,6 +13,41 @@
       "OperationLabel": "Excel Export Generation",
       "LogFilePrefix": "Export_Log",
       "LogFileExtension": ".txt"
+    },
+    "ExportObjects": {
+      "DefaultViewName": "EXPDATA",
+      "DefaultStoredProcedureName": "ExportData_New1",
+      "Views": [
+        {
+          "Name": "EXPDATA",
+          "DisplayName": "EXPDATA",
+          "OrderByColumn": "sb_DATE"
+        },
+        {
+          "Name": "EXPDATA_DETAILED",
+          "DisplayName": "Detailed Export Data",
+          "OrderByColumn": "sb_DATE"
+        },
+        {
+          "Name": "EXPDATA_SUMMARY",
+          "DisplayName": "Summary Export Data",
+          "OrderByColumn": "sb_DATE"
+        }
+      ],
+      "StoredProcedures": [
+        {
+          "Name": "ExportData_New1",
+          "DisplayName": "ExportData_New1"
+        },
+        {
+          "Name": "ExportData_Detailed",
+          "DisplayName": "Detailed Export Process"
+        },
+        {
+          "Name": "ExportData_Summary",
+          "DisplayName": "Summary Export Process"
+        }
+      ]
     }
   }
 }

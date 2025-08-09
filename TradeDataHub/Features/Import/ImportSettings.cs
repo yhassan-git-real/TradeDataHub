@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using TradeDataHub.Core.Models;
+
 namespace TradeDataHub.Features.Import
 {
     public class ImportSettingsRoot
@@ -10,6 +13,7 @@ namespace TradeDataHub.Features.Import
         public required ImportDatabaseSettings Database { get; set; }
         public required ImportFileSettings Files { get; set; }
         public required ImportLoggingSettings Logging { get; set; }
+        public ImportObjectsSettings ImportObjects { get; set; }
     }
 
     public class ImportDatabaseSettings
@@ -29,7 +33,15 @@ namespace TradeDataHub.Features.Import
     public class ImportLoggingSettings
     {
         public string OperationLabel { get; set; } = "Excel Import Generation";
-    public string LogFilePrefix { get; set; } = "ImportLog";
-    public string LogFileExtension { get; set; } = ".txt";
+        public string LogFilePrefix { get; set; } = "ImportLog";
+        public string LogFileExtension { get; set; } = ".txt";
+    }
+
+    public class ImportObjectsSettings
+    {
+        public string DefaultViewName { get; set; } = "IMPDATA";
+        public string DefaultStoredProcedureName { get; set; } = "ImportJNPTData_New1";
+        public List<DbObjectOption> Views { get; set; } = new List<DbObjectOption>();
+        public List<DbObjectOption> StoredProcedures { get; set; } = new List<DbObjectOption>();
     }
 }
