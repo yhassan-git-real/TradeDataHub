@@ -10,6 +10,8 @@ using TradeDataHub.Features.Export; // Ensure ExcelService is in scope
 using TradeDataHub.Core.Logging;
 using TradeDataHub.Core.Helpers;
 using TradeDataHub.Features.Import;
+using System.Threading;
+using TradeDataHub.Core.Cancellation;
 
 namespace TradeDataHub
 {
@@ -17,12 +19,15 @@ namespace TradeDataHub
     {
     private readonly ExportExcelService _excelService;
     private readonly ImportExcelService _importService;
+    private readonly ICancellationManager _cancellationManager;
+    private CancellationTokenSource? _currentCancellationSource;
 
         public MainWindow()
         {
             InitializeComponent();
             _excelService = new ExportExcelService();
             _importService = new ImportExcelService();
+            _cancellationManager = new CancellationManager();
             ApplyModeUI();
             rbExport.Checked += (_,__) => { ApplyModeUI(); };
             rbImport.Checked += (_,__) => { ApplyModeUI(); };
@@ -48,6 +53,10 @@ namespace TradeDataHub
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
         {
+            // Clean up any previous cancellation source
+            _currentCancellationSource?.Dispose();
+            _currentCancellationSource = new CancellationTokenSource();
+
             StatusText.Text = "Processing...";
             GenerateButton.IsEnabled = false;
 
@@ -56,14 +65,19 @@ namespace TradeDataHub
                 // 🎯 Check which process type is selected
                 if (rbImport.IsChecked == true)
                 {
-                    await RunImportProcess();
+                    await RunImportProcess(_currentCancellationSource.Token);
                 }
 
                 if (rbExport.IsChecked == true)
                 {
                     // Export is selected - run the existing export process
-                    await RunExportProcess();
+                    await RunExportProcess(_currentCancellationSource.Token);
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                Dispatcher.Invoke(() => StatusText.Text = "Operation cancelled by user");
+                MessageBox.Show("Operation was cancelled by user.", "Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -74,12 +88,19 @@ namespace TradeDataHub
             {
                 Dispatcher.Invoke(() => {
                     GenerateButton.IsEnabled = true;
-                    StatusText.Text = "Ready";
+                    if (StatusText.Text == "Processing..." || StatusText.Text == "Cancelling operation...")
+                    {
+                        StatusText.Text = "Ready";
+                    }
                 });
+
+                // Clean up cancellation source
+                _currentCancellationSource?.Dispose();
+                _currentCancellationSource = null;
             }
         }
 
-        private async Task RunExportProcess()
+        private async Task RunExportProcess(CancellationToken cancellationToken)
         {
             var fromMonth = Txt_Frommonth.Text;
             var toMonth = Txtmonthto.Text;
@@ -108,6 +129,7 @@ namespace TradeDataHub
             int combinationsSkipped = 0;
             int skippedNoData = 0;
             int skippedRowLimit = 0;
+            int cancelledCombinations = 0;
 
             await Task.Run(() =>
             {
@@ -125,17 +147,28 @@ namespace TradeDataHub
                                     {
                                         foreach (var name in foreignNames)
                                         {
+                                            // Check for cancellation at the start of each combination
+                                            if (cancellationToken.IsCancellationRequested)
+                                            {
+                                                cancellationToken.ThrowIfCancellationRequested();
+                                            }
+
                                             combinationsProcessed++;
                                             Dispatcher.Invoke(() => StatusText.Text = $"Processing combination {combinationsProcessed}...");
 
                                             try
                                             {
                                                 // Step 1: Execute SP and get data reader with row count (single SP execution)
-                                                var result = _excelService.CreateReport(combinationsProcessed, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
+                                                var result = _excelService.CreateReport(combinationsProcessed, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, cancellationToken);
                                                 
                                                 if (result.Success)
                                                 {
                                                     filesGenerated++;
+                                                }
+                                                else if (result.IsCancelled)
+                                                {
+                                                    cancelledCombinations++;
+                                                    cancellationToken.ThrowIfCancellationRequested();
                                                 }
                                                 else
                                                 {
@@ -152,6 +185,11 @@ namespace TradeDataHub
                                                     }
                                                 }
                                             }
+                                            catch (OperationCanceledException)
+                                            {
+                                                cancelledCombinations++;
+                                                throw; // Re-throw to exit the loops
+                                            }
                                             catch (Exception ex)
                                             {
                                                 // Log individual combination errors but continue processing
@@ -167,13 +205,20 @@ namespace TradeDataHub
                         }
                     }
                 }
-            });
+            }, cancellationToken);
+
+            // Check if operation was cancelled
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Dispatcher.Invoke(() => StatusText.Text = $"Export cancelled - {filesGenerated} files generated before cancellation");
+                return;
+            }
 
             // Log processing summary
             SkippedDatasetLogger.LogProcessingSummary(combinationsProcessed, filesGenerated, combinationsSkipped);
 
             // Create enhanced completion summary with clear skip reasons
-            var summaryMessage = "Processing Complete\n\n";
+            var summaryMessage = "Export Processing Complete\n\n";
             
             // Success metrics
             summaryMessage += $"Files Generated: {filesGenerated:N0} Excel files created successfully\n";
@@ -205,7 +250,7 @@ namespace TradeDataHub
 
             // Determine message type and icon based on results
             var messageType = MessageBoxImage.Information;
-            var messageTitle = "Batch Processing Complete";
+            var messageTitle = "Export Batch Processing Complete";
             
             if (filesGenerated == 0)
             {
@@ -216,7 +261,7 @@ namespace TradeDataHub
             else if (skippedRowLimit > 0)
             {
                 messageType = MessageBoxImage.Warning;
-                messageTitle = "Processing Complete - Some Data Limits Exceeded";
+                messageTitle = "Export Processing Complete - Some Data Limits Exceeded";
                 summaryMessage += "\n\nSuggestion: Consider adding more specific filters to reduce row counts for large datasets.";
             }
 
@@ -247,7 +292,7 @@ namespace TradeDataHub
             }
         }
 
-        private async Task RunImportProcess()
+        private async Task RunImportProcess(CancellationToken cancellationToken)
         {
             var fromMonth = Txt_Frommonth.Text;
             var toMonth = Txtmonthto.Text;
@@ -277,6 +322,7 @@ namespace TradeDataHub
             int combinationsSkipped = 0;
             int skippedNoData = 0;
             int skippedRowLimit = 0;
+            int cancelledCombinations = 0;
 
             await Task.Run(() =>
             {
@@ -294,16 +340,27 @@ namespace TradeDataHub
                                     {
                                         foreach (var name in foreignNames)
                                         {
+                                            // Check for cancellation at the start of each combination
+                                            if (cancellationToken.IsCancellationRequested)
+                                            {
+                                                cancellationToken.ThrowIfCancellationRequested();
+                                            }
+
                                             combinationsProcessed++;
                                             var comboNumber = combinationsProcessed; // capture for closure
                                             Dispatcher.Invoke(() => StatusText.Text = $"Processing (Import) combination {comboNumber}...");
 
                                             try
                                             {
-                                                var result = _importService.CreateReport(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port);
+                                                var result = _importService.CreateReport(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, cancellationToken);
                                                 if (result.Success)
                                                 {
                                                     filesGenerated++;
+                                                }
+                                                else if (result.IsCancelled)
+                                                {
+                                                    cancelledCombinations++;
+                                                    cancellationToken.ThrowIfCancellationRequested();
                                                 }
                                                 else
                                                 {
@@ -320,6 +377,11 @@ namespace TradeDataHub
                                                     }
                                                 }
                                             }
+                                            catch (OperationCanceledException)
+                                            {
+                                                cancelledCombinations++;
+                                                throw; // Re-throw to exit the loops
+                                            }
                                             catch (Exception ex)
                                             {
                                                 var errorMsg = $"Import error combination {comboNumber}: {ex.Message}";
@@ -334,7 +396,14 @@ namespace TradeDataHub
                         }
                     }
                 }
-            });
+            }, cancellationToken);
+
+            // Check if operation was cancelled
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Dispatcher.Invoke(() => StatusText.Text = $"Import cancelled - {filesGenerated} files generated before cancellation");
+                return;
+            }
 
             SkippedDatasetLogger.LogProcessingSummary(combinationsProcessed, filesGenerated, combinationsSkipped);
 
@@ -379,6 +448,56 @@ namespace TradeDataHub
                 : (combinationsSkipped == 0 ? $"Import complete: {filesGenerated} files" : $"Import complete: {filesGenerated} files, {combinationsSkipped} skipped"));
 
             MessageBox.Show(summaryMessage, messageTitle, MessageBoxButton.OK, messageType);
+        }
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_currentCancellationSource != null && !_currentCancellationSource.IsCancellationRequested)
+                {
+                    _currentCancellationSource.Cancel();
+                    StatusText.Text = "Cancelling operation...";
+                    CancelButton.IsEnabled = false;
+                }
+                else
+                {
+                    // No operation is currently running
+                    MessageBox.Show("No operation is currently running to cancel.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during cancellation: {ex.Message}", "Cancellation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Clear all text boxes
+                Txt_Frommonth.Text = "";
+                Txtmonthto.Text = "";
+                Txt_HS.Text = "";
+                txt_Port.Text = "";
+                Txt_Product.Text = "";
+                Txt_Exporter.Text = "";
+                Txt_Importer.Text = "";
+                txt_ForCount.Text = "";
+                Txt_ForName.Text = "";
+                Txt_IEC.Text = "";
+
+                
+                // Update status
+                StatusText.Text = "All input fields have been cleared. Ready.";
+
+                MessageBox.Show("All input fields have been cleared.", "Reset Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during reset: {ex.Message}", "Reset Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

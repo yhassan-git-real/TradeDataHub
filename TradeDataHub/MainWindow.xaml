@@ -33,36 +33,40 @@
         <TextBlock Grid.Row="1" Grid.Column="0" Text="To Month (YYYYMM):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="Txtmonthto" Grid.Row="1" Grid.Column="1" Margin="5"/>
 
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="HS Code(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="HS Code(s):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="Txt_HS" Grid.Row="2" Grid.Column="1" Margin="5"/>
 
-        <TextBlock Grid.Row="3" Grid.Column="0" Text="Port(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Port(s):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="txt_Port" Grid.Row="3" Grid.Column="1" Margin="5"/>
 
-        <TextBlock Grid.Row="4" Grid.Column="0" Text="Product(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="Product(s):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="Txt_Product" Grid.Row="4" Grid.Column="1" Margin="5"/>
 
-    <TextBlock x:Name="Lbl_Exporter" Grid.Row="5" Grid.Column="0" Text="Exporter(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
+    <TextBlock x:Name="Lbl_Exporter" Grid.Row="5" Grid.Column="0" Text="Exporter(s):" VerticalAlignment="Center" Margin="5"/>
     <TextBox x:Name="Txt_Exporter" Grid.Row="5" Grid.Column="1" Margin="5"/>
-    <TextBlock x:Name="Lbl_Importer" Grid.Row="5" Grid.Column="0" Text="Importer(s) (comma-sep):" VerticalAlignment="Center" Margin="5" Visibility="Collapsed"/>
+    <TextBlock x:Name="Lbl_Importer" Grid.Row="5" Grid.Column="0" Text="Importer(s):" VerticalAlignment="Center" Margin="5" Visibility="Collapsed"/>
     <TextBox x:Name="Txt_Importer" Grid.Row="5" Grid.Column="1" Margin="5" Visibility="Collapsed"/>
 
-        <TextBlock Grid.Row="6" Grid.Column="0" Text="Foreign Country(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
+        <TextBlock Grid.Row="6" Grid.Column="0" Text="Foreign Country(s):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="txt_ForCount" Grid.Row="6" Grid.Column="1" Margin="5"/>
 
-        <TextBlock Grid.Row="7" Grid.Column="0" Text="Foreign Name(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
+        <TextBlock Grid.Row="7" Grid.Column="0" Text="Foreign Name(s):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="Txt_ForName" Grid.Row="7" Grid.Column="1" Margin="5"/>
 
-        <TextBlock Grid.Row="8" Grid.Column="0" Text="IEC(s) (comma-sep):" VerticalAlignment="Center" Margin="5"/>
+        <TextBlock Grid.Row="8" Grid.Column="0" Text="IEC(s):" VerticalAlignment="Center" Margin="5"/>
         <TextBox x:Name="Txt_IEC" Grid.Row="8" Grid.Column="1" Margin="5"/>
 
-        <TextBlock Grid.Row="9" Grid.Column="0" Text="Type:" VerticalAlignment="Center" Margin="5"/>
+        <TextBlock Grid.Row="9" Grid.Column="0" Text="Mode:" VerticalAlignment="Center" Margin="5"/>
         <StackPanel Grid.Row="9" Grid.Column="1" Orientation="Horizontal" Margin="5">
             <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" Margin="0,0,20,0" GroupName="ProcessType"/>
             <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" GroupName="ProcessType"/>
         </StackPanel>
 
-        <Button x:Name="GenerateButton" Content="Generate Reports" Grid.Row="10" Grid.Column="1" Margin="5" HorizontalAlignment="Right" Click="GenerateButton_Click"/>
+        <StackPanel Grid.Row="10" Grid.Column="1" Orientation="Horizontal" Margin="5" HorizontalAlignment="Right">
+            <Button x:Name="ResetButton" Content="Reset" Margin="0,0,10,0" Click="ResetButton_Click"/>
+            <Button x:Name="GenerateButton" Content="Generate Reports" Margin="0,0,10,0" Click="GenerateButton_Click"/>
+            <Button x:Name="CancelButton" Content="Cancel" Click="CancelButton_Click"/>
+        </StackPanel>
 
         <StatusBar Grid.Row="12" Grid.ColumnSpan="2">
             <StatusBarItem>

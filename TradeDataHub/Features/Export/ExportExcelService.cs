@@ -11,6 +11,8 @@ using TradeDataHub.Core.DataAccess;
 using TradeDataHub.Core.Database;
 using TradeDataHub.Core.Helpers;
 using TradeDataHub.Core.Logging;
+using System.Threading;
+using TradeDataHub.Core.Cancellation;
 
 namespace TradeDataHub.Features.Export;
 
@@ -18,7 +20,8 @@ public enum SkipReason
 {
 	None,
 	NoData,
-	ExcelRowLimit
+	ExcelRowLimit,
+	Cancelled
 }
 
 public class ExcelResult
@@ -27,6 +30,7 @@ public class ExcelResult
 	public SkipReason SkipReason { get; set; }
 	public string? FileName { get; set; }
 	public int RowCount { get; set; }
+	public bool IsCancelled => SkipReason == SkipReason.Cancelled;
 }
 
 // Renamed from ExcelService to ExportExcelService for clarity
@@ -73,7 +77,7 @@ public class ExportExcelService
 		return root.DatabaseConfig;
 	}
 
-	public ExcelResult CreateReport(int combinationNumber, string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port)
+	public ExcelResult CreateReport(int combinationNumber, string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port, CancellationToken cancellationToken = default)
 	{
 		var processId = _logger.GenerateProcessId();
 
@@ -83,14 +87,21 @@ public class ExportExcelService
 
 		using var reportTimer = _logger.StartTimer("Total Process", processId);
 		var dataAccess = new ExportDataAccess();
+		string? partialFilePath = null;
+
 		try
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+
 			_logger.LogStep("Database", "Executing stored procedure", processId);
 			using var spTimer = _logger.StartTimer("Stored Procedure", processId);
-			var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
+			var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, cancellationToken);
 			spTimer.Dispose();
+
 			try
 			{
+				cancellationToken.ThrowIfCancellationRequested();
+
 				_logger.LogStep("Validation", $"Row count: {recordCount:N0}", processId);
 				if (recordCount == 0)
 				{
@@ -106,12 +117,18 @@ public class ExportExcelService
 					_logger.LogProcessComplete("Excel Export Generation", reportTimer.Elapsed, "Skipped - too many rows", processId);
 					return new ExcelResult { Success = false, SkipReason = SkipReason.ExcelRowLimit, FileName = skippedFileName, RowCount = (int)recordCount };
 				}
+
+				cancellationToken.ThrowIfCancellationRequested();
+
 				string fileName = FileNameHelper.GenerateExportFileName(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
 				_logger.LogExcelFileCreationStart(fileName, processId);
 				using var excelTimer = _logger.StartTimer("Excel Creation", processId);
 				using var package = new ExcelPackage();
 				var worksheetName = _exportSettings.Operation.WorksheetName;
 				var worksheet = package.Workbook.Worksheets.Add(string.IsNullOrWhiteSpace(worksheetName) ? "Export Data" : worksheetName);
+
+				cancellationToken.ThrowIfCancellationRequested();
+
 				int fieldCount = reader.FieldCount;
 				worksheet.Cells.Style.Font.Name = _formatSettings.FontName;
 				worksheet.Cells.Style.Font.Size = _formatSettings.FontSize;
@@ -122,18 +139,35 @@ public class ExportExcelService
 				foreach (int textCol in _formatSettings.TextColumns)
 					if (textCol > 0 && textCol <= fieldCount)
 						worksheet.Column(textCol).Style.Numberformat.Format = "@";
+
+				cancellationToken.ThrowIfCancellationRequested();
+
 				for (int col = 0; col < fieldCount; col++)
 					worksheet.Cells[1, col + 1].Value = reader.GetName(col);
+				
+				cancellationToken.ThrowIfCancellationRequested();
+
 				worksheet.Cells[2, 1].LoadFromDataReader(reader, false);
+				
+				cancellationToken.ThrowIfCancellationRequested();
+
 				int lastRow = (int)recordCount + 1; // include header
 				ApplyExcelFormatting(worksheet, lastRow, fieldCount);
+				
+				cancellationToken.ThrowIfCancellationRequested();
+
 				string outputDir = _exportSettings.Files.OutputDirectory;
 				Directory.CreateDirectory(outputDir);
 				string outputPath = Path.Combine(outputDir, fileName);
+				partialFilePath = outputPath; // Track for cleanup if cancelled
+
 				using var saveTimer = _logger.StartTimer("File Save", processId);
 				package.SaveAs(new FileInfo(outputPath));
 				_logger.LogFileSave("Completed", saveTimer.Elapsed, processId);
 				saveTimer.Dispose();
+
+				partialFilePath = null; // File successfully created, don't clean up
+
 				_logger.LogExcelResult(fileName, excelTimer.Elapsed, recordCount, processId);
 				excelTimer.Dispose();
 				_logger.LogProcessComplete("Excel Export Generation", reportTimer.Elapsed, $"Success - {fileName}", processId);
@@ -144,6 +178,15 @@ public class ExportExcelService
 				reader.Dispose();
 				connection.Dispose();
 			}
+		}
+		catch (OperationCanceledException)
+		{
+			_logger.LogProcessComplete("Excel Export Generation", reportTimer.Elapsed, "Cancelled by user", processId);
+			
+			// Clean up partial file if it exists
+			CancellationCleanupHelper.SafeDeletePartialFile(partialFilePath, processId);
+			
+			return new ExcelResult { Success = false, SkipReason = SkipReason.Cancelled, RowCount = 0 };
 		}
 		catch (Exception ex)
 		{

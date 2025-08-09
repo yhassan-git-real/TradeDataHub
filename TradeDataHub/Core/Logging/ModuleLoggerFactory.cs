@@ -44,6 +44,15 @@ namespace TradeDataHub.Core.Logging
         }
 
         /// <summary>
+        /// Gets a logger for Cancellation operations
+        /// </summary>
+        /// <returns>Cancellation module logger</returns>
+        public static ModuleLogger GetCancellationLogger()
+        {
+            return GetLogger("Cancellation_Log", ".txt");
+        }
+
+        /// <summary>
         /// Disposes all module loggers and clears the cache
         /// </summary>
         public static void DisposeAll()
