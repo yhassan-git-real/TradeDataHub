@@ -40,6 +40,9 @@ public class ExportExcelService
 	private readonly ModuleLogger _logger;
 	private readonly ExportSettings _exportSettings;
 	private readonly SharedDatabaseSettings _dbSettings;
+	
+	// Public property to access export settings
+	public ExportSettings ExportSettings => _exportSettings;
 
 	public ExportExcelService()
 	{
@@ -77,7 +80,7 @@ public class ExportExcelService
 		return root.DatabaseConfig;
 	}
 
-	public ExcelResult CreateReport(int combinationNumber, string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port, CancellationToken cancellationToken = default)
+	public ExcelResult CreateReport(int combinationNumber, string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port, CancellationToken cancellationToken = default, string? viewName = null, string? storedProcedureName = null)
 	{
 		var processId = _logger.GenerateProcessId();
 
@@ -87,6 +90,9 @@ public class ExportExcelService
 
 		using var reportTimer = _logger.StartTimer("Total Process", processId);
 		var dataAccess = new ExportDataAccess();
+			// Use provided view and stored procedure names if specified, otherwise use defaults
+			string effectiveViewName = viewName ?? _exportSettings.Operation.ViewName;
+			string effectiveStoredProcedureName = storedProcedureName ?? _exportSettings.Operation.StoredProcedureName;
 		string? partialFilePath = null;
 
 		try
@@ -95,7 +101,7 @@ public class ExportExcelService
 
 			_logger.LogStep("Database", "Executing stored procedure", processId);
 			using var spTimer = _logger.StartTimer("Stored Procedure", processId);
-			var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, cancellationToken);
+			var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, cancellationToken, effectiveViewName, effectiveStoredProcedureName);
 			spTimer.Dispose();
 
 			try

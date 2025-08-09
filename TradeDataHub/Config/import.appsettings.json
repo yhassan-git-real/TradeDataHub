@@ -14,6 +14,41 @@
       "OperationLabel": "Excel Import Generation",
       "LogFilePrefix": "Import_Log",
       "LogFileExtension": ".txt"
+    },
+    "ImportObjects": {
+      "DefaultViewName": "IMPDATA",
+      "DefaultStoredProcedureName": "ImportJNPTData_New1",
+      "Views": [
+        {
+          "Name": "IMPDATA",
+          "DisplayName": "IMPDATA",
+          "OrderByColumn": "DATE"
+        },
+        {
+          "Name": "IMPDATA_DETAILED",
+          "DisplayName": "Detailed Import Data",
+          "OrderByColumn": "DATE"
+        },
+        {
+          "Name": "IMPDATA_SUMMARY",
+          "DisplayName": "Summary Import Data",
+          "OrderByColumn": "DATE"
+        }
+      ],
+      "StoredProcedures": [
+        {
+          "Name": "ImportJNPTData_New1",
+          "DisplayName": "ImportJNPTData_New1"
+        },
+        {
+          "Name": "ImportJNPTData_Detailed",
+          "DisplayName": "Detailed Import Process"
+        },
+        {
+          "Name": "ImportJNPTData_Summary",
+          "DisplayName": "Summary Import Process"
+        }
+      ]
     }
   }
 }

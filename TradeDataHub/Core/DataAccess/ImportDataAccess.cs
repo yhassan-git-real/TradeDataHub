@@ -34,7 +34,7 @@ namespace TradeDataHub.Features.Import
         }
 
         public (SqlConnection connection, SqlDataReader reader, long recordCount) GetDataReader(
-            string fromMonth, string toMonth, string hsCode, string product, string iec, string importer, string country, string name, string port, CancellationToken cancellationToken = default)
+            string fromMonth, string toMonth, string hsCode, string product, string iec, string importer, string country, string name, string port, CancellationToken cancellationToken = default, string? viewName = null, string? storedProcedureName = null)
         {
             SqlConnection? con = null;
             SqlDataReader? reader = null;
@@ -49,8 +49,23 @@ namespace TradeDataHub.Features.Import
 
                 cancellationToken.ThrowIfCancellationRequested();
 
+                // Determine effective view, stored procedure, and order by column
+                string effectiveStoredProcedureName = storedProcedureName ?? _settings.Database.StoredProcedureName;
+                string effectiveViewName = viewName ?? _settings.Database.ViewName;
+                string effectiveOrderByColumn = _settings.Database.OrderByColumn;
+                
+                // If using a custom view from ImportObjects, get its OrderByColumn
+                if (viewName != null && _settings.ImportObjects != null)
+                {
+                    var customView = _settings.ImportObjects.Views?.FirstOrDefault(v => v.Name == viewName);
+                    if (customView != null && !string.IsNullOrEmpty(customView.OrderByColumn))
+                    {
+                        effectiveOrderByColumn = customView.OrderByColumn;
+                    }
+                }
+                
                 // Execute stored procedure once
-                using (var cmd = new SqlCommand(_settings.Database.StoredProcedureName, con))
+                using (var cmd = new SqlCommand(effectiveStoredProcedureName, con))
                 {
                     currentCommand = cmd;
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -80,7 +95,7 @@ namespace TradeDataHub.Features.Import
 
                 // Row count
                 long recordCount = 0;
-                using (var countCmd = new SqlCommand($"SELECT COUNT(*) FROM {_settings.Database.ViewName}", con))
+                using (var countCmd = new SqlCommand($"SELECT COUNT(*) FROM {effectiveViewName}", con))
                 {
                     currentCommand = countCmd;
                     countCmd.CommandTimeout = 50000;
@@ -95,7 +110,7 @@ namespace TradeDataHub.Features.Import
                 }
 
                 // Open streaming reader
-                var dataCmd = new SqlCommand($"SELECT * FROM {_settings.Database.ViewName} ORDER BY [{_settings.Database.OrderByColumn}]", con);
+                var dataCmd = new SqlCommand($"SELECT * FROM {effectiveViewName} ORDER BY [{effectiveOrderByColumn}]", con);
                 currentCommand = dataCmd;
                 dataCmd.CommandTimeout = 50000;
 

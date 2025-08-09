@@ -25,6 +25,9 @@ namespace TradeDataHub.Features.Import
         private readonly ModuleLogger _logger;
         private readonly ImportSettings _settings;
         private readonly ImportExcelFormatSettings _format;
+        
+        // Public property to access import settings
+        public ImportSettings ImportSettings => _settings;
 
         public ImportExcelService()
         {
@@ -54,7 +57,8 @@ namespace TradeDataHub.Features.Import
         }
 
     public ImportExcelResult CreateReport(string fromMonth, string toMonth, string hsCode, string product,
-            string iec, string importer, string country, string name, string port, CancellationToken cancellationToken = default)
+            string iec, string importer, string country, string name, string port, CancellationToken cancellationToken = default,
+            string? viewName = null, string? storedProcedureName = null)
         {
             var processId = _logger.GenerateProcessId();
             _logger.LogProcessStart(_settings.Logging.OperationLabel, $"fromMonth:{fromMonth}, toMonth:{toMonth}, hsCode:{hsCode}, product:{product}, iec:{iec}, importer:{importer}, country:{country}, name:{name}, port:{port}", processId);
@@ -66,9 +70,13 @@ namespace TradeDataHub.Features.Import
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var dataAccess = new ImportDataAccess(_settings);
+                
+                // Use provided view and stored procedure names if specified, otherwise use defaults
+                string effectiveViewName = viewName ?? _settings.Database.ViewName;
+                string effectiveStoredProcedureName = storedProcedureName ?? _settings.Database.StoredProcedureName;
                 _logger.LogStep("Database", "Executing stored procedure", processId);
                 using var spTimer = _logger.StartTimer("Stored Procedure", processId);
-                var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, cancellationToken);
+                var (connection, reader, recordCount) = dataAccess.GetDataReader(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, cancellationToken, effectiveViewName, effectiveStoredProcedureName);
                 spTimer.Dispose();
 
                 try

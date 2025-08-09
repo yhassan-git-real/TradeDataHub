@@ -253,16 +253,41 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
                 <!-- Mode Selection -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Mode:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" Margin="0,0,20,0" GroupName="ProcessType"/>
-                    <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" GroupName="ProcessType"/>
+                    <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" Margin="0,0,20,0" GroupName="ProcessType" Checked="ProcessType_CheckedChanged"/>
+                    <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" GroupName="ProcessType" Checked="ProcessType_CheckedChanged"/>
+                </StackPanel>
+
+                <!-- Database Objects Selection -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,15,0,0">
+                    <!-- View Dropdown -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
+                        <TextBlock Text="View:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ComboBox x:Name="ViewComboBox" Width="200" Height="32" 
+                                  DisplayMemberPath="DisplayName" 
+                                  SelectedValuePath="Name" 
+                                  SelectionChanged="ViewComboBox_SelectionChanged"/>
+                    </StackPanel>
+                    
+                    <!-- Stored Procedure Dropdown -->
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Stored Procedure:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ComboBox x:Name="StoredProcedureComboBox" Width="200" Height="32" 
+                                  DisplayMemberPath="DisplayName" 
+                                  SelectedValuePath="Name" 
+                                  SelectionChanged="StoredProcedureComboBox_SelectionChanged"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Buttons -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="ResetButton" Content="Reset" Width="80" Height="32" Margin="0,0,10,0" Click="ResetButton_Click"/>
                     <Button x:Name="GenerateButton" Content="Generate Reports" Width="130" Height="32" Margin="0,0,10,0" Click="GenerateButton_Click"/>
                     <Button x:Name="CancelButton" Content="Cancel" Width="80" Height="32" Click="CancelButton_Click"/>
