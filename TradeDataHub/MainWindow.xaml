@@ -7,15 +7,79 @@
         xmlns:monitoring="clr-namespace:TradeDataHub.Features.Monitoring.Controls"
         mc:Ignorable="d"
         Title="Trade Data Hub" Height="650" Width="1000">
-    <Grid Margin="15">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    
+    <DockPanel>
+        <!-- Professional Menu Bar -->
+        <Menu DockPanel.Dock="Top" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New" Click="MenuNew_Click" InputGestureText="Ctrl+N">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Assets/Icons/new.png" Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="_Open" Click="MenuOpen_Click" InputGestureText="Ctrl+O">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Assets/Icons/open.png" Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="_Save" Click="MenuSave_Click" InputGestureText="Ctrl+S">
+                    <MenuItem.Icon>
+                        <Image Source="pack://application:,,,/Assets/Icons/save.png" Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Save _As..." Click="MenuSaveAs_Click" InputGestureText="Ctrl+Shift+S"/>
+                <Separator/>
+                <MenuItem Header="Recent Files" IsEnabled="False"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="MenuExit_Click" InputGestureText="Alt+F4"/>
+            </MenuItem>
+            
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" Click="MenuUndo_Click" InputGestureText="Ctrl+Z"/>
+                <MenuItem Header="_Redo" Click="MenuRedo_Click" InputGestureText="Ctrl+Y"/>
+                <Separator/>
+                <MenuItem Header="Cu_t" Click="MenuCut_Click" InputGestureText="Ctrl+X"/>
+                <MenuItem Header="_Copy" Click="MenuCopy_Click" InputGestureText="Ctrl+C"/>
+                <MenuItem Header="_Paste" Click="MenuPaste_Click" InputGestureText="Ctrl+V"/>
+                <Separator/>
+                <MenuItem Header="Select _All" Click="MenuSelectAll_Click" InputGestureText="Ctrl+A"/>
+                <Separator/>
+                <MenuItem Header="_Preferences" Click="MenuPreferences_Click"/>
+            </MenuItem>
+            
+            <MenuItem Header="_View">
+                <MenuItem Header="_Basic View" x:Name="MenuBasicView" Click="MenuBasicView_Click" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="_Advanced View" x:Name="MenuAdvancedView" Click="MenuAdvancedView_Click" IsCheckable="True"/>
+                <Separator/>
+                <MenuItem Header="_Monitoring Panel" x:Name="MenuMonitoringPanel" Click="MenuMonitoringPanel_Click" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="_Activity Log" Click="MenuActivityLog_Click" IsCheckable="True" IsChecked="True"/>
+                <Separator/>
+                <MenuItem Header="_Refresh" Click="MenuRefresh_Click" InputGestureText="F5"/>
+                <MenuItem Header="_Full Screen" Click="MenuFullScreen_Click" InputGestureText="F11"/>
+            </MenuItem>
+            
+            <MenuItem Header="_Help">
+                <MenuItem Header="_User Manual" Click="MenuUserManual_Click" InputGestureText="F1"/>
+                <MenuItem Header="_Quick Start Guide" Click="MenuQuickStart_Click"/>
+                <MenuItem Header="_Keyboard Shortcuts" Click="MenuKeyboardShortcuts_Click"/>
+                <Separator/>
+                <MenuItem Header="_Online Help" Click="MenuOnlineHelp_Click"/>
+                <MenuItem Header="_Check for Updates" Click="MenuCheckUpdates_Click"/>
+                <Separator/>
+                <MenuItem Header="_About Trade Data Hub" Click="MenuAbout_Click"/>
+            </MenuItem>
+        </Menu>
+        
+        <!-- Main Content Area -->
+        <Grid Margin="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
         <!-- Input Parameters Section Header -->
         <Grid Grid.Row="0" Margin="0,0,0,10">
@@ -168,4 +232,5 @@
 
         <!-- Status Bar -->
     </Grid>
+    </DockPanel>
 </Window>
