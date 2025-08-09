@@ -29,6 +29,54 @@ namespace TradeDataHub
     private readonly MonitoringService _monitoringService;
     private CancellationTokenSource? _currentCancellationSource;
 
+        // Thin DTO records to centralize textbox value extraction (backend-only refactor; UI unchanged)
+        private record ExportInputs(string FromMonth, string ToMonth, List<string> Ports, List<string> HSCodes, List<string> Products,
+            List<string> Exporters, List<string> IECs, List<string> ForeignCountries, List<string> ForeignNames);
+        private record ImportInputs(string FromMonth, string ToMonth, List<string> Ports, List<string> HSCodes, List<string> Products,
+            List<string> Importers, List<string> IECs, List<string> ForeignCountries, List<string> ForeignNames);
+
+        private ExportInputs GetExportInputs()
+        {
+            return new ExportInputs(
+                Txt_Frommonth.Text,
+                Txtmonthto.Text,
+                ExportParameterHelper.ParseFilterList(txt_Port.Text),
+                ExportParameterHelper.ParseFilterList(Txt_HS.Text),
+                ExportParameterHelper.ParseFilterList(Txt_Product.Text),
+                ExportParameterHelper.ParseFilterList(Txt_Exporter.Text),
+                ExportParameterHelper.ParseFilterList(Txt_IEC.Text),
+                ExportParameterHelper.ParseFilterList(txt_ForCount.Text),
+                ExportParameterHelper.ParseFilterList(Txt_ForName.Text)
+            );
+        }
+
+        private ImportInputs GetImportInputs()
+        {
+            return new ImportInputs(
+                Txt_Frommonth.Text,
+                Txtmonthto.Text,
+                ImportParameterHelper.ParseFilterList(txt_Port.Text),
+                ImportParameterHelper.ParseFilterList(Txt_HS.Text),
+                ImportParameterHelper.ParseFilterList(Txt_Product.Text),
+                ImportParameterHelper.ParseFilterList(Txt_Importer.Text),
+                ImportParameterHelper.ParseFilterList(Txt_IEC.Text),
+                ImportParameterHelper.ParseFilterList(txt_ForCount.Text),
+                ImportParameterHelper.ParseFilterList(Txt_ForName.Text)
+            );
+        }
+
+        private ExportParameterHelper.ValidationResult ValidateExportMonths(string fromMonth, string toMonth)
+        {
+            var w = ExportParameterHelper.WILDCARD;
+            return ExportParameterHelper.ValidateExportParameters(fromMonth, toMonth, w, w, w, w, w, w, w);
+        }
+
+        private ImportParameterHelper.ValidationResult ValidateImportMonths(string fromMonth, string toMonth)
+        {
+            var w = ImportParameterHelper.WILDCARD;
+            return ImportParameterHelper.ValidateImportParameters(fromMonth, toMonth, w, w, w, w, w, w, w);
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -160,12 +208,19 @@ namespace TradeDataHub
 
         private async Task RunExportProcess(CancellationToken cancellationToken)
         {
-            var fromMonth = Txt_Frommonth.Text;
-            var toMonth = Txtmonthto.Text;
+            var exportInputs = GetExportInputs();
+            var fromMonth = exportInputs.FromMonth;
+            var toMonth = exportInputs.ToMonth;
 
-            // Enhanced parameter validation using ParameterHelper
-            var validation = ExportParameterHelper.ValidateExportParameters(
-                fromMonth, toMonth, ExportParameterHelper.WILDCARD, ExportParameterHelper.WILDCARD, ExportParameterHelper.WILDCARD, ExportParameterHelper.WILDCARD, ExportParameterHelper.WILDCARD, ExportParameterHelper.WILDCARD, ExportParameterHelper.WILDCARD);
+            // Early guard for empty months (faster feedback before full validation call)
+            if (string.IsNullOrWhiteSpace(fromMonth) || string.IsNullOrWhiteSpace(toMonth))
+            {
+                MessageBox.Show("From Month and To Month are required.", "Missing Input", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Centralized validation (months + format)
+            var validation = ValidateExportMonths(fromMonth, toMonth);
             
             if (!validation.IsValid)
             {
@@ -173,14 +228,13 @@ namespace TradeDataHub
                 MessageBox.Show(errorMessage, "Invalid Parameters", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-
-            var hsCodes = ExportParameterHelper.ParseFilterList(Txt_HS.Text);
-            var ports = ExportParameterHelper.ParseFilterList(txt_Port.Text);
-            var products = ExportParameterHelper.ParseFilterList(Txt_Product.Text);
-            var exporters = ExportParameterHelper.ParseFilterList(Txt_Exporter.Text);
-            var foreignCountries = ExportParameterHelper.ParseFilterList(txt_ForCount.Text);
-            var foreignNames = ExportParameterHelper.ParseFilterList(Txt_ForName.Text);
-            var iecs = ExportParameterHelper.ParseFilterList(Txt_IEC.Text);
+            var ports = exportInputs.Ports;
+            var hsCodes = exportInputs.HSCodes;
+            var products = exportInputs.Products;
+            var exporters = exportInputs.Exporters;
+            var foreignCountries = exportInputs.ForeignCountries;
+            var foreignNames = exportInputs.ForeignNames;
+            var iecs = exportInputs.IECs;
 
             int filesGenerated = 0;
             int combinationsProcessed = 0;
@@ -353,12 +407,17 @@ namespace TradeDataHub
 
         private async Task RunImportProcess(CancellationToken cancellationToken)
         {
-            var fromMonth = Txt_Frommonth.Text;
-            var toMonth = Txtmonthto.Text;
+            var importInputs = GetImportInputs();
+            var fromMonth = importInputs.FromMonth;
+            var toMonth = importInputs.ToMonth;
 
-            // Reuse export parameter helper for validation (months only for now)
-            var validation = ImportParameterHelper.ValidateImportParameters(
-                fromMonth, toMonth, ImportParameterHelper.WILDCARD, ImportParameterHelper.WILDCARD, ImportParameterHelper.WILDCARD, ImportParameterHelper.WILDCARD, ImportParameterHelper.WILDCARD, ImportParameterHelper.WILDCARD, ImportParameterHelper.WILDCARD);
+            if (string.IsNullOrWhiteSpace(fromMonth) || string.IsNullOrWhiteSpace(toMonth))
+            {
+                MessageBox.Show("From Month and To Month are required.", "Missing Input", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var validation = ValidateImportMonths(fromMonth, toMonth);
 
             if (!validation.IsValid)
             {
@@ -368,13 +427,13 @@ namespace TradeDataHub
             }
 
             // Parse lists (Txt_Exporter textbox is repurposed as Importer list when Import mode selected)
-            var hsCodes = ImportParameterHelper.ParseFilterList(Txt_HS.Text);
-            var ports = ImportParameterHelper.ParseFilterList(txt_Port.Text);
-            var products = ImportParameterHelper.ParseFilterList(Txt_Product.Text);
-            var importers = ImportParameterHelper.ParseFilterList(Txt_Importer.Text); // importer names
-            var foreignCountries = ImportParameterHelper.ParseFilterList(txt_ForCount.Text);
-            var foreignNames = ImportParameterHelper.ParseFilterList(Txt_ForName.Text);
-            var iecs = ImportParameterHelper.ParseFilterList(Txt_IEC.Text);
+            var ports = importInputs.Ports;
+            var hsCodes = importInputs.HSCodes;
+            var products = importInputs.Products;
+            var importers = importInputs.Importers; // importer names
+            var foreignCountries = importInputs.ForeignCountries;
+            var foreignNames = importInputs.ForeignNames;
+            var iecs = importInputs.IECs;
 
             int filesGenerated = 0;
             int combinationsProcessed = 0;
