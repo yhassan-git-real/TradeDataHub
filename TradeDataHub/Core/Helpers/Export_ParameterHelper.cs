@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace TradeDataHub.Core.Helpers
 {
-    public static class ParameterHelper
+    public static class Export_ParameterHelper
     {
         // Parameter Constants
         public const string WILDCARD = "%";
@@ -75,7 +75,7 @@ namespace TradeDataHub.Core.Helpers
         }
 
         // Parameter Processing Methods
-        public static List<string> ParseFilterList(string rawText)
+    public static List<string> ParseFilterList(string rawText)
         {
             if (string.IsNullOrWhiteSpace(rawText))
             {
@@ -89,12 +89,12 @@ namespace TradeDataHub.Core.Helpers
                 .ToList();
         }
 
-        public static string NormalizeParameter(string parameter)
+    public static string NormalizeParameter(string parameter)
         {
             return string.IsNullOrWhiteSpace(parameter) ? WILDCARD : parameter.Trim();
         }
 
-        public static Dictionary<string, string> CreateExportParameterSet(
+    public static Dictionary<string, string> CreateExportParameterSet(
             string fromMonth, string toMonth, string hsCode, string product, 
             string iec, string exporter, string foreignCountry, string foreignName, string port)
         {
@@ -113,24 +113,24 @@ namespace TradeDataHub.Core.Helpers
         }
 
         // Logging and Key Generation
-        public static string GenerateParameterKey(params string[] parameters)
+    public static string GenerateParameterKey(params string[] parameters)
         {
             return string.Join("|", parameters.Select(p => p ?? WILDCARD));
         }
 
-        public static string GenerateExportParameterKey(
+    public static string GenerateExportParameterKey(
             string fromMonth, string toMonth, string hsCode, string product, 
             string iec, string exporter, string foreignCountry, string foreignName, string port)
         {
             return GenerateParameterKey(fromMonth, toMonth, hsCode, product, iec, exporter, foreignCountry, foreignName, port);
         }
 
-        public static string FormatParametersForDisplay(Dictionary<string, string> parameters)
+    public static string FormatParametersForDisplay(Dictionary<string, string> parameters)
         {
             return string.Join(", ", parameters.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
         }
 
-        public static string FormatStoredProcedureParameters(
+    public static string FormatStoredProcedureParameters(
             string fromMonth, string toMonth, string hsCode, string product, 
             string iec, string exporter, string foreignCountry, string foreignName, string port)
         {
@@ -145,7 +145,7 @@ namespace TradeDataHub.Core.Helpers
             public Dictionary<string, string> NormalizedParameters { get; set; } = new Dictionary<string, string>();
         }
 
-        public static ValidationResult ValidateExportParameters(
+    public static ValidationResult ValidateExportParameters(
             string fromMonth, string toMonth, string hsCode, string product, 
             string iec, string exporter, string foreignCountry, string foreignName, string port)
         {

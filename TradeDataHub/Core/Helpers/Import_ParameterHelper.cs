@@ -35,15 +35,15 @@ namespace TradeDataHub.Core.Helpers
         {
             return new Dictionary<string, string>
             {
-                { ImportParameters.FROM_MONTH, ParameterHelper.NormalizeParameter(fromMonth) },
-                { ImportParameters.TO_MONTH, ParameterHelper.NormalizeParameter(toMonth) },
-                { ImportParameters.HS_CODE, ParameterHelper.NormalizeParameter(hsCode) },
-                { ImportParameters.PRODUCT, ParameterHelper.NormalizeParameter(product) },
-                { ImportParameters.IEC, ParameterHelper.NormalizeParameter(iec) },
-                { ImportParameters.IMPORTER, ParameterHelper.NormalizeParameter(importer) },
-                { ImportParameters.FOREIGN_COUNTRY, ParameterHelper.NormalizeParameter(foreignCountry) },
-                { ImportParameters.FOREIGN_NAME, ParameterHelper.NormalizeParameter(foreignName) },
-                { ImportParameters.PORT, ParameterHelper.NormalizeParameter(port) },
+                { ImportParameters.FROM_MONTH, Export_ParameterHelper.NormalizeParameter(fromMonth) },
+                { ImportParameters.TO_MONTH, Export_ParameterHelper.NormalizeParameter(toMonth) },
+                { ImportParameters.HS_CODE, Export_ParameterHelper.NormalizeParameter(hsCode) },
+                { ImportParameters.PRODUCT, Export_ParameterHelper.NormalizeParameter(product) },
+                { ImportParameters.IEC, Export_ParameterHelper.NormalizeParameter(iec) },
+                { ImportParameters.IMPORTER, Export_ParameterHelper.NormalizeParameter(importer) },
+                { ImportParameters.FOREIGN_COUNTRY, Export_ParameterHelper.NormalizeParameter(foreignCountry) },
+                { ImportParameters.FOREIGN_NAME, Export_ParameterHelper.NormalizeParameter(foreignName) },
+                { ImportParameters.PORT, Export_ParameterHelper.NormalizeParameter(port) },
             };
         }
     }

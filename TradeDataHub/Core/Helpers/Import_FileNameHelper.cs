@@ -13,7 +13,7 @@ namespace TradeDataHub.Core.Helpers
             string monthSegment = BuildMonthSegment(fromMonth, toMonth);
 
             string[] parts = new [] { hsCode, product, iec, importer, foreignCountry, foreignName, port }
-                .Where(p => !string.IsNullOrWhiteSpace(p) && p != ParameterHelper.WILDCARD)
+                .Where(p => !string.IsNullOrWhiteSpace(p) && p != Export_ParameterHelper.WILDCARD)
                 .Select(Sanitize)
                 .ToArray();
 

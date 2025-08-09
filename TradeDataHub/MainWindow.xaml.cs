@@ -164,8 +164,8 @@ namespace TradeDataHub
             var toMonth = Txtmonthto.Text;
 
             // Enhanced parameter validation using ParameterHelper
-            var validation = ParameterHelper.ValidateExportParameters(
-                fromMonth, toMonth, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD);
+            var validation = Export_ParameterHelper.ValidateExportParameters(
+                fromMonth, toMonth, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD);
             
             if (!validation.IsValid)
             {
@@ -174,13 +174,13 @@ namespace TradeDataHub
                 return;
             }
 
-            var hsCodes = ParameterHelper.ParseFilterList(Txt_HS.Text);
-            var ports = ParameterHelper.ParseFilterList(txt_Port.Text);
-            var products = ParameterHelper.ParseFilterList(Txt_Product.Text);
-            var exporters = ParameterHelper.ParseFilterList(Txt_Exporter.Text);
-            var foreignCountries = ParameterHelper.ParseFilterList(txt_ForCount.Text);
-            var foreignNames = ParameterHelper.ParseFilterList(Txt_ForName.Text);
-            var iecs = ParameterHelper.ParseFilterList(Txt_IEC.Text);
+            var hsCodes = Export_ParameterHelper.ParseFilterList(Txt_HS.Text);
+            var ports = Export_ParameterHelper.ParseFilterList(txt_Port.Text);
+            var products = Export_ParameterHelper.ParseFilterList(Txt_Product.Text);
+            var exporters = Export_ParameterHelper.ParseFilterList(Txt_Exporter.Text);
+            var foreignCountries = Export_ParameterHelper.ParseFilterList(txt_ForCount.Text);
+            var foreignNames = Export_ParameterHelper.ParseFilterList(Txt_ForName.Text);
+            var iecs = Export_ParameterHelper.ParseFilterList(Txt_IEC.Text);
 
             int filesGenerated = 0;
             int combinationsProcessed = 0;
@@ -357,8 +357,8 @@ namespace TradeDataHub
             var toMonth = Txtmonthto.Text;
 
             // Reuse export parameter helper for validation (months only for now)
-            var validation = ParameterHelper.ValidateExportParameters(
-                fromMonth, toMonth, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD, ParameterHelper.WILDCARD);
+            var validation = Export_ParameterHelper.ValidateExportParameters(
+                fromMonth, toMonth, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD, Export_ParameterHelper.WILDCARD);
 
             if (!validation.IsValid)
             {
@@ -368,13 +368,13 @@ namespace TradeDataHub
             }
 
             // Parse lists (Txt_Exporter textbox is repurposed as Importer list when Import mode selected)
-            var hsCodes = ParameterHelper.ParseFilterList(Txt_HS.Text);
-            var ports = ParameterHelper.ParseFilterList(txt_Port.Text);
-            var products = ParameterHelper.ParseFilterList(Txt_Product.Text);
-            var importers = ParameterHelper.ParseFilterList(Txt_Importer.Text); // importer names
-            var foreignCountries = ParameterHelper.ParseFilterList(txt_ForCount.Text);
-            var foreignNames = ParameterHelper.ParseFilterList(Txt_ForName.Text);
-            var iecs = ParameterHelper.ParseFilterList(Txt_IEC.Text);
+            var hsCodes = Export_ParameterHelper.ParseFilterList(Txt_HS.Text);
+            var ports = Export_ParameterHelper.ParseFilterList(txt_Port.Text);
+            var products = Export_ParameterHelper.ParseFilterList(Txt_Product.Text);
+            var importers = Export_ParameterHelper.ParseFilterList(Txt_Importer.Text); // importer names
+            var foreignCountries = Export_ParameterHelper.ParseFilterList(txt_ForCount.Text);
+            var foreignNames = Export_ParameterHelper.ParseFilterList(Txt_ForName.Text);
+            var iecs = Export_ParameterHelper.ParseFilterList(Txt_IEC.Text);
 
             int filesGenerated = 0;
             int combinationsProcessed = 0;

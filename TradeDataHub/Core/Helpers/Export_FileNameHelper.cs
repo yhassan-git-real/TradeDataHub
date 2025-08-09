@@ -2,7 +2,7 @@ using System;
 
 namespace TradeDataHub.Core.Helpers
 {
-    public static class FileNameHelper
+    public static class Export_FileNameHelper
     {
         public static string SanitizeFileName(string fileName)
         {

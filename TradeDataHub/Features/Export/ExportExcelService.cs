@@ -81,8 +81,8 @@ public class ExportExcelService
 	{
 		var processId = _logger.GenerateProcessId();
 
-		var parameterSet = ParameterHelper.CreateExportParameterSet(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
-		var parameterDisplay = ParameterHelper.FormatParametersForDisplay(parameterSet);
+		var parameterSet = Export_ParameterHelper.CreateExportParameterSet(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
+		var parameterDisplay = Export_ParameterHelper.FormatParametersForDisplay(parameterSet);
 		_logger.LogProcessStart("Excel Export Generation", parameterDisplay, processId);
 
 		using var reportTimer = _logger.StartTimer("Total Process", processId);
@@ -111,7 +111,7 @@ public class ExportExcelService
 				}
 				if (recordCount > 1_048_575)
 				{
-					string skippedFileName = FileNameHelper.GenerateExportFileName(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
+					string skippedFileName = Export_FileNameHelper.GenerateExportFileName(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
 					ModuleSkippedDatasetLogger.LogExportSkippedDataset(combinationNumber, recordCount, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, "RowLimit");
 					_logger.LogSkipped(skippedFileName, recordCount, "Excel row limit exceeded", processId);
 					_logger.LogProcessComplete("Excel Export Generation", reportTimer.Elapsed, "Skipped - too many rows", processId);
@@ -120,7 +120,7 @@ public class ExportExcelService
 
 				cancellationToken.ThrowIfCancellationRequested();
 
-				string fileName = FileNameHelper.GenerateExportFileName(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
+					string fileName = Export_FileNameHelper.GenerateExportFileName(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
 				_logger.LogExcelFileCreationStart(fileName, processId);
 				using var excelTimer = _logger.StartTimer("Excel Creation", processId);
 				using var package = new ExcelPackage();
