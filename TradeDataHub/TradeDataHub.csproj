@@ -24,4 +24,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Config\ImportExcelFormatSettings.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
+  </ItemGroup>
+
 </Project>
