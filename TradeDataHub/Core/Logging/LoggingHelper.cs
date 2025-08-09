@@ -145,7 +145,7 @@ namespace TradeDataHub.Core.Logging
 
         public void LogDetailedParameters(string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string forCount, string forName, string port, string processId)
         {
-            string parameters = Export_ParameterHelper.FormatStoredProcedureParameters(fromMonth, toMonth, hsCode, product, iec, exporter, forCount, forName, port);
+            string parameters = ExportParameterHelper.FormatStoredProcedureParameters(fromMonth, toMonth, hsCode, product, iec, exporter, forCount, forName, port);
             LogStep("Parameters Detail", parameters, processId);
         }
 

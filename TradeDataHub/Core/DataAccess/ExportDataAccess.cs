@@ -63,15 +63,15 @@ namespace TradeDataHub.Core.DataAccess
                     currentCommand = cmd;
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandTimeout = 50000;
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_FROM_MONTH, int.Parse(fromMonth));
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_TO_MONTH, int.Parse(toMonth));
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_HS_CODE, hsCode);
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_PRODUCT, product);
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_IEC, iec);
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_EXPORTER, exporter);
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_FOREIGN_COUNTRY, country);
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_FOREIGN_NAME, name);
-                    cmd.Parameters.AddWithValue(Export_ParameterHelper.StoredProcedureParameters.SP_PORT, port);
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_FROM_MONTH, int.Parse(fromMonth));
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_TO_MONTH, int.Parse(toMonth));
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_HS_CODE, hsCode);
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_PRODUCT, product);
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_IEC, iec);
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_EXPORTER, exporter);
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_FOREIGN_COUNTRY, country);
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_FOREIGN_NAME, name);
+                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_PORT, port);
 
                     // Register cancellation callback to cancel the command
                     using var registration = cancellationToken.Register(() => 
