@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TradeDataHub"
         xmlns:monitoring="clr-namespace:TradeDataHub.Features.Monitoring.Controls"
+        xmlns:controls="clr-namespace:TradeDataHub.Controls"
         mc:Ignorable="d"
         Title="Trade Data Hub" Height="650" Width="1000">
     
@@ -81,44 +82,84 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-        <!-- Input Parameters Section Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <!-- Title on the left -->
-            <TextBlock Grid.Column="0" Text="Input Parameters" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-            
-            <!-- Improved Toggle Switch with better spacing -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,30,0">
-                <TextBlock Text="View:" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="13" Foreground="#555555" FontWeight="Medium"/>
-                <Border x:Name="CompactToggle" Background="#F8F8F8" CornerRadius="18" Height="32" Width="110" 
-                        MouseLeftButtonDown="ToggleSwitch_Click" Cursor="Hand" BorderBrush="#E0E0E0" BorderThickness="1">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+        <!-- Input Parameters Header with Modern Toggle -->
+        <Border Grid.Row="0" Background="#F8F9FA" BorderBrush="#E9ECEF" BorderThickness="0,0,0,1" Padding="20,15" Margin="0,0,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Header Content -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Settings Icon -->
+                    <Border Background="#0078D4" CornerRadius="8" Width="40" Height="40" Margin="0,0,15,0">
+                        <Viewbox Width="20" Height="20" Margin="10">
+                            <Canvas Width="24" Height="24">
+                                <Path Fill="White" Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+                            </Canvas>
+                        </Viewbox>
+                    </Border>
+                    
+                    <!-- Title Text -->
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Input Parameters" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" FontFamily="Segoe UI"/>
+                        <TextBlock Text="Configure your trade data filters" FontSize="13" Foreground="#6C757D" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+                
+                <!-- Enhanced Toggle Switch -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="View:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="14" 
+                               Foreground="#495057" FontWeight="SemiBold" FontFamily="Segoe UI"/>
+                    
+                    <!-- Professional Toggle Button -->
+                    <Border x:Name="ToggleContainer" Background="#F8F9FA" CornerRadius="20" Height="36" Width="120" 
+                            MouseLeftButtonDown="ToggleSwitch_Click" Cursor="Hand" BorderBrush="#DEE2E6" BorderThickness="1">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" ShadowDepth="0" BlurRadius="4" Opacity="0.1"/>
+                        </Border.Effect>
                         
-                        <!-- Active indicator (slides left/right) -->
-                        <Border x:Name="ActiveIndicator" Grid.Column="0" Background="#0078D4" CornerRadius="16" 
-                                Margin="2" HorizontalAlignment="Stretch">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#0078D4" ShadowDepth="0" BlurRadius="4" Opacity="0.3"/>
-                            </Border.Effect>
-                        </Border>
-                        
-                        <!-- Static text labels with improved font -->
-                        <TextBlock Grid.Column="0" Text="Basic" HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                   Foreground="White" FontWeight="SemiBold" FontSize="11" x:Name="BasicText" FontFamily="Segoe UI"/>
-                        <TextBlock Grid.Column="1" Text="Advanced" HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                   Foreground="#555555" FontWeight="SemiBold" FontSize="11" x:Name="AdvancedText" FontFamily="Segoe UI"/>
-                    </Grid>
-                </Border>
-            </StackPanel>
-        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Active Indicator -->
+                            <Border x:Name="ActiveIndicator" Grid.Column="0" Background="#0078D4" CornerRadius="18" 
+                                    Margin="2" HorizontalAlignment="Stretch">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#0078D4" ShadowDepth="0" BlurRadius="6" Opacity="0.4"/>
+                                </Border.Effect>
+                            </Border>
+                            
+                            <!-- Basic Mode Section -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Viewbox Width="14" Height="14" Margin="0,0,4,0">
+                                    <Canvas Width="24" Height="24">
+                                        <Path x:Name="BasicIcon" Fill="White" Data="M3,3H21V5H3V3M3,7H21V9H3V7M3,11H21V13H3V11M3,15H21V17H3V15M3,19H21V21H3V19Z"/>
+                                    </Canvas>
+                                </Viewbox>
+                                <TextBlock x:Name="BasicText" Text="Basic" Foreground="White" FontWeight="Bold" 
+                                           FontSize="12" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                            
+                            <!-- All Mode Section -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Viewbox Width="14" Height="14" Margin="0,0,4,0">
+                                    <Canvas Width="24" Height="24">
+                                        <Path x:Name="AllIcon" Fill="#6C757D" Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,6V8H13V6H11M11,10V18H13V10H11Z"/>
+                                    </Canvas>
+                                </Viewbox>
+                                <TextBlock x:Name="AllText" Text="All" Foreground="#6C757D" FontWeight="Bold" 
+                                           FontSize="12" FontFamily="Segoe UI"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
         
         <!-- Description -->
         <TextBlock Grid.Row="1" Text="Specify the criteria for your trade data report." 
@@ -137,23 +178,25 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Row 1: From Month, To Month, HS Codes -->
-                    <StackPanel Grid.Column="0" Margin="0,0,10,15">
-                        <TextBlock Text="From Month (YYYYMM)" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="Txt_Frommonth" Height="25"/>
+                    <StackPanel Grid.Column="0" Margin="0,0,15,15">
+                        <TextBlock Text="From Month" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <controls:YearMonthPicker x:Name="FromMonthPicker" 
+                                                  PlaceholderText="Select start month"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" Margin="5,0,5,15">
-                        <TextBlock Text="To Month (YYYYMM)" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="Txtmonthto" Height="25"/>
+                    <StackPanel Grid.Column="1" Margin="0,0,15,15">
+                        <TextBlock Text="To Month" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <controls:YearMonthPicker x:Name="ToMonthPicker" 
+                                                  PlaceholderText="Select end month"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="2" Margin="10,0,0,15">
+                    <StackPanel Grid.Column="2" Margin="0,0,0,15">
                         <TextBlock Text="HS Codes" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="Txt_HS" Height="25"/>
+                        <TextBox x:Name="Txt_HS" Height="32"/>
                     </StackPanel>
                 </Grid>
 
-                <!-- Advanced Parameters (Toggleable) - Rows 2 & 3 -->
+                <!-- Additional Parameters (Toggleable) - Rows 2 & 3 -->
                 <Grid x:Name="AdvancedParametersGrid">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -166,37 +209,37 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Row 2: Port Codes, Products, Exporters/Importers -->
-                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,15">
+                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,15,15">
                         <TextBlock Text="Port Codes" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="txt_Port" Height="25"/>
+                        <TextBox x:Name="txt_Port" Height="32"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="5,0,5,15">
+                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,15,15">
                         <TextBlock Text="Products" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="Txt_Product" Height="25"/>
+                        <TextBox x:Name="Txt_Product" Height="32"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="10,0,0,15">
+                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,15">
                         <TextBlock x:Name="Lbl_Exporter" Text="Exporters" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="Txt_Exporter" Height="25"/>
+                        <TextBox x:Name="Txt_Exporter" Height="32"/>
                         <TextBlock x:Name="Lbl_Importer" Text="Importers" FontWeight="SemiBold" Margin="0,0,0,5" Visibility="Collapsed"/>
-                        <TextBox x:Name="Txt_Importer" Height="25" Visibility="Collapsed"/>
+                        <TextBox x:Name="Txt_Importer" Height="32" Visibility="Collapsed"/>
                     </StackPanel>
 
                     <!-- Row 3: Foreign Countries, Foreign Companies, IEC Codes -->
-                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,15">
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,15,15">
                         <TextBlock Text="Foreign Countries" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="txt_ForCount" Height="25"/>
+                        <TextBox x:Name="txt_ForCount" Height="32"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="5,0,5,15">
+                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,15,15">
                         <TextBlock Text="Foreign Companies" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="Txt_ForName" Height="25"/>
+                        <TextBox x:Name="Txt_ForName" Height="32"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="10,0,0,15">
+                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,15">
                         <TextBlock Text="IEC Codes" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                        <TextBox x:Name="Txt_IEC" Height="25"/>
+                        <TextBox x:Name="Txt_IEC" Height="32"/>
                     </StackPanel>
                 </Grid>
             </StackPanel>

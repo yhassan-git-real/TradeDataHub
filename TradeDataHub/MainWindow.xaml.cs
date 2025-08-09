@@ -38,8 +38,8 @@ namespace TradeDataHub
         private ExportInputs GetExportInputs()
         {
             return new ExportInputs(
-                Txt_Frommonth.Text,
-                Txtmonthto.Text,
+                FromMonthPicker.SelectedYearMonth,
+                ToMonthPicker.SelectedYearMonth,
                 ExportParameterHelper.ParseFilterList(txt_Port.Text),
                 ExportParameterHelper.ParseFilterList(Txt_HS.Text),
                 ExportParameterHelper.ParseFilterList(Txt_Product.Text),
@@ -53,8 +53,8 @@ namespace TradeDataHub
         private ImportInputs GetImportInputs()
         {
             return new ImportInputs(
-                Txt_Frommonth.Text,
-                Txtmonthto.Text,
+                FromMonthPicker.SelectedYearMonth,
+                ToMonthPicker.SelectedYearMonth,
                 ImportParameterHelper.ParseFilterList(txt_Port.Text),
                 ImportParameterHelper.ParseFilterList(Txt_HS.Text),
                 ImportParameterHelper.ParseFilterList(Txt_Product.Text),
@@ -85,7 +85,7 @@ namespace TradeDataHub
             _cancellationManager = new CancellationManager();
             _monitoringService = MonitoringService.Instance;
             
-            // Initialize to Basic mode (hide advanced parameters)
+            // Initialize to Basic mode (hide additional parameters)
             AdvancedParametersGrid.Visibility = Visibility.Collapsed;
             
             // Set initial status
@@ -117,44 +117,7 @@ namespace TradeDataHub
             }
         }
 
-        private void ToggleSwitch_Click(object sender, MouseButtonEventArgs e)
-        {
-            // Check current state based on AdvancedParametersGrid visibility
-            bool isBasicMode = AdvancedParametersGrid.Visibility == Visibility.Collapsed;
-            
-            if (isBasicMode)
-            {
-                // Switch to Advanced mode
-                AdvancedParametersGrid.Visibility = Visibility.Visible;
-                
-                // Move active indicator to right (Advanced)
-                ActiveIndicator.SetValue(Grid.ColumnProperty, 1);
-                
-                // Update text colors
-                BasicText.Foreground = new SolidColorBrush(Color.FromRgb(85, 85, 85)); // #555555
-                AdvancedText.Foreground = new SolidColorBrush(Colors.White);
-                
-                // Update menu checkboxes
-                MenuBasicView.IsChecked = false;
-                MenuAdvancedView.IsChecked = true;
-            }
-            else
-            {
-                // Switch to Basic mode
-                AdvancedParametersGrid.Visibility = Visibility.Collapsed;
-                
-                // Move active indicator to left (Basic)
-                ActiveIndicator.SetValue(Grid.ColumnProperty, 0);
-                
-                // Update text colors
-                BasicText.Foreground = new SolidColorBrush(Colors.White);
-                AdvancedText.Foreground = new SolidColorBrush(Color.FromRgb(85, 85, 85)); // #555555
-                
-                // Update menu checkboxes
-                MenuBasicView.IsChecked = true;
-                MenuAdvancedView.IsChecked = false;
-            }
-        }
+
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
         {
@@ -597,9 +560,11 @@ namespace TradeDataHub
         {
             try
             {
+                // Clear YearMonth pickers
+                FromMonthPicker.Clear();
+                ToMonthPicker.Clear();
+                
                 // Clear all text boxes
-                Txt_Frommonth.Text = "";
-                Txtmonthto.Text = "";
                 Txt_HS.Text = "";
                 txt_Port.Text = "";
                 Txt_Product.Text = "";
@@ -609,6 +574,9 @@ namespace TradeDataHub
                 Txt_ForName.Text = "";
                 Txt_IEC.Text = "";
 
+                // Reset to Export mode
+                rbExport.IsChecked = true;
+                rbImport.IsChecked = false;
                 
                 // Update status
                 _monitoringService.UpdateStatus(StatusType.Idle, "All input fields have been cleared. Ready.");
@@ -660,8 +628,8 @@ namespace TradeDataHub
                 // Get current parameters
                 var config = new
                 {
-                    FromMonth = Txt_Frommonth.Text,
-                    ToMonth = Txtmonthto.Text,
+                    FromMonth = FromMonthPicker.SelectedYearMonth,
+                    ToMonth = ToMonthPicker.SelectedYearMonth,
                     HSCodes = Txt_HS.Text,
                     PortCodes = txt_Port.Text,
                     Products = Txt_Product.Text,
@@ -703,8 +671,8 @@ namespace TradeDataHub
                 {
                     var config = new
                     {
-                        FromMonth = Txt_Frommonth.Text,
-                        ToMonth = Txtmonthto.Text,
+                        FromMonth = FromMonthPicker.SelectedYearMonth,
+                        ToMonth = ToMonthPicker.SelectedYearMonth,
                         HSCodes = Txt_HS.Text,
                         PortCodes = txt_Port.Text,
                         Products = Txt_Product.Text,
@@ -940,8 +908,8 @@ namespace TradeDataHub
             {
                 var settings = "Trade Data Hub - Current Settings\n" +
                               "================================\n\n" +
-                              $"From Month: {Txt_Frommonth?.Text ?? ""}\n" +
-                              $"To Month: {Txtmonthto?.Text ?? ""}\n" +
+                              $"From Month: {FromMonthPicker?.SelectedYearMonth ?? ""}\n" +
+                              $"To Month: {ToMonthPicker?.SelectedYearMonth ?? ""}\n" +
                               $"HS Codes: {Txt_HS?.Text ?? ""}\n" +
                               $"Port Codes: {txt_Port?.Text ?? ""}\n" +
                               $"Products: {Txt_Product?.Text ?? ""}\n" +
@@ -980,30 +948,67 @@ namespace TradeDataHub
         }
 
         // View Menu Handlers
+        private void ToggleSwitch_Click(object sender, MouseButtonEventArgs e)
+        {
+            // Check current state based on AdvancedParametersGrid visibility
+            bool isBasicMode = AdvancedParametersGrid.Visibility == Visibility.Collapsed;
+            
+            if (isBasicMode)
+            {
+                SwitchToAllMode();
+            }
+            else
+            {
+                SwitchToBasicMode();
+            }
+        }
+
+        private void SwitchToAllMode()
+        {
+            // Show all parameters
+            AdvancedParametersGrid.Visibility = Visibility.Visible;
+            
+            // Move active indicator to right (All mode)
+            ActiveIndicator.SetValue(Grid.ColumnProperty, 1);
+            
+            // Update colors for All mode
+            BasicText.Foreground = new SolidColorBrush(Color.FromRgb(108, 117, 125)); // #6C757D
+            BasicIcon.Fill = new SolidColorBrush(Color.FromRgb(108, 117, 125));
+            AllText.Foreground = new SolidColorBrush(Colors.White);
+            AllIcon.Fill = new SolidColorBrush(Colors.White);
+            
+            // Update menu checkboxes
+            if (MenuBasicView != null) MenuBasicView.IsChecked = false;
+            if (MenuAdvancedView != null) MenuAdvancedView.IsChecked = true;
+        }
+
+        private void SwitchToBasicMode()
+        {
+            // Hide additional parameters
+            AdvancedParametersGrid.Visibility = Visibility.Collapsed;
+            
+            // Move active indicator to left (Basic mode)
+            ActiveIndicator.SetValue(Grid.ColumnProperty, 0);
+            
+            // Update colors for Basic mode
+            BasicText.Foreground = new SolidColorBrush(Colors.White);
+            BasicIcon.Fill = new SolidColorBrush(Colors.White);
+            AllText.Foreground = new SolidColorBrush(Color.FromRgb(108, 117, 125)); // #6C757D
+            AllIcon.Fill = new SolidColorBrush(Color.FromRgb(108, 117, 125));
+            
+            // Update menu checkboxes
+            if (MenuBasicView != null) MenuBasicView.IsChecked = true;
+            if (MenuAdvancedView != null) MenuAdvancedView.IsChecked = false;
+        }
+
         private void MenuBasicView_Click(object sender, RoutedEventArgs e)
         {
-            // Switch to Basic view (existing functionality)
-            AdvancedParametersGrid.Visibility = Visibility.Collapsed;
-            MenuBasicView.IsChecked = true;
-            MenuAdvancedView.IsChecked = false;
-            
-            // Update the toggle switch to match
-            Grid.SetColumn(ActiveIndicator, 0);
-            BasicText.Foreground = new SolidColorBrush(Colors.White);
-            AdvancedText.Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55));
+            SwitchToBasicMode();
         }
 
         private void MenuAdvancedView_Click(object sender, RoutedEventArgs e)
         {
-            // Switch to Advanced view (existing functionality)
-            AdvancedParametersGrid.Visibility = Visibility.Visible;
-            MenuBasicView.IsChecked = false;
-            MenuAdvancedView.IsChecked = true;
-            
-            // Update the toggle switch to match
-            Grid.SetColumn(ActiveIndicator, 1);
-            BasicText.Foreground = new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55));
-            AdvancedText.Foreground = new SolidColorBrush(Colors.White);
+            SwitchToAllMode();
         }
 
         private void MenuMonitoringPanel_Click(object sender, RoutedEventArgs e)
@@ -1307,6 +1312,8 @@ namespace TradeDataHub
                 }
             }
         }
+
+
 
         #endregion
     }
