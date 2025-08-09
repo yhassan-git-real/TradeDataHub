@@ -12,6 +12,8 @@ using TradeDataHub.Core.Helpers;
 using TradeDataHub.Features.Import;
 using System.Threading;
 using TradeDataHub.Core.Cancellation;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace TradeDataHub
 {
@@ -28,6 +30,10 @@ namespace TradeDataHub
             _excelService = new ExportExcelService();
             _importService = new ImportExcelService();
             _cancellationManager = new CancellationManager();
+            
+            // Initialize to Basic mode (hide advanced parameters)
+            AdvancedParametersGrid.Visibility = Visibility.Collapsed;
+            
             ApplyModeUI();
             rbExport.Checked += (_,__) => { ApplyModeUI(); };
             rbImport.Checked += (_,__) => { ApplyModeUI(); };
@@ -48,6 +54,37 @@ namespace TradeDataHub
                 Txt_Exporter.Visibility = Visibility.Collapsed;
                 Lbl_Importer.Visibility = Visibility.Visible;
                 Txt_Importer.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ToggleSwitch_Click(object sender, MouseButtonEventArgs e)
+        {
+            // Check current state based on AdvancedParametersGrid visibility
+            bool isBasicMode = AdvancedParametersGrid.Visibility == Visibility.Collapsed;
+            
+            if (isBasicMode)
+            {
+                // Switch to Advanced mode
+                AdvancedParametersGrid.Visibility = Visibility.Visible;
+                
+                // Move active indicator to right (Advanced)
+                ActiveIndicator.SetValue(Grid.ColumnProperty, 1);
+                
+                // Update text colors
+                BasicText.Foreground = new SolidColorBrush(Color.FromRgb(85, 85, 85)); // #555555
+                AdvancedText.Foreground = new SolidColorBrush(Colors.White);
+            }
+            else
+            {
+                // Switch to Basic mode
+                AdvancedParametersGrid.Visibility = Visibility.Collapsed;
+                
+                // Move active indicator to left (Basic)
+                ActiveIndicator.SetValue(Grid.ColumnProperty, 0);
+                
+                // Update text colors
+                BasicText.Foreground = new SolidColorBrush(Colors.White);
+                AdvancedText.Foreground = new SolidColorBrush(Color.FromRgb(85, 85, 85)); // #555555
             }
         }
 
