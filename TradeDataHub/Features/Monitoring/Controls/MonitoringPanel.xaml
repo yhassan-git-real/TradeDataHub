@@ -4,7 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="200" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800">
     
     <UserControl.Resources>
         <!-- Enhanced SVG Icons -->
@@ -70,11 +70,12 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Enhanced Status Display Section -->
-        <Border Grid.Row="0" Background="#f8f9fa" BorderBrush="#e9ecef" BorderThickness="1" Padding="18,12" CornerRadius="6">
+        <!-- Enhanced System Monitor Section -->
+        <Border Grid.Row="0" Background="#EBF5FF" BorderBrush="#cfe2ff" BorderThickness="1" Padding="18,12" CornerRadius="6,6,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -86,8 +87,11 @@
 
                 <!-- Monitor Icon and Enhanced Title -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <ContentPresenter Content="{StaticResource MonitorIcon}" Margin="0,0,10,0"/>
-                    <TextBlock Text="System Monitor" Style="{StaticResource TitleTextStyle}"/>
+                    <Border Background="#0078D4" Width="28" Height="28" CornerRadius="6" Margin="0,0,10,0">
+                        <Path Data="M3 3h18v12H3V3zm16 10V5H5v8h14zM2 17h20v2H2v-2z" Fill="White" Stretch="Uniform" Width="16" Height="16" 
+                              Margin="6" Opacity="0.9"/>
+                    </Border>
+                    <TextBlock Text="System Monitor" Style="{StaticResource TitleTextStyle}" FontSize="15"/>
                 </StackPanel>
 
                 <!-- Enhanced Status Badge and Detailed Information -->
@@ -155,131 +159,130 @@
             </Grid>
         </Border>
 
-        <!-- Enhanced Logs Viewer Section -->
-        <Border Grid.Row="1" Background="#ffffff" BorderBrush="#e9ecef" BorderThickness="1,0,1,1" CornerRadius="0,0,6,6">
+        <!-- Enhanced Activity Monitor Header -->
+        <Border Grid.Row="1" Background="#F8F9FA" BorderBrush="#e9ecef" BorderThickness="1,0,1,0" Padding="15,8">
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <!-- Enhanced Logs Header -->
-                <Border Grid.Row="0" Background="#f8f9fa" Padding="15,8" BorderBrush="#e9ecef" BorderThickness="0,0,0,1">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <ContentPresenter Content="{StaticResource ActivityIcon}" Margin="0,0,8,0"/>
-                            <TextBlock Text="Activity Monitor" Style="{StaticResource TitleTextStyle}"/>
-                            <TextBlock x:Name="LogCountText" Text="1 entries" Style="{StaticResource MetricTextStyle}" 
-                                       VerticalAlignment="Center" Margin="15,0,0,0"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Enhanced Logs List with Scroll Optimization -->
-                <ListView Grid.Row="1" x:Name="LogsListView" Background="#ffffff" BorderThickness="0"
-                          MaxHeight="300" 
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto" 
-                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                          ScrollViewer.CanContentScroll="True"
-                          VirtualizingPanel.IsVirtualizing="True"
-                          VirtualizingPanel.VirtualizationMode="Recycling"
-                          ItemContainerStyle="{StaticResource LogEntryStyle}"
-                          FontFamily="Segoe UI, system-ui, sans-serif">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Time" Width="90">
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="GridViewColumnHeader">
-                                        <Setter Property="FontFamily" Value="Segoe UI"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="FontSize" Value="11"/>
-                                        <Setter Property="Foreground" Value="#495057"/>
-                                        <Setter Property="Background" Value="#f8f9fa"/>
-                                        <Setter Property="BorderBrush" Value="#dee2e6"/>
-                                        <Setter Property="Padding" Value="8,6"/>
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding FormattedTimestamp}" FontSize="10" 
-                                                   FontFamily="JetBrains Mono, Consolas, monospace" 
-                                                   Foreground="#6c757d" FontWeight="Medium"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            
-                            <GridViewColumn Header="Level" Width="70">
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="GridViewColumnHeader">
-                                        <Setter Property="FontFamily" Value="Segoe UI"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="FontSize" Value="11"/>
-                                        <Setter Property="Foreground" Value="#495057"/>
-                                        <Setter Property="Background" Value="#f8f9fa"/>
-                                        <Setter Property="BorderBrush" Value="#dee2e6"/>
-                                        <Setter Property="Padding" Value="8,6"/>
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border Background="{Binding LevelColor}" CornerRadius="4" Padding="6,3" MinWidth="50">
-                                            <TextBlock Text="{Binding LevelText}" FontSize="9" FontWeight="Bold" 
-                                                       Foreground="White" HorizontalAlignment="Center"
-                                                       FontFamily="Segoe UI"/>
-                                        </Border>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            
-                            <GridViewColumn Header="Source" Width="130">
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="GridViewColumnHeader">
-                                        <Setter Property="FontFamily" Value="Segoe UI"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="FontSize" Value="11"/>
-                                        <Setter Property="Foreground" Value="#495057"/>
-                                        <Setter Property="Background" Value="#f8f9fa"/>
-                                        <Setter Property="BorderBrush" Value="#dee2e6"/>
-                                        <Setter Property="Padding" Value="8,6"/>
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Source}" FontSize="11" Foreground="#495057" 
-                                                   FontWeight="SemiBold" FontFamily="Segoe UI"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            
-                            <GridViewColumn Header="Message" Width="650">
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="GridViewColumnHeader">
-                                        <Setter Property="FontFamily" Value="Segoe UI"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="FontSize" Value="11"/>
-                                        <Setter Property="Foreground" Value="#495057"/>
-                                        <Setter Property="Background" Value="#f8f9fa"/>
-                                        <Setter Property="BorderBrush" Value="#dee2e6"/>
-                                        <Setter Property="Padding" Value="8,6"/>
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Message}" FontSize="11" Foreground="#2c3e50" 
-                                                   TextWrapping="NoWrap" ToolTip="{Binding Message}"
-                                                   FontFamily="Segoe UI" FontWeight="Normal" LineHeight="16"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#6c757d" Width="24" Height="24" CornerRadius="4" Margin="0,0,8,0">
+                        <Path Data="M3 6h18v2H3V6zm0 4h18v2H3v-2zm0 4h18v2H3v-2z" Fill="White" Stretch="Uniform" Width="16" Height="16"
+                              Margin="4" Opacity="0.9"/>
+                    </Border>
+                    <TextBlock Text="Activity Monitor" FontWeight="SemiBold" FontFamily="Segoe UI" FontSize="15" Foreground="#212529"/>
+                    <TextBlock x:Name="LogCountText" Text="0 entries" Style="{StaticResource MetricTextStyle}" 
+                               VerticalAlignment="Center" Margin="15,0,0,0"/>
+                </StackPanel>
+                
+                <TextBlock Grid.Column="1" Text="Real-time logs and processing activity" Foreground="#6c757d" 
+                           FontSize="12" Margin="20,0,0,0" VerticalAlignment="Center"/>
             </Grid>
+        </Border>
+
+    <!-- Enhanced Logs Viewer Section (fixed height with internal scrolling) -->
+    <Border Grid.Row="2" Background="#ffffff" BorderBrush="#e9ecef" BorderThickness="1,0,1,1" CornerRadius="0,0,6,6"
+        Height="260" MinHeight="220">
+        <ListView x:Name="LogsListView" Background="#ffffff" BorderThickness="0"
+              ScrollViewer.HorizontalScrollBarVisibility="Auto"
+              ScrollViewer.VerticalScrollBarVisibility="Auto"
+              ScrollViewer.CanContentScroll="True"
+              VirtualizingPanel.IsVirtualizing="True"
+              VirtualizingPanel.VirtualizationMode="Recycling"
+              ItemContainerStyle="{StaticResource LogEntryStyle}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Time" Width="90">
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="GridViewColumnHeader">
+                                    <Setter Property="FontFamily" Value="Segoe UI"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="FontSize" Value="11"/>
+                                    <Setter Property="Foreground" Value="#495057"/>
+                                    <Setter Property="Background" Value="#f8f9fa"/>
+                                    <Setter Property="BorderBrush" Value="#dee2e6"/>
+                                    <Setter Property="Padding" Value="8,6"/>
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding FormattedTimestamp}" FontSize="10" 
+                                               FontFamily="Consolas, monospace" 
+                                               Foreground="#6c757d" FontWeight="Medium"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        
+                        <GridViewColumn Header="Level" Width="70">
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="GridViewColumnHeader">
+                                    <Setter Property="FontFamily" Value="Segoe UI"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="FontSize" Value="11"/>
+                                    <Setter Property="Foreground" Value="#495057"/>
+                                    <Setter Property="Background" Value="#f8f9fa"/>
+                                    <Setter Property="BorderBrush" Value="#dee2e6"/>
+                                    <Setter Property="Padding" Value="8,6"/>
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Background="{Binding LevelColor}" CornerRadius="4" Padding="6,3" MinWidth="50">
+                                        <TextBlock Text="{Binding LevelText}" FontSize="9" FontWeight="Bold" 
+                                                   Foreground="White" HorizontalAlignment="Center"
+                                                   FontFamily="Segoe UI"/>
+                                    </Border>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        
+                        <GridViewColumn Header="Source" Width="130">
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="GridViewColumnHeader">
+                                    <Setter Property="FontFamily" Value="Segoe UI"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="FontSize" Value="11"/>
+                                    <Setter Property="Foreground" Value="#495057"/>
+                                    <Setter Property="Background" Value="#f8f9fa"/>
+                                    <Setter Property="BorderBrush" Value="#dee2e6"/>
+                                    <Setter Property="Padding" Value="8,6"/>
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Source}" FontSize="11" Foreground="#495057" 
+                                               FontWeight="SemiBold" FontFamily="Segoe UI"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        
+                        <GridViewColumn Header="Message" Width="480">
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="GridViewColumnHeader">
+                                    <Setter Property="FontFamily" Value="Segoe UI"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="FontSize" Value="11"/>
+                                    <Setter Property="Foreground" Value="#495057"/>
+                                    <Setter Property="Background" Value="#f8f9fa"/>
+                                    <Setter Property="BorderBrush" Value="#dee2e6"/>
+                                    <Setter Property="Padding" Value="8,6"/>
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Message}" FontSize="11" Foreground="#2c3e50" 
+                                               TextWrapping="Wrap" ToolTip="{Binding Message}"
+                                               FontFamily="Segoe UI" FontWeight="Normal" LineHeight="16"
+                                               MaxWidth="460"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
         </Border>
     </Grid>
 </UserControl>

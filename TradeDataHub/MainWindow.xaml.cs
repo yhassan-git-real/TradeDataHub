@@ -1237,14 +1237,48 @@ namespace TradeDataHub
 
         private void MenuMonitoringPanel_Click(object sender, RoutedEventArgs e)
         {
-            if (MenuMonitoringPanel.IsChecked)
+            // This handler is shared by the MenuItem (checkable) and the header ToggleButton.
+            // During InitializeComponent() the ToggleButton's Checked event can fire before
+            // the MonitoringPanel element (row 5) has been constructed, leading to a null ref.
+            if (MonitoringPanel == null)
             {
-                MonitoringPanel.Visibility = Visibility.Visible;
+                // Defer until layout pass – store desired visibility and apply once loaded.
+                // Use dispatcher to run after initialization if we can still determine state.
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (MonitoringPanel == null) return; // still not ready – bail safely
+                    ApplyMonitoringPanelVisibility(sender);
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
+                return;
             }
-            else
+
+            ApplyMonitoringPanelVisibility(sender);
+        }
+
+        private void ApplyMonitoringPanelVisibility(object sender)
+        {
+            bool isChecked = false;
+
+            // Prefer the sender if it's a ToggleButton / MenuItem to avoid relying on other controls being initialized
+            switch (sender)
             {
-                MonitoringPanel.Visibility = Visibility.Collapsed;
+                case System.Windows.Controls.Primitives.ToggleButton tb:
+                    isChecked = tb.IsChecked == true;
+                    break;
+                case MenuItem mi:
+                    isChecked = mi.IsChecked;
+                    break;
+                default:
+                    if (MenuMonitoringPanel != null)
+                        isChecked = MenuMonitoringPanel.IsChecked; // fallback
+                    break;
             }
+
+            MonitoringPanel.Visibility = isChecked ? Visibility.Visible : Visibility.Collapsed;
+
+            // Keep the MenuItem and the ToggleButton (if both exist) in sync without causing recursion.
+            if (MenuMonitoringPanel != null && MenuMonitoringPanel.IsChecked != isChecked)
+                MenuMonitoringPanel.IsChecked = isChecked;
         }
 
         private void MenuActivityLog_Click(object sender, RoutedEventArgs e)
