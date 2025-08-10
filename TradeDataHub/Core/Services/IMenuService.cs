@@ -27,7 +27,8 @@ namespace TradeDataHub.Core.Services
         // View Menu Operations
         void HandleBasicViewCommand();
         void HandleAdvancedViewCommand();
-        void HandleMonitoringPanelCommand();
+        void HandleToggleSwitchClick();
+        void HandleMonitoringPanelCommand(object sender);
         void HandleActivityLogCommand();
         void HandleRefreshCommand();
         void HandleFullScreenCommand(Window window);

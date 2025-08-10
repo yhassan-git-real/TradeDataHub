@@ -11,6 +11,7 @@ using TradeDataHub.Features.Monitoring.Services;
 using TradeDataHub.Features.Monitoring.Models;
 using TradeDataHub.Core.Logging;
 using MonitoringLogLevel = TradeDataHub.Features.Monitoring.Models.LogLevel;
+using TradeDataHub.Core.Services;
 
 namespace TradeDataHub.Core.Controllers
 {
@@ -20,22 +21,22 @@ namespace TradeDataHub.Core.Controllers
     public class ImportController : IImportController
     {
         private readonly ImportExcelService _importExcelService;
-        private readonly IParameterValidator _parameterValidator;
+        private readonly IValidationService _validationService;
+        private readonly IResultProcessorService _resultProcessorService;
         private readonly MonitoringService _monitoringService;
-        private readonly ImportObjectValidationService _importObjectValidationService;
         private readonly Dispatcher _dispatcher;
 
         public ImportController(
             ImportExcelService importExcelService,
-            IParameterValidator parameterValidator,
+            IValidationService validationService,
+            IResultProcessorService resultProcessorService,
             MonitoringService monitoringService,
-            ImportObjectValidationService importObjectValidationService,
             Dispatcher dispatcher)
         {
             _importExcelService = importExcelService;
-            _parameterValidator = parameterValidator;
+            _validationService = validationService;
+            _resultProcessorService = resultProcessorService;
             _monitoringService = monitoringService;
-            _importObjectValidationService = importObjectValidationService;
             _dispatcher = dispatcher;
         }
 
@@ -44,28 +45,11 @@ namespace TradeDataHub.Core.Controllers
             var fromMonth = importInputs.FromMonth;
             var toMonth = importInputs.ToMonth;
 
-            // Validate selected database objects
-            if (!_importObjectValidationService.ValidateObjects(selectedView, selectedStoredProcedure))
+            // Validate using ValidationService
+            var validationResult = _validationService.ValidateImportOperation(importInputs, selectedView, selectedStoredProcedure);
+            if (!validationResult.IsValid)
             {
-                MessageBox.Show("The selected View or Stored Procedure is not valid. Please select valid database objects.", 
-                    "Invalid Database Objects", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Early guard for empty months (faster feedback before full validation call)
-            if (string.IsNullOrWhiteSpace(fromMonth) || string.IsNullOrWhiteSpace(toMonth))
-            {
-                MessageBox.Show("From Month and To Month are required.", "Missing Input", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Centralized validation (months + format)
-            var validation = _parameterValidator.ValidateImport(importInputs);
-            
-            if (!validation.IsValid)
-            {
-                string errorMessage = "Parameter Validation Failed:\n" + string.Join("\n", validation.Errors);
-                MessageBox.Show(errorMessage, "Invalid Parameters", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(validationResult.ErrorMessage, validationResult.Title, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -78,12 +62,8 @@ namespace TradeDataHub.Core.Controllers
             var foreignNames = importInputs.ForeignNames;
             var iecs = importInputs.IECs;
 
-            int filesGenerated = 0;
-            int combinationsProcessed = 0;
-            int combinationsSkipped = 0;
-            int skippedNoData = 0;
-            int skippedRowLimit = 0;
-            int cancelledCombinations = 0;
+            // Initialize processing counters using ResultProcessorService
+            var counters = _resultProcessorService.InitializeCounters();
 
             await Task.Run(() =>
             {
@@ -107,8 +87,8 @@ namespace TradeDataHub.Core.Controllers
                                                 cancellationToken.ThrowIfCancellationRequested();
                                             }
 
-                                            combinationsProcessed++;
-                                            var comboNumber = combinationsProcessed; // capture for closure
+                                            counters.CombinationsProcessed++;
+                                            var comboNumber = counters.CombinationsProcessed; // capture for closure
                                             _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Running, $"Processing (Import) combination {comboNumber}...", "Import"));
 
                                             try
@@ -127,42 +107,24 @@ namespace TradeDataHub.Core.Controllers
                                                     selectedView,
                                                     selectedStoredProcedure);
                                                     
-                                                if (result.Success)
+                                                // Process the result using ResultProcessorService
+                                                _resultProcessorService.ProcessImportResult(counters, result, counters.CombinationsProcessed, _monitoringService);
+                                                
+                                                if (result.IsCancelled)
                                                 {
-                                                    filesGenerated++;
-                                                }
-                                                else if (result.IsCancelled)
-                                                {
-                                                    cancelledCombinations++;
                                                     cancellationToken.ThrowIfCancellationRequested();
-                                                }
-                                                else
-                                                {
-                                                    combinationsSkipped++;
-                                                    if (result.SkipReason == "NoData")
-                                                    {
-                                                        skippedNoData++;
-                                                        SkippedDatasetLogger.LogSkippedDataset(comboNumber, 0, fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, "NoData");
-                                                    }
-                                                    else if (result.SkipReason == "ExcelRowLimit")
-                                                    {
-                                                        skippedRowLimit++;
-                                                        SkippedDatasetLogger.LogSkippedDataset(comboNumber, result.RowCount, fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, "RowLimit");
-                                                    }
                                                 }
                                             }
                                             catch (OperationCanceledException)
                                             {
-                                                cancelledCombinations++;
+                                                counters.CancelledCombinations++;
                                                 throw; // Re-throw to exit the loops
                                             }
                                             catch (Exception ex)
                                             {
-                                                var errorMsg = $"Import error combination {comboNumber}: {ex.Message}";
-                                                _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Error, errorMsg, "Import"));
-                                                _monitoringService.AddLog(MonitoringLogLevel.Error, errorMsg, "Import");
-                                                System.Diagnostics.Debug.WriteLine($"ERROR: {errorMsg}");
-                                                System.Diagnostics.Debug.WriteLine($"Filters - HSCode:{hsCode}, Product:{product}, IEC:{iec}, Importer:{importer}, Country:{country}, Name:{name}, Port:{port}");
+                                                // Handle error using ResultProcessorService
+                                                var filterDetails = $"HSCode:{hsCode}, Product:{product}, IEC:{iec}, Importer:{importer}, Country:{country}, Name:{name}, Port:{port}";
+                                                _resultProcessorService.HandleProcessingError(ex, counters.CombinationsProcessed, _monitoringService, "Import", filterDetails);
                                             }
                                         }
                                     }
@@ -176,55 +138,27 @@ namespace TradeDataHub.Core.Controllers
             // Check if operation was cancelled
             if (cancellationToken.IsCancellationRequested)
             {
-                _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Cancelled, $"Import cancelled - {filesGenerated} files generated before cancellation"));
+                _resultProcessorService.HandleCancellation(counters, _monitoringService, "Import");
                 return;
             }
 
-            SkippedDatasetLogger.LogProcessingSummary(combinationsProcessed, filesGenerated, combinationsSkipped);
+            // Log processing summary using ResultProcessorService
+            _resultProcessorService.LogProcessingSummary(counters);
 
-            var summaryMessage = "Import Processing Complete\n\n";
-            summaryMessage += $"Files Generated: {filesGenerated:N0} Excel files created successfully\n";
-            summaryMessage += $"Total Processed: {combinationsProcessed:N0} parameter combinations checked\n\n";
+            // Generate completion summary using ResultProcessorService
+            var summaryMessage = _resultProcessorService.GenerateCompletionSummary(counters, "Import");
 
-            if (combinationsSkipped > 0)
-            {
-                summaryMessage += $"Skipped Combinations: {combinationsSkipped:N0} total\n";
-                if (skippedNoData > 0)
-                    summaryMessage += $"  • No Data Found: {skippedNoData:N0} combinations had zero matching records\n";
-                if (skippedRowLimit > 0)
-                    summaryMessage += $"  • Excel Row Limit: {skippedRowLimit:N0} combinations exceeded 1,048,575 row limit\n";
-                summaryMessage += $"\nNote: Skipped datasets are logged in: Logs\\SkippedDatasets_{DateTime.Now:yyyyMMdd}.log\n";
-            }
+            // Show completion message
+            MessageBox.Show(summaryMessage, "Import Processing Complete", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            if (filesGenerated > 0)
-            {
-                summaryMessage += $"\nSuccess Rate: {(double)filesGenerated / combinationsProcessed * 100:F1}% of combinations produced files";
-            }
-
-            var messageType = MessageBoxImage.Information;
-            var messageTitle = "Import Batch Complete";
-            if (filesGenerated == 0)
-            {
-                messageType = MessageBoxImage.Warning;
-                messageTitle = "No Files Generated";
-                summaryMessage += "\n\nNext Steps: Review your filter criteria - all combinations resulted in no data or exceeded limits.";
-            }
-            else if (skippedRowLimit > 0)
-            {
-                messageType = MessageBoxImage.Warning;
-                messageTitle = "Processing Complete - Some Data Limits Exceeded";
-                summaryMessage += "\n\nSuggestion: Consider adding more specific filters to reduce row counts for large datasets.";
-            }
-
-            var importStatusMessage = filesGenerated == 0
-                ? (skippedNoData > 0 && skippedRowLimit == 0 ? "Import complete: All combinations had no data" :
-                   skippedRowLimit > 0 && skippedNoData == 0 ? "Import complete: All combinations exceeded row limits" :
-                   (skippedNoData > 0 && skippedRowLimit > 0 ? $"Import complete: 0 files - {skippedNoData} no data, {skippedRowLimit} over limits" : "Import complete: No files"))
-                : (combinationsSkipped == 0 ? $"Import complete: {filesGenerated} files" : $"Import complete: {filesGenerated} files, {combinationsSkipped} skipped");
+            // Update final status
+            var importStatusMessage = counters.FilesGenerated == 0
+                ? (counters.SkippedNoData > 0 && counters.SkippedRowLimit == 0 ? "Import complete: All combinations had no data" :
+                   counters.SkippedRowLimit > 0 && counters.SkippedNoData == 0 ? "Import complete: All combinations exceeded row limits" :
+                   (counters.SkippedNoData > 0 && counters.SkippedRowLimit > 0 ? $"Import complete: 0 files - {counters.SkippedNoData} no data, {counters.SkippedRowLimit} over limits" : "Import complete: No files"))
+                : (counters.CombinationsSkipped == 0 ? $"Import complete: {counters.FilesGenerated} files" : $"Import complete: {counters.FilesGenerated} files, {counters.CombinationsSkipped} skipped");
 
             _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Completed, importStatusMessage));
-
-            MessageBox.Show(summaryMessage, messageTitle, MessageBoxButton.OK, messageType);
         }
     }
 }

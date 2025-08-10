@@ -398,13 +398,63 @@ namespace TradeDataHub.Core.Services
             SwitchToAllMode();
         }
 
-        public void HandleMonitoringPanelCommand()
+        public void HandleToggleSwitchClick()
         {
-            if (_monitoringPanel == null || _menuMonitoringPanel == null)
-                return;
+            // Check current state based on AdvancedParametersGrid visibility
+            if (_advancedParametersGrid == null) return;
+            
+            bool isBasicMode = _advancedParametersGrid.Visibility == Visibility.Collapsed;
+            
+            if (isBasicMode)
+            {
+                SwitchToAllMode();
+            }
+            else
+            {
+                SwitchToBasicMode();
+            }
+        }
 
-            bool isChecked = _menuMonitoringPanel.IsChecked;
+        public void HandleMonitoringPanelCommand(object sender)
+        {
+            if (_monitoringPanel == null)
+            {
+                // Defer until layout pass if not ready
+                _mainWindow?.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    ApplyMonitoringPanelVisibility(sender);
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
+                return;
+            }
+
+            ApplyMonitoringPanelVisibility(sender);
+        }
+
+        private void ApplyMonitoringPanelVisibility(object sender)
+        {
+            if (_monitoringPanel == null || _menuMonitoringPanel == null) return;
+
+            bool isChecked = false;
+
+            // Prefer the sender if it's a ToggleButton / MenuItem
+            switch (sender)
+            {
+                case System.Windows.Controls.Primitives.ToggleButton tb:
+                    isChecked = tb.IsChecked == true;
+                    break;
+                case MenuItem mi:
+                    isChecked = mi.IsChecked;
+                    break;
+                default:
+                    isChecked = _menuMonitoringPanel.IsChecked; // fallback
+                    break;
+            }
+
             _monitoringPanel.Visibility = isChecked ? Visibility.Visible : Visibility.Collapsed;
+
+            // Keep the MenuItem and ToggleButton in sync
+            if (_menuMonitoringPanel.IsChecked != isChecked)
+                _menuMonitoringPanel.IsChecked = isChecked;
         }
 
         public void HandleActivityLogCommand()

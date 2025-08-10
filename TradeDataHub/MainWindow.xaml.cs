@@ -29,64 +29,7 @@ namespace TradeDataHub
     {
         #region Fields
 
-        // Core Services
-        private readonly ExportExcelService _excelService;
-        private readonly ImportExcelService _importService;
-        private readonly ICancellationManager _cancellationManager;
-        private readonly MonitoringService _monitoringService;
-
-        // Validation Services
-        private readonly ExportObjectValidationService _exportObjectValidationService;
-        private readonly ImportObjectValidationService _importObjectValidationService;
-        private readonly IParameterValidator _parameterValidator;
-        private readonly DatabaseObjectValidator _databaseObjectValidator;
-
-        // Controllers
-        private readonly IExportController _exportController;
-        private readonly IImportController _importController;
-        private readonly IUIService _uiService;
-        private readonly IMenuService _menuService;
-
-        // View Models
-        private readonly DbObjectSelectorViewModel _exportDbObjectViewModel;
-        private readonly DbObjectSelectorViewModel _importDbObjectViewModel;
-
-        // State Management
-        private CancellationTokenSource? _currentCancellationSource;
-
-        #endregion
-
-        #region Data Transfer Object Methods
-
-        private TradeDataHub.Core.Models.ExportInputs GetExportInputs()
-        {
-            return InputBinder.GetExportInputs(
-                FromMonthPicker,
-                ToMonthPicker,
-                txt_Port,
-                Txt_HS,
-                Txt_Product,
-                Txt_Exporter,
-                Txt_IEC,
-                txt_ForCount,
-                Txt_ForName
-            );
-        }
-
-        private TradeDataHub.Core.Models.ImportInputs GetImportInputs()
-        {
-            return InputBinder.GetImportInputs(
-                FromMonthPicker,
-                ToMonthPicker,
-                txt_Port,
-                Txt_HS,
-                Txt_Product,
-                Txt_Importer,
-                Txt_IEC,
-                txt_ForCount,
-                Txt_ForName
-            );
-        }
+        private readonly ServiceContainer _services;
 
         #endregion
 
@@ -95,13 +38,13 @@ namespace TradeDataHub
         private ExportParameterHelper.ValidationResult ValidateExportMonths(string fromMonth, string toMonth)
         {
             var exportInputs = new TradeDataHub.Core.Models.ExportInputs(fromMonth, toMonth, new(), new(), new(), new(), new(), new(), new());
-            return _parameterValidator.ValidateExport(exportInputs);
+            return _services.ParameterValidator.ValidateExport(exportInputs);
         }
 
         private ImportParameterHelper.ValidationResult ValidateImportMonths(string fromMonth, string toMonth)
         {
             var importInputs = new TradeDataHub.Core.Models.ImportInputs(fromMonth, toMonth, new(), new(), new(), new(), new(), new(), new());
-            return _parameterValidator.ValidateImport(importInputs);
+            return _services.ParameterValidator.ValidateImport(importInputs);
         }
 
         #endregion
@@ -124,102 +67,74 @@ namespace TradeDataHub
         public MainWindow()
         {
             InitializeComponent();
-            _excelService = new ExportExcelService();
-            _importService = new ImportExcelService();
-            _cancellationManager = new CancellationManager();
-            _monitoringService = MonitoringService.Instance;
             
-            // Initialize menu service
-            _menuService = new MenuService();
-            
-            // Initialize validation services
-            _exportObjectValidationService = new ExportObjectValidationService(_excelService.ExportSettings);
-            _importObjectValidationService = new ImportObjectValidationService(_importService.ImportSettings);
-            _parameterValidator = new TradeDataHub.Core.Validation.ParameterValidator();
-            
-            // Initialize controllers
-            _exportController = new ExportController(
-                _excelService,
-                _parameterValidator,
-                _monitoringService,
-                _exportObjectValidationService,
-                this.Dispatcher);
-                
-            _importController = new ImportController(
-                _importService,
-                _parameterValidator,
-                _monitoringService,
-                _importObjectValidationService,
-                this.Dispatcher);
-            
-            // Initialize database object validator
-            var dbSettings = LoadSharedDatabaseSettings();
-            _databaseObjectValidator = new Core.Database.DatabaseObjectValidator(dbSettings.ConnectionString);
-            
-            // Initialize UI service
-            _uiService = new UIService(_databaseObjectValidator, _monitoringService);
-            
-            // Initialize view models for database object selection
-            _exportDbObjectViewModel = new DbObjectSelectorViewModel(
-                _exportObjectValidationService.GetAvailableViews(),
-                _exportObjectValidationService.GetAvailableStoredProcedures(),
-                _exportObjectValidationService.GetDefaultViewName(),
-                _exportObjectValidationService.GetDefaultStoredProcedureName());
-                
-            _importDbObjectViewModel = new DbObjectSelectorViewModel(
-                _importObjectValidationService.GetAvailableViews(),
-                _importObjectValidationService.GetAvailableStoredProcedures(),
-                _importObjectValidationService.GetDefaultViewName(),
-                _importObjectValidationService.GetDefaultStoredProcedureName());
-            
-            // Initialize to Basic mode (hide additional parameters)
-            // AdvancedParametersGrid.Visibility = Visibility.Collapsed;
-            
-            // Initialize UI service with controls - moved to Loaded event
-            // _uiService.Initialize(Lbl_Exporter, Txt_Exporter, Lbl_Importer, Txt_Importer, ViewComboBox, StoredProcedureComboBox);
-            
-            // Set initial status
-            _monitoringService.UpdateStatus(StatusType.Idle, "Application ready");
+            // Initialize all services through container
+            _services = new ServiceContainer();
+            _services.InitializeServices(this);
             
             // Apply UI mode after everything is initialized
             // Use Loaded event to ensure all XAML controls are fully loaded
-            this.Loaded += (sender, e) => {
-                // Initialize UI controls after they're loaded
-                AdvancedParametersGrid.Visibility = Visibility.Collapsed;
-                _uiService.Initialize(Lbl_Exporter, Txt_Exporter, Lbl_Importer, Txt_Importer, ViewComboBox, StoredProcedureComboBox);
-                
-                // Initialize menu service
-                _menuService.Initialize(this);
-                
-                // Wire up the RadioButton event handlers after initialization
-                rbExport.Checked += ProcessType_CheckedChanged;
-                rbImport.Checked += ProcessType_CheckedChanged;
-                
-                // Apply the initial UI state
-                ApplyModeUI();
-            };
+            this.Loaded += OnWindowLoaded;
             
             // Add keyboard event handler
             this.KeyDown += MainWindow_KeyDown;
         }
 
+        private void OnWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            // Initialize UI controls after they're loaded
+            var advancedParametersGrid = this.FindName("AdvancedParametersGrid") as System.Windows.Controls.Grid;
+            if (advancedParametersGrid != null)
+            {
+                advancedParametersGrid.Visibility = Visibility.Collapsed;
+            }
+
+            // Get UI control references using FindName
+            var lblExporter = this.FindName("Lbl_Exporter") as TextBlock;
+            var txtExporter = this.FindName("Txt_Exporter") as TextBox;
+            var lblImporter = this.FindName("Lbl_Importer") as TextBlock;
+            var txtImporter = this.FindName("Txt_Importer") as TextBox;
+            var viewComboBox = this.FindName("ViewComboBox") as ComboBox;
+            var storedProcedureComboBox = this.FindName("StoredProcedureComboBox") as ComboBox;
+            
+            // Initialize UIService only if all required controls are found
+            if (lblExporter != null && txtExporter != null && lblImporter != null && 
+                txtImporter != null && viewComboBox != null && storedProcedureComboBox != null)
+            {
+                _services.UIService.Initialize(lblExporter, txtExporter, lblImporter, txtImporter, viewComboBox, storedProcedureComboBox);
+            }
+            
+            // Initialize UIActionService with window reference for control access
+            _services.UIActionService.Initialize(this);
+            
+            // Wire up the RadioButton event handlers after initialization
+            var rbExport = this.FindName("rbExport") as System.Windows.Controls.RadioButton;
+            var rbImport = this.FindName("rbImport") as System.Windows.Controls.RadioButton;
+            if (rbExport != null) rbExport.Checked += ProcessType_CheckedChanged;
+            if (rbImport != null) rbImport.Checked += ProcessType_CheckedChanged;
+            
+            // Apply the initial UI state
+            ApplyModeUI();
+        }
+
         private void ApplyModeUI()
         {
             // Guard against calls during initialization
-            if (_uiService == null || _exportDbObjectViewModel == null || _importDbObjectViewModel == null)
+            if (_services?.UIService == null || _services?.ExportDbObjectViewModel == null || _services?.ImportDbObjectViewModel == null)
                 return;
                 
-            bool isExportMode = rbExport.IsChecked == true;
-            _uiService.ApplyModeUI(isExportMode, _exportDbObjectViewModel, _importDbObjectViewModel);
+            var rbExport = this.FindName("rbExport") as System.Windows.Controls.RadioButton;
+            bool isExportMode = rbExport?.IsChecked == true;
+            _services.UIService.ApplyModeUI(isExportMode, _services.ExportDbObjectViewModel, _services.ImportDbObjectViewModel);
         }
         
         private void ValidateSelectedDatabaseObjects(string viewName, string storedProcedureName)
         {
             // Guard against calls during initialization
-            if (_uiService == null)
+            if (_services?.UIService == null)
                 return;
                 
-            _uiService.ValidateSelectedDatabaseObjects(viewName, storedProcedureName);
+            _services.UIService.ValidateSelectedDatabaseObjects(viewName, storedProcedureName);
         }
         
         private void ProcessType_CheckedChanged(object sender, RoutedEventArgs e)
@@ -231,8 +146,9 @@ namespace TradeDataHub
         {
             if (sender is ComboBox combo && combo.SelectedItem is DbObjectOption selectedView)
             {
-                bool isExportMode = this.rbExport.IsChecked == true;
-                _uiService.HandleViewSelectionChanged(selectedView, isExportMode, _exportDbObjectViewModel, _importDbObjectViewModel);
+                var rbExport = this.FindName("rbExport") as System.Windows.Controls.RadioButton;
+                bool isExportMode = rbExport?.IsChecked == true;
+                _services.UIService.HandleViewSelectionChanged(selectedView, isExportMode, _services.ExportDbObjectViewModel, _services.ImportDbObjectViewModel);
             }
         }
         
@@ -240,8 +156,9 @@ namespace TradeDataHub
         {
             if (sender is ComboBox combo && combo.SelectedItem is DbObjectOption selectedSP)
             {
-                bool isExportMode = this.rbExport.IsChecked == true;
-                _uiService.HandleStoredProcedureSelectionChanged(selectedSP, isExportMode, _exportDbObjectViewModel, _importDbObjectViewModel);
+                var rbExport = this.FindName("rbExport") as System.Windows.Controls.RadioButton;
+                bool isExportMode = rbExport?.IsChecked == true;
+                _services.UIService.HandleStoredProcedureSelectionChanged(selectedSP, isExportMode, _services.ExportDbObjectViewModel, _services.ImportDbObjectViewModel);
             }
         }
 
@@ -249,118 +166,25 @@ namespace TradeDataHub
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
         {
-            // Clean up any previous cancellation source
-            _currentCancellationSource?.Dispose();
-            _currentCancellationSource = new CancellationTokenSource();
-
-            _monitoringService.UpdateStatus(StatusType.Running, "Processing...");
-            GenerateButton.IsEnabled = false;
-
             try
             {
-                // 🎯 Check which process type is selected
-                if (rbImport.IsChecked == true)
-                {
-                    // Import is selected - use new ImportController
-                    var importInputs = GetImportInputs();
-                    var selectedView = _importDbObjectViewModel.SelectedView?.Name ?? "";
-                    var selectedSP = _importDbObjectViewModel.SelectedStoredProcedure?.Name ?? "";
-                    await _importController.RunAsync(importInputs, _currentCancellationSource.Token, selectedView, selectedSP);
-                }
-                else if (rbExport.IsChecked == true)
-                {
-                    // Export is selected - use new ExportController
-                    var exportInputs = GetExportInputs();
-                    var selectedView = _exportDbObjectViewModel.SelectedView?.Name ?? "";
-                    var selectedSP = _exportDbObjectViewModel.SelectedStoredProcedure?.Name ?? "";
-                    await _exportController.RunAsync(exportInputs, _currentCancellationSource.Token, selectedView, selectedSP);
-                }
-                else
-                {
-                    // Neither Import nor Export is selected
-                    MessageBox.Show("Please select either Import or Export mode.", "Mode Selection Required", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Cancelled, "Operation cancelled by user"));
-                MessageBox.Show("Operation was cancelled by user.", "Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
+                await _services.UIActionService.HandleGenerateAsync(CancellationToken.None);
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Error, "An error occurred"));
-                _monitoringService.AddLog(MonitoringLogLevel.Error, $"Unexpected error: {ex.Message}", "GenerateButton");
+                _services.MonitoringService.AddLog(MonitoringLogLevel.Error, $"Unexpected error in Generate button: {ex.Message}", "GenerateButton");
                 MessageBox.Show($"An unexpected error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                Dispatcher.Invoke(() => {
-                    GenerateButton.IsEnabled = true;
-                    if (_monitoringService.CurrentStatus.CurrentStatus == StatusType.Running)
-                    {
-                        _monitoringService.UpdateStatus(StatusType.Idle, "Ready");
-                    }
-                });
-
-                // Clean up cancellation source
-                _currentCancellationSource?.Dispose();
-                _currentCancellationSource = null;
             }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                if (_currentCancellationSource != null && !_currentCancellationSource.IsCancellationRequested)
-                {
-                    _currentCancellationSource.Cancel();
-                    _monitoringService.UpdateStatus(StatusType.Running, "Cancelling operation...");
-                    CancelButton.IsEnabled = false;
-                }
-                else
-                {
-                    // No operation is currently running
-                    MessageBox.Show("No operation is currently running to cancel.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during cancellation: {ex.Message}", "Cancellation Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.UIActionService.HandleCancel();
         }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // Clear YearMonth pickers
-                FromMonthPicker.Clear();
-                ToMonthPicker.Clear();
-                
-                // Clear all text boxes
-                Txt_HS.Text = "";
-                txt_Port.Text = "";
-                Txt_Product.Text = "";
-                Txt_Exporter.Text = "";
-                Txt_Importer.Text = "";
-                txt_ForCount.Text = "";
-                Txt_ForName.Text = "";
-                Txt_IEC.Text = "";
-
-                // Reset to Export mode
-                rbExport.IsChecked = true;
-                rbImport.IsChecked = false;
-                
-                // Update status
-                _monitoringService.UpdateStatus(StatusType.Idle, "All input fields have been cleared. Ready.");
-
-                MessageBox.Show("All input fields have been cleared.", "Reset Complete", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during reset: {ex.Message}", "Reset Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.UIActionService.HandleReset();
         }
 
         #region Public Methods for Services
@@ -380,369 +204,90 @@ namespace TradeDataHub
         // File Menu Handlers
         private void MenuNew_Click(object sender, RoutedEventArgs e)
         {
-            _menuService.HandleNewCommand();
+            _services.MenuService.HandleNewCommand();
         }
 
         private void MenuOpen_Click(object sender, RoutedEventArgs e)
         {
-            _menuService.HandleOpenCommand();
+            _services.MenuService.HandleOpenCommand();
         }
 
         private void MenuSave_Click(object sender, RoutedEventArgs e)
         {
-            _menuService.HandleSaveCommand();
+            _services.MenuService.HandleSaveCommand();
         }
 
         private void MenuSaveAs_Click(object sender, RoutedEventArgs e)
         {
-            _menuService.HandleSaveAsCommand();
+            _services.MenuService.HandleSaveAsCommand();
         }
 
         private void MenuExit_Click(object sender, RoutedEventArgs e)
         {
-            _menuService.HandleExitCommand(this);
+            _services.MenuService.HandleExitCommand(this);
         }
 
         // Edit Menu Handlers
         private void MenuUndo_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // Try to undo in the focused text box
-                if (Keyboard.FocusedElement is TextBox textBox)
-                {
-                    textBox.Undo();
-                }
-                else
-                {
-                    // If no textbox is focused, show information about undoable actions
-                    var undoInfo = "Undo operations available:\n\n" +
-                                  "• Text changes in input fields (Ctrl+Z when field is focused)\n" +
-                                  "• Use Reset button to restore all fields to empty state\n" +
-                                  "• Cancel button to stop ongoing operations\n\n" +
-                                  "Focus on a text field first, then use Ctrl+Z to undo text changes.";
-                    
-                    MessageBox.Show(undoInfo, "Undo", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during undo operation: {ex.Message}", "Undo Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.MenuService.HandleUndoCommand();
         }
 
         private void MenuRedo_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // Try to redo in the focused text box
-                if (Keyboard.FocusedElement is TextBox textBox)
-                {
-                    textBox.Redo();
-                }
-                else
-                {
-                    var redoInfo = "Redo operations available:\n\n" +
-                                  "• Text changes in input fields (Ctrl+Y when field is focused)\n" +
-                                  "• Re-run the last successful report generation\n\n" +
-                                  "Focus on a text field first, then use Ctrl+Y to redo text changes.";
-                    
-                    MessageBox.Show(redoInfo, "Redo", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during redo operation: {ex.Message}", "Redo Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.MenuService.HandleRedoCommand();
         }
 
         private void MenuCut_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // Try to cut from focused text box
-                if (Keyboard.FocusedElement is TextBox textBox && !string.IsNullOrEmpty(textBox.SelectedText))
-                {
-                    textBox.Cut();
-                    _monitoringService.UpdateStatus(StatusType.Idle, $"Text cut to clipboard");
-                }
-                else if (Keyboard.FocusedElement is TextBox)
-                {
-                    MessageBox.Show("No text is selected in the current field.", "Cut", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    MessageBox.Show("Please focus on a text field first, then select text to cut.", "Cut", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during cut operation: {ex.Message}", "Cut Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.MenuService.HandleCutCommand();
         }
 
         private void MenuCopy_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // Try to copy from focused text box
-                if (Keyboard.FocusedElement is TextBox textBox && !string.IsNullOrEmpty(textBox.SelectedText))
-                {
-                    textBox.Copy();
-                    _monitoringService.UpdateStatus(StatusType.Idle, $"Text copied to clipboard: '{textBox.SelectedText.Substring(0, Math.Min(textBox.SelectedText.Length, 20))}{(textBox.SelectedText.Length > 20 ? "..." : "")}'");
-                }
-                else if (Keyboard.FocusedElement is TextBox textBox2 && !string.IsNullOrEmpty(textBox2.Text))
-                {
-                    // If no text is selected, copy all text from the field
-                    textBox2.SelectAll();
-                    textBox2.Copy();
-                    textBox2.Select(0, 0); // Clear selection
-                    _monitoringService.UpdateStatus(StatusType.Idle, $"All text copied from field to clipboard");
-                }
-                else if (Keyboard.FocusedElement is TextBox)
-                {
-                    MessageBox.Show("The current field is empty.", "Copy", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    // If no textbox is focused, offer to copy application information
-                    var result = MessageBox.Show("No text field is focused. Would you like to copy the current application settings to clipboard?", 
-                                                "Copy", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        CopyApplicationSettingsToClipboard();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during copy operation: {ex.Message}", "Copy Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.MenuService.HandleCopyCommand();
         }
 
         private void MenuPaste_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // Try to paste to focused text box
-                if (Keyboard.FocusedElement is TextBox textBox)
-                {
-                    if (Clipboard.ContainsText())
-                    {
-                        textBox.Paste();
-                        _monitoringService.UpdateStatus(StatusType.Idle, "Text pasted from clipboard");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Clipboard does not contain text.", "Paste", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Please focus on a text field first to paste text.", "Paste", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during paste operation: {ex.Message}", "Paste Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.MenuService.HandlePasteCommand();
         }
 
         private void MenuSelectAll_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // Try to select all in focused text box
-                if (Keyboard.FocusedElement is TextBox textBox)
-                {
-                    textBox.SelectAll();
-                    _monitoringService.UpdateStatus(StatusType.Idle, "All text selected in current field");
-                }
-                else
-                {
-                    var result = MessageBox.Show("No text field is focused. Would you like to select all text in all input fields for easier copying?", 
-                                                "Select All", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        SelectAllFieldsContent();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error during select all operation: {ex.Message}", "Select All Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.MenuService.HandleSelectAllCommand();
         }
 
         private void MenuPreferences_Click(object sender, RoutedEventArgs e)
         {
-            var prefMessage = "Preferences:\n\n" +
-                            "• File locations:\n" +
-                            "  - Config: " + System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config") + "\n" +
-                            "  - Logs: " + System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs") + "\n" +
-                            "  - Export: " + System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EXPORT_Excel") + "\n" +
-                            "  - Import: " + System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IMPORT_Excel") + "\n\n" +
-                            "• Database connection settings are in Config/database.appsettings.json\n" +
-                            "• Excel formatting settings are in Config/excelFormatting.json\n\n" +
-                            "Advanced preferences dialog will be available in future updates.";
-            
-            MessageBox.Show(prefMessage, "Preferences", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        // Helper methods for Edit menu functionality
-        private void CopyApplicationSettingsToClipboard()
-        {
-            try
-            {
-                var settings = "Trade Data Hub - Current Settings\n" +
-                              "================================\n\n" +
-                              $"From Month: {FromMonthPicker?.SelectedYearMonth ?? ""}\n" +
-                              $"To Month: {ToMonthPicker?.SelectedYearMonth ?? ""}\n" +
-                              $"HS Codes: {Txt_HS?.Text ?? ""}\n" +
-                              $"Port Codes: {txt_Port?.Text ?? ""}\n" +
-                              $"Products: {Txt_Product?.Text ?? ""}\n" +
-                              $"Exporters: {Txt_Exporter?.Text ?? ""}\n" +
-                              $"Importers: {Txt_Importer?.Text ?? ""}\n" +
-                              $"Foreign Countries: {txt_ForCount?.Text ?? ""}\n" +
-                              $"Foreign Companies: {Txt_ForName?.Text ?? ""}\n" +
-                              $"IEC Codes: {Txt_IEC?.Text ?? ""}\n" +
-                              $"Mode: {(rbExport?.IsChecked == true ? "Export" : "Import")}\n" +
-                              $"View: {(MenuAdvancedView?.IsChecked == true ? "Advanced" : "Basic")}\n" +
-                              $"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
-
-                Clipboard.SetText(settings);
-                _monitoringService.UpdateStatus(StatusType.Idle, "Application settings copied to clipboard");
-                MessageBox.Show("Current application settings have been copied to clipboard.", "Settings Copied", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error copying settings to clipboard: {ex.Message}", "Copy Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void SelectAllFieldsContent()
-        {
-            try
-            {
-                var message = "Select All Fields functionality will be fully implemented once UI binding is restored.\n\n" +
-                             "For now, you can focus on individual text fields and use Ctrl+A to select all text in that field.";
-                
-                MessageBox.Show(message, "Select All Fields", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error in select all operation: {ex.Message}", "Select All Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _services.MenuService.HandlePreferencesCommand();
         }
 
         // View Menu Handlers
         private void ToggleSwitch_Click(object sender, MouseButtonEventArgs e)
         {
-            // Check current state based on AdvancedParametersGrid visibility
-            bool isBasicMode = AdvancedParametersGrid.Visibility == Visibility.Collapsed;
+            // Guard against calls during XAML initialization before services are ready
+            if (_services?.MenuService == null) return;
             
-            if (isBasicMode)
-            {
-                SwitchToAllMode();
-            }
-            else
-            {
-                SwitchToBasicMode();
-            }
-        }
-
-        private void SwitchToAllMode()
-        {
-            // Show all parameters
-            AdvancedParametersGrid.Visibility = Visibility.Visible;
-            
-            // Move active indicator to right (All mode)
-            ActiveIndicator.SetValue(Grid.ColumnProperty, 1);
-            
-            // Update colors for All mode
-            BasicText.Foreground = new SolidColorBrush(Color.FromRgb(108, 117, 125)); // #6C757D
-            BasicIcon.Fill = new SolidColorBrush(Color.FromRgb(108, 117, 125));
-            AllText.Foreground = new SolidColorBrush(Colors.White);
-            AllIcon.Fill = new SolidColorBrush(Colors.White);
-            
-            // Update menu checkboxes
-            if (MenuBasicView != null) MenuBasicView.IsChecked = false;
-            if (MenuAdvancedView != null) MenuAdvancedView.IsChecked = true;
-        }
-
-        private void SwitchToBasicMode()
-        {
-            // Hide additional parameters
-            AdvancedParametersGrid.Visibility = Visibility.Collapsed;
-            
-            // Move active indicator to left (Basic mode)
-            ActiveIndicator.SetValue(Grid.ColumnProperty, 0);
-            
-            // Update colors for Basic mode
-            BasicText.Foreground = new SolidColorBrush(Colors.White);
-            BasicIcon.Fill = new SolidColorBrush(Colors.White);
-            AllText.Foreground = new SolidColorBrush(Color.FromRgb(108, 117, 125)); // #6C757D
-            AllIcon.Fill = new SolidColorBrush(Color.FromRgb(108, 117, 125));
-            
-            // Update menu checkboxes
-            if (MenuBasicView != null) MenuBasicView.IsChecked = true;
-            if (MenuAdvancedView != null) MenuAdvancedView.IsChecked = false;
+            _services.MenuService.HandleToggleSwitchClick();
         }
 
         private void MenuBasicView_Click(object sender, RoutedEventArgs e)
         {
-            SwitchToBasicMode();
+            _services.MenuService.HandleBasicViewCommand();
         }
 
         private void MenuAdvancedView_Click(object sender, RoutedEventArgs e)
         {
-            SwitchToAllMode();
+            _services.MenuService.HandleAdvancedViewCommand();
         }
 
         private void MenuMonitoringPanel_Click(object sender, RoutedEventArgs e)
         {
-            // This handler is shared by the MenuItem (checkable) and the header ToggleButton.
-            // During InitializeComponent() the ToggleButton's Checked event can fire before
-            // the MonitoringPanel element (row 5) has been constructed, leading to a null ref.
-            if (MonitoringPanel == null)
-            {
-                // Defer until layout pass – store desired visibility and apply once loaded.
-                // Use dispatcher to run after initialization if we can still determine state.
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    if (MonitoringPanel == null) return; // still not ready – bail safely
-                    ApplyMonitoringPanelVisibility(sender);
-                }), System.Windows.Threading.DispatcherPriority.Loaded);
-                return;
-            }
-
-            ApplyMonitoringPanelVisibility(sender);
-        }
-
-        private void ApplyMonitoringPanelVisibility(object sender)
-        {
-            bool isChecked = false;
-
-            // Prefer the sender if it's a ToggleButton / MenuItem to avoid relying on other controls being initialized
-            switch (sender)
-            {
-                case System.Windows.Controls.Primitives.ToggleButton tb:
-                    isChecked = tb.IsChecked == true;
-                    break;
-                case MenuItem mi:
-                    isChecked = mi.IsChecked;
-                    break;
-                default:
-                    if (MenuMonitoringPanel != null)
-                        isChecked = MenuMonitoringPanel.IsChecked; // fallback
-                    break;
-            }
-
-            MonitoringPanel.Visibility = isChecked ? Visibility.Visible : Visibility.Collapsed;
-
-            // Keep the MenuItem and the ToggleButton (if both exist) in sync without causing recursion.
-            if (MenuMonitoringPanel != null && MenuMonitoringPanel.IsChecked != isChecked)
-                MenuMonitoringPanel.IsChecked = isChecked;
+            // Guard against calls during XAML initialization before services are ready
+            if (_services?.MenuService == null) return;
+            
+            _services.MenuService.HandleMonitoringPanelCommand(sender);
         }
 
         private void MenuActivityLog_Click(object sender, RoutedEventArgs e)
@@ -790,7 +335,7 @@ namespace TradeDataHub
         private void MenuRefresh_Click(object sender, RoutedEventArgs e)
         {
             // Refresh monitoring status
-            _monitoringService.UpdateStatus(StatusType.Idle, "Application refreshed");
+            _services.MonitoringService.UpdateStatus(StatusType.Idle, "Application refreshed");
             MessageBox.Show("Application view refreshed.", "Refresh", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
