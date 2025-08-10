@@ -39,6 +39,7 @@ namespace TradeDataHub.Core.Services
         public IImportController ImportController { get; private set; } = null!;
         public IUIService UIService { get; private set; } = null!;
         public IMenuService MenuService { get; private set; } = null!;
+        public IKeyboardShortcutService KeyboardShortcutService { get; private set; } = null!;
         public IUIActionService UIActionService { get; private set; } = null!;
         public IViewStateService ViewStateService { get; private set; } = null!;
 
@@ -88,6 +89,7 @@ namespace TradeDataHub.Core.Services
                 // Initialize services
                 UIService = new UIService(DatabaseObjectValidator, MonitoringService);
                 MenuService = new MenuService();
+                KeyboardShortcutService = new KeyboardShortcutService(MenuService);
                 UIActionService = new UIActionService(ExportController, ImportController, MonitoringService);
                 ViewStateService = new ViewStateService(MonitoringService);
                 
