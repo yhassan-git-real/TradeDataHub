@@ -1,92 +1,112 @@
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Collections.Generic;
-using System.Linq;
-using System;
-using System.Data;
-using System.Threading.Tasks;
-using TradeDataHub.Core;
-using TradeDataHub.Features.Export; // Ensure ExcelService is in scope
-using TradeDataHub.Core.Logging;
-using TradeDataHub.Core.Helpers;
-using TradeDataHub.Features.Import;
-using System.Threading;
-using TradeDataHub.Core.Cancellation;
 using System.Windows.Input;
 using System.Windows.Media;
-using TradeDataHub.Features.Monitoring.Services;
-using TradeDataHub.Features.Monitoring.Models;
-using MonitoringLogLevel = TradeDataHub.Features.Monitoring.Models.LogLevel;
-using System.IO;
-using TradeDataHub.Core.Models;
-using TradeDataHub.Features.Common.ViewModels;
-using TradeDataHub.Features.Export.Services;
-using TradeDataHub.Features.Import.Services;
-using TradeDataHub.Core.Database;
 using Microsoft.Extensions.Configuration;
+using TradeDataHub.Core.Cancellation;
+using TradeDataHub.Core.Controllers;
+using TradeDataHub.Core.Database;
+using TradeDataHub.Core.Helpers;
+using TradeDataHub.Core.Models;
+using TradeDataHub.Core.Services;
+using TradeDataHub.Core.Validation;
+using TradeDataHub.Features.Common.ViewModels;
+using TradeDataHub.Features.Export;
+using TradeDataHub.Features.Export.Services;
+using TradeDataHub.Features.Import;
+using TradeDataHub.Features.Import.Services;
+using TradeDataHub.Features.Monitoring.Models;
+using TradeDataHub.Features.Monitoring.Services;
+using MonitoringLogLevel = TradeDataHub.Features.Monitoring.Models.LogLevel;
 
 namespace TradeDataHub
 {
     public partial class MainWindow : Window
     {
-    private readonly ExportExcelService _excelService;
-    private readonly ImportExcelService _importService;
-    private readonly ICancellationManager _cancellationManager;
-    private readonly MonitoringService _monitoringService;
-    private readonly ExportObjectValidationService _exportObjectValidationService;
-    private readonly ImportObjectValidationService _importObjectValidationService;
-    private readonly DbObjectSelectorViewModel _exportDbObjectViewModel;
-    private readonly DbObjectSelectorViewModel _importDbObjectViewModel;
-    private readonly Core.Database.DatabaseObjectValidator _databaseObjectValidator;
-    private CancellationTokenSource? _currentCancellationSource;
+        #region Fields
 
-        // Thin DTO records to centralize textbox value extraction (backend-only refactor; UI unchanged)
-        private record ExportInputs(string FromMonth, string ToMonth, List<string> Ports, List<string> HSCodes, List<string> Products,
-            List<string> Exporters, List<string> IECs, List<string> ForeignCountries, List<string> ForeignNames);
-        private record ImportInputs(string FromMonth, string ToMonth, List<string> Ports, List<string> HSCodes, List<string> Products,
-            List<string> Importers, List<string> IECs, List<string> ForeignCountries, List<string> ForeignNames);
+        // Core Services
+        private readonly ExportExcelService _excelService;
+        private readonly ImportExcelService _importService;
+        private readonly ICancellationManager _cancellationManager;
+        private readonly MonitoringService _monitoringService;
 
-        private ExportInputs GetExportInputs()
+        // Validation Services
+        private readonly ExportObjectValidationService _exportObjectValidationService;
+        private readonly ImportObjectValidationService _importObjectValidationService;
+        private readonly IParameterValidator _parameterValidator;
+        private readonly DatabaseObjectValidator _databaseObjectValidator;
+
+        // Controllers
+        private readonly IExportController _exportController;
+        private readonly IImportController _importController;
+        private readonly IUIService _uiService;
+        private readonly IMenuService _menuService;
+
+        // View Models
+        private readonly DbObjectSelectorViewModel _exportDbObjectViewModel;
+        private readonly DbObjectSelectorViewModel _importDbObjectViewModel;
+
+        // State Management
+        private CancellationTokenSource? _currentCancellationSource;
+
+        #endregion
+
+        #region Data Transfer Object Methods
+
+        private TradeDataHub.Core.Models.ExportInputs GetExportInputs()
         {
-            return new ExportInputs(
-                FromMonthPicker.SelectedYearMonth,
-                ToMonthPicker.SelectedYearMonth,
-                ExportParameterHelper.ParseFilterList(txt_Port.Text),
-                ExportParameterHelper.ParseFilterList(Txt_HS.Text),
-                ExportParameterHelper.ParseFilterList(Txt_Product.Text),
-                ExportParameterHelper.ParseFilterList(Txt_Exporter.Text),
-                ExportParameterHelper.ParseFilterList(Txt_IEC.Text),
-                ExportParameterHelper.ParseFilterList(txt_ForCount.Text),
-                ExportParameterHelper.ParseFilterList(Txt_ForName.Text)
+            return InputBinder.GetExportInputs(
+                FromMonthPicker,
+                ToMonthPicker,
+                txt_Port,
+                Txt_HS,
+                Txt_Product,
+                Txt_Exporter,
+                Txt_IEC,
+                txt_ForCount,
+                Txt_ForName
             );
         }
 
-        private ImportInputs GetImportInputs()
+        private TradeDataHub.Core.Models.ImportInputs GetImportInputs()
         {
-            return new ImportInputs(
-                FromMonthPicker.SelectedYearMonth,
-                ToMonthPicker.SelectedYearMonth,
-                ImportParameterHelper.ParseFilterList(txt_Port.Text),
-                ImportParameterHelper.ParseFilterList(Txt_HS.Text),
-                ImportParameterHelper.ParseFilterList(Txt_Product.Text),
-                ImportParameterHelper.ParseFilterList(Txt_Importer.Text),
-                ImportParameterHelper.ParseFilterList(Txt_IEC.Text),
-                ImportParameterHelper.ParseFilterList(txt_ForCount.Text),
-                ImportParameterHelper.ParseFilterList(Txt_ForName.Text)
+            return InputBinder.GetImportInputs(
+                FromMonthPicker,
+                ToMonthPicker,
+                txt_Port,
+                Txt_HS,
+                Txt_Product,
+                Txt_Importer,
+                Txt_IEC,
+                txt_ForCount,
+                Txt_ForName
             );
         }
+
+        #endregion
+
+        #region Validation Helper Methods
 
         private ExportParameterHelper.ValidationResult ValidateExportMonths(string fromMonth, string toMonth)
         {
-            var w = ExportParameterHelper.WILDCARD;
-            return ExportParameterHelper.ValidateExportParameters(fromMonth, toMonth, w, w, w, w, w, w, w);
+            var exportInputs = new TradeDataHub.Core.Models.ExportInputs(fromMonth, toMonth, new(), new(), new(), new(), new(), new(), new());
+            return _parameterValidator.ValidateExport(exportInputs);
         }
 
         private ImportParameterHelper.ValidationResult ValidateImportMonths(string fromMonth, string toMonth)
         {
-            var w = ImportParameterHelper.WILDCARD;
-            return ImportParameterHelper.ValidateImportParameters(fromMonth, toMonth, w, w, w, w, w, w, w);
+            var importInputs = new TradeDataHub.Core.Models.ImportInputs(fromMonth, toMonth, new(), new(), new(), new(), new(), new(), new());
+            return _parameterValidator.ValidateImport(importInputs);
         }
+
+        #endregion
+
+        #region Configuration Methods
 
         private SharedDatabaseSettings LoadSharedDatabaseSettings()
         {
@@ -96,7 +116,11 @@ namespace TradeDataHub
             var root = cfg.Get<SharedDatabaseSettingsRoot>() ?? throw new InvalidOperationException("Failed to bind SharedDatabaseSettingsRoot");
             return root.DatabaseConfig;
         }
-        
+
+        #endregion
+
+        #region Constructor
+
         public MainWindow()
         {
             InitializeComponent();
@@ -105,13 +129,35 @@ namespace TradeDataHub
             _cancellationManager = new CancellationManager();
             _monitoringService = MonitoringService.Instance;
             
+            // Initialize menu service
+            _menuService = new MenuService();
+            
             // Initialize validation services
             _exportObjectValidationService = new ExportObjectValidationService(_excelService.ExportSettings);
             _importObjectValidationService = new ImportObjectValidationService(_importService.ImportSettings);
+            _parameterValidator = new TradeDataHub.Core.Validation.ParameterValidator();
+            
+            // Initialize controllers
+            _exportController = new ExportController(
+                _excelService,
+                _parameterValidator,
+                _monitoringService,
+                _exportObjectValidationService,
+                this.Dispatcher);
+                
+            _importController = new ImportController(
+                _importService,
+                _parameterValidator,
+                _monitoringService,
+                _importObjectValidationService,
+                this.Dispatcher);
             
             // Initialize database object validator
             var dbSettings = LoadSharedDatabaseSettings();
             _databaseObjectValidator = new Core.Database.DatabaseObjectValidator(dbSettings.ConnectionString);
+            
+            // Initialize UI service
+            _uiService = new UIService(_databaseObjectValidator, _monitoringService);
             
             // Initialize view models for database object selection
             _exportDbObjectViewModel = new DbObjectSelectorViewModel(
@@ -127,12 +173,31 @@ namespace TradeDataHub
                 _importObjectValidationService.GetDefaultStoredProcedureName());
             
             // Initialize to Basic mode (hide additional parameters)
-            AdvancedParametersGrid.Visibility = Visibility.Collapsed;
+            // AdvancedParametersGrid.Visibility = Visibility.Collapsed;
+            
+            // Initialize UI service with controls - moved to Loaded event
+            // _uiService.Initialize(Lbl_Exporter, Txt_Exporter, Lbl_Importer, Txt_Importer, ViewComboBox, StoredProcedureComboBox);
             
             // Set initial status
             _monitoringService.UpdateStatus(StatusType.Idle, "Application ready");
             
-            ApplyModeUI();
+            // Apply UI mode after everything is initialized
+            // Use Loaded event to ensure all XAML controls are fully loaded
+            this.Loaded += (sender, e) => {
+                // Initialize UI controls after they're loaded
+                AdvancedParametersGrid.Visibility = Visibility.Collapsed;
+                _uiService.Initialize(Lbl_Exporter, Txt_Exporter, Lbl_Importer, Txt_Importer, ViewComboBox, StoredProcedureComboBox);
+                
+                // Initialize menu service
+                _menuService.Initialize(this);
+                
+                // Wire up the RadioButton event handlers after initialization
+                rbExport.Checked += ProcessType_CheckedChanged;
+                rbImport.Checked += ProcessType_CheckedChanged;
+                
+                // Apply the initial UI state
+                ApplyModeUI();
+            };
             
             // Add keyboard event handler
             this.KeyDown += MainWindow_KeyDown;
@@ -140,69 +205,21 @@ namespace TradeDataHub
 
         private void ApplyModeUI()
         {
-            // Defensive programming to handle potential null references
-            if (rbExport.IsChecked == true)
-            {
-                Lbl_Exporter.Visibility = Visibility.Visible;
-                Txt_Exporter.Visibility = Visibility.Visible;
-                Lbl_Importer.Visibility = Visibility.Collapsed;
-                Txt_Importer.Visibility = Visibility.Collapsed;
+            // Guard against calls during initialization
+            if (_uiService == null || _exportDbObjectViewModel == null || _importDbObjectViewModel == null)
+                return;
                 
-                // Set export database objects with null checks
-                if (_exportDbObjectViewModel != null)
-                {
-                    ViewComboBox.ItemsSource = _exportDbObjectViewModel.Views;
-                    ViewComboBox.SelectedItem = _exportDbObjectViewModel.SelectedView;
-                    StoredProcedureComboBox.ItemsSource = _exportDbObjectViewModel.StoredProcedures;
-                    StoredProcedureComboBox.SelectedItem = _exportDbObjectViewModel.SelectedStoredProcedure;
-                    
-                    // Validate selected database objects
-                    ValidateSelectedDatabaseObjects(_exportDbObjectViewModel.SelectedView?.Name, 
-                                                   _exportDbObjectViewModel.SelectedStoredProcedure?.Name);
-                }
-            }
-            else
-            {
-                Lbl_Exporter.Visibility = Visibility.Collapsed;
-                Txt_Exporter.Visibility = Visibility.Collapsed;
-                Lbl_Importer.Visibility = Visibility.Visible;
-                Txt_Importer.Visibility = Visibility.Visible;
-                
-                // Set import database objects with null checks
-                if (_importDbObjectViewModel != null)
-                {
-                    ViewComboBox.ItemsSource = _importDbObjectViewModel.Views;
-                    ViewComboBox.SelectedItem = _importDbObjectViewModel.SelectedView;
-                    StoredProcedureComboBox.ItemsSource = _importDbObjectViewModel.StoredProcedures;
-                    StoredProcedureComboBox.SelectedItem = _importDbObjectViewModel.SelectedStoredProcedure;
-                    
-                    // Validate selected database objects
-                    ValidateSelectedDatabaseObjects(_importDbObjectViewModel.SelectedView?.Name, 
-                                                   _importDbObjectViewModel.SelectedStoredProcedure?.Name);
-                }
-            }
+            bool isExportMode = rbExport.IsChecked == true;
+            _uiService.ApplyModeUI(isExportMode, _exportDbObjectViewModel, _importDbObjectViewModel);
         }
         
         private void ValidateSelectedDatabaseObjects(string viewName, string storedProcedureName)
         {
-            if (string.IsNullOrEmpty(viewName) || string.IsNullOrEmpty(storedProcedureName))
+            // Guard against calls during initialization
+            if (_uiService == null)
                 return;
                 
-            var (viewExists, spExists) = _databaseObjectValidator.ValidateDatabaseObjects(viewName, storedProcedureName);
-            
-            if (!viewExists)
-            {
-                MessageBox.Show($"The selected view '{viewName}' does not exist in the database.", 
-                    "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                _monitoringService.SetWarning($"View '{viewName}' not found in database");
-            }
-            
-            if (!spExists)
-            {
-                MessageBox.Show($"The selected stored procedure '{storedProcedureName}' does not exist in the database.", 
-                    "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                _monitoringService.SetWarning($"Stored procedure '{storedProcedureName}' not found in database");
-            }
+            _uiService.ValidateSelectedDatabaseObjects(viewName, storedProcedureName);
         }
         
         private void ProcessType_CheckedChanged(object sender, RoutedEventArgs e)
@@ -212,63 +229,19 @@ namespace TradeDataHub
         
         private void ViewComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ViewComboBox.SelectedItem is DbObjectOption selectedView)
+            if (sender is ComboBox combo && combo.SelectedItem is DbObjectOption selectedView)
             {
-                if (rbExport.IsChecked == true && _exportDbObjectViewModel != null)
-                {
-                    _exportDbObjectViewModel.SelectedView = selectedView;
-                    
-                    // Validate if the view exists in the database
-                    if (!_databaseObjectValidator.ViewExists(selectedView.Name))
-                    {
-                        MessageBox.Show($"The selected view '{selectedView.Name}' does not exist in the database.", 
-                            "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        _monitoringService.SetWarning($"View '{selectedView.Name}' not found in database");
-                    }
-                }
-                else if (_importDbObjectViewModel != null)
-                {
-                    _importDbObjectViewModel.SelectedView = selectedView;
-                    
-                    // Validate if the view exists in the database
-                    if (!_databaseObjectValidator.ViewExists(selectedView.Name))
-                    {
-                        MessageBox.Show($"The selected view '{selectedView.Name}' does not exist in the database.", 
-                            "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        _monitoringService.SetWarning($"View '{selectedView.Name}' not found in database");
-                    }
-                }
+                bool isExportMode = this.rbExport.IsChecked == true;
+                _uiService.HandleViewSelectionChanged(selectedView, isExportMode, _exportDbObjectViewModel, _importDbObjectViewModel);
             }
         }
         
         private void StoredProcedureComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (StoredProcedureComboBox.SelectedItem is DbObjectOption selectedSP)
+            if (sender is ComboBox combo && combo.SelectedItem is DbObjectOption selectedSP)
             {
-                if (rbExport.IsChecked == true && _exportDbObjectViewModel != null)
-                {
-                    _exportDbObjectViewModel.SelectedStoredProcedure = selectedSP;
-                    
-                    // Validate if the stored procedure exists in the database
-                    if (!_databaseObjectValidator.StoredProcedureExists(selectedSP.Name))
-                    {
-                        MessageBox.Show($"The selected stored procedure '{selectedSP.Name}' does not exist in the database.", 
-                            "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        _monitoringService.SetWarning($"Stored procedure '{selectedSP.Name}' not found in database");
-                    }
-                }
-                else if (_importDbObjectViewModel != null)
-                {
-                    _importDbObjectViewModel.SelectedStoredProcedure = selectedSP;
-                    
-                    // Validate if the stored procedure exists in the database
-                    if (!_databaseObjectValidator.StoredProcedureExists(selectedSP.Name))
-                    {
-                        MessageBox.Show($"The selected stored procedure '{selectedSP.Name}' does not exist in the database.", 
-                            "Database Object Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        _monitoringService.SetWarning($"Stored procedure '{selectedSP.Name}' not found in database");
-                    }
-                }
+                bool isExportMode = this.rbExport.IsChecked == true;
+                _uiService.HandleStoredProcedureSelectionChanged(selectedSP, isExportMode, _exportDbObjectViewModel, _importDbObjectViewModel);
             }
         }
 
@@ -288,12 +261,19 @@ namespace TradeDataHub
                 // 🎯 Check which process type is selected
                 if (rbImport.IsChecked == true)
                 {
-                    await RunImportProcess(_currentCancellationSource.Token);
+                    // Import is selected - use new ImportController
+                    var importInputs = GetImportInputs();
+                    var selectedView = _importDbObjectViewModel.SelectedView?.Name ?? "";
+                    var selectedSP = _importDbObjectViewModel.SelectedStoredProcedure?.Name ?? "";
+                    await _importController.RunAsync(importInputs, _currentCancellationSource.Token, selectedView, selectedSP);
                 }
                 else if (rbExport.IsChecked == true)
                 {
-                    // Export is selected - run the existing export process
-                    await RunExportProcess(_currentCancellationSource.Token);
+                    // Export is selected - use new ExportController
+                    var exportInputs = GetExportInputs();
+                    var selectedView = _exportDbObjectViewModel.SelectedView?.Name ?? "";
+                    var selectedSP = _exportDbObjectViewModel.SelectedStoredProcedure?.Name ?? "";
+                    await _exportController.RunAsync(exportInputs, _currentCancellationSource.Token, selectedView, selectedSP);
                 }
                 else
                 {
@@ -326,436 +306,6 @@ namespace TradeDataHub
                 _currentCancellationSource?.Dispose();
                 _currentCancellationSource = null;
             }
-        }
-
-        private async Task RunExportProcess(CancellationToken cancellationToken)
-        {
-            var exportInputs = GetExportInputs();
-            var fromMonth = exportInputs.FromMonth;
-            var toMonth = exportInputs.ToMonth;
-            
-            // Check if view model is initialized
-            if (_exportDbObjectViewModel == null)
-            {
-                MessageBox.Show("Export database objects are not properly initialized. Please restart the application.", 
-                    "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            
-            // Get selected view and stored procedure
-            var selectedView = _exportDbObjectViewModel.SelectedView?.Name;
-            var selectedSP = _exportDbObjectViewModel.SelectedStoredProcedure?.Name;
-            
-            // Validate selected database objects
-            if (!_exportObjectValidationService.ValidateObjects(selectedView, selectedSP))
-            {
-                MessageBox.Show("The selected View or Stored Procedure is not valid. Please select valid database objects.", 
-                    "Invalid Database Objects", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Early guard for empty months (faster feedback before full validation call)
-            if (string.IsNullOrWhiteSpace(fromMonth) || string.IsNullOrWhiteSpace(toMonth))
-            {
-                MessageBox.Show("From Month and To Month are required.", "Missing Input", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Centralized validation (months + format)
-            var validation = ValidateExportMonths(fromMonth, toMonth);
-            
-            if (!validation.IsValid)
-            {
-                string errorMessage = "Parameter Validation Failed:\n" + string.Join("\n", validation.Errors);
-                MessageBox.Show(errorMessage, "Invalid Parameters", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            var ports = exportInputs.Ports;
-            var hsCodes = exportInputs.HSCodes;
-            var products = exportInputs.Products;
-            var exporters = exportInputs.Exporters;
-            var foreignCountries = exportInputs.ForeignCountries;
-            var foreignNames = exportInputs.ForeignNames;
-            var iecs = exportInputs.IECs;
-
-            int filesGenerated = 0;
-            int combinationsProcessed = 0;
-            int combinationsSkipped = 0;
-            int skippedNoData = 0;
-            int skippedRowLimit = 0;
-            int cancelledCombinations = 0;
-
-            await Task.Run(() =>
-            {
-                foreach (var port in ports)
-                {
-                    foreach (var hsCode in hsCodes)
-                    {
-                        foreach (var product in products)
-                        {
-                            foreach (var exporter in exporters)
-                            {
-                                foreach (var iec in iecs)
-                                {
-                                    foreach (var country in foreignCountries)
-                                    {
-                                        foreach (var name in foreignNames)
-                                        {
-                                            // Check for cancellation at the start of each combination
-                                            if (cancellationToken.IsCancellationRequested)
-                                            {
-                                                cancellationToken.ThrowIfCancellationRequested();
-                                            }
-
-                                            combinationsProcessed++;
-                                            Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Running, $"Processing combination {combinationsProcessed}...", "Export"));
-
-                                            try
-                                            {
-                                                // Step 1: Execute SP and get data reader with row count (single SP execution)
-                                                var result = _excelService.CreateReport(
-                                                    combinationsProcessed, 
-                                                    fromMonth, 
-                                                    toMonth, 
-                                                    hsCode, 
-                                                    product, 
-                                                    iec, 
-                                                    exporter, 
-                                                    country, 
-                                                    name, 
-                                                    port, 
-                                                    cancellationToken,
-                                                    selectedView,
-                                                    selectedSP);
-                                                
-                                                if (result.Success)
-                                                {
-                                                    filesGenerated++;
-                                                }
-                                                else if (result.IsCancelled)
-                                                {
-                                                    cancelledCombinations++;
-                                                    cancellationToken.ThrowIfCancellationRequested();
-                                                }
-                                                else
-                                                {
-                                                    combinationsSkipped++;
-                                                    
-                                                    // Track skip reasons for better completion message
-                                                    if (result.SkipReason == SkipReason.NoData)
-                                                    {
-                                                        skippedNoData++;
-                                                    }
-                                                    else if (result.SkipReason == SkipReason.ExcelRowLimit)
-                                                    {
-                                                        skippedRowLimit++;
-                                                    }
-                                                }
-                                            }
-                                            catch (OperationCanceledException)
-                                            {
-                                                cancelledCombinations++;
-                                                throw; // Re-throw to exit the loops
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                // Log individual combination errors but continue processing
-                                                var errorMsg = $"Error processing combination {combinationsProcessed}: {ex.Message}";
-                                                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Error, errorMsg, "Export"));
-                                                _monitoringService.AddLog(MonitoringLogLevel.Error, errorMsg, "Export");
-                                                System.Diagnostics.Debug.WriteLine($"ERROR: {errorMsg}");
-                                                System.Diagnostics.Debug.WriteLine($"Filters - HSCode:{hsCode}, Product:{product}, IEC:{iec}, Exporter:{exporter}, Country:{country}, Name:{name}, Port:{port}");
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }, cancellationToken);
-
-            // Check if operation was cancelled
-            if (cancellationToken.IsCancellationRequested)
-            {
-                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Cancelled, $"Export cancelled - {filesGenerated} files generated before cancellation"));
-                return;
-            }
-
-            // Log processing summary
-            SkippedDatasetLogger.LogProcessingSummary(combinationsProcessed, filesGenerated, combinationsSkipped);
-
-            // Create enhanced completion summary with clear skip reasons
-            var summaryMessage = "Export Processing Complete\n\n";
-            
-            // Success metrics
-            summaryMessage += $"Files Generated: {filesGenerated:N0} Excel files created successfully\n";
-            summaryMessage += $"Total Processed: {combinationsProcessed:N0} parameter combinations checked\n\n";
-            
-            // Skip details with clear explanations
-            if (combinationsSkipped > 0)
-            {
-                summaryMessage += $"Skipped Combinations: {combinationsSkipped:N0} total\n";
-                
-                if (skippedNoData > 0)
-                {
-                    summaryMessage += $"  • No Data Found: {skippedNoData:N0} combinations had zero matching records\n";
-                }
-                
-                if (skippedRowLimit > 0)
-                {
-                    summaryMessage += $"  • Excel Row Limit: {skippedRowLimit:N0} combinations exceeded 1,048,575 row limit\n";
-                }
-                
-                summaryMessage += $"\nNote: Skipped datasets are logged in: Logs\\SkippedDatasets_{DateTime.Now:yyyyMMdd}.log\n";
-            }
-            
-            // Performance summary
-            if (filesGenerated > 0)
-            {
-                summaryMessage += $"\nSuccess Rate: {(double)filesGenerated / combinationsProcessed * 100:F1}% of combinations produced files";
-            }
-
-            // Determine message type and icon based on results
-            var messageType = MessageBoxImage.Information;
-            var messageTitle = "Export Batch Processing Complete";
-            
-            if (filesGenerated == 0)
-            {
-                messageType = MessageBoxImage.Warning;
-                messageTitle = "No Files Generated";
-                summaryMessage += "\n\nNext Steps: Review your filter criteria - all combinations resulted in no data or exceeded limits.";
-            }
-            else if (skippedRowLimit > 0)
-            {
-                messageType = MessageBoxImage.Warning;
-                messageTitle = "Export Processing Complete - Some Data Limits Exceeded";
-                summaryMessage += "\n\nSuggestion: Consider adding more specific filters to reduce row counts for large datasets.";
-            }
-
-            Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Completed, GetStatusSummary(filesGenerated, skippedNoData, skippedRowLimit)));
-            MessageBox.Show(summaryMessage, messageTitle, MessageBoxButton.OK, messageType);
-        }
-
-        private string GetStatusSummary(int filesGenerated, int skippedNoData, int skippedRowLimit)
-        {
-            if (filesGenerated == 0)
-            {
-                if (skippedNoData > 0 && skippedRowLimit == 0)
-                    return "Complete: No files generated - all combinations had no data";
-                else if (skippedRowLimit > 0 && skippedNoData == 0)
-                    return "Complete: No files generated - all combinations exceeded row limits";
-                else if (skippedNoData > 0 && skippedRowLimit > 0)
-                    return $"Complete: No files generated - {skippedNoData} no data, {skippedRowLimit} over limits";
-                else
-                    return "Complete: No files generated";
-            }
-            else
-            {
-                var totalSkipped = skippedNoData + skippedRowLimit;
-                if (totalSkipped == 0)
-                    return $"Complete: {filesGenerated} files generated successfully";
-                else
-                    return $"Complete: {filesGenerated} files, {totalSkipped} skipped ({skippedNoData} no data, {skippedRowLimit} over limits)";
-            }
-        }
-
-        private async Task RunImportProcess(CancellationToken cancellationToken)
-        {
-            var importInputs = GetImportInputs();
-            var fromMonth = importInputs.FromMonth;
-            var toMonth = importInputs.ToMonth;
-            
-            // Check if view model is initialized
-            if (_importDbObjectViewModel == null)
-            {
-                MessageBox.Show("Import database objects are not properly initialized. Please restart the application.", 
-                    "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            
-            // Get selected view and stored procedure
-            var selectedView = _importDbObjectViewModel.SelectedView?.Name;
-            var selectedSP = _importDbObjectViewModel.SelectedStoredProcedure?.Name;
-            
-            // Validate selected database objects
-            if (!_importObjectValidationService.ValidateObjects(selectedView, selectedSP))
-            {
-                MessageBox.Show("The selected View or Stored Procedure is not valid. Please select valid database objects.", 
-                    "Invalid Database Objects", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(fromMonth) || string.IsNullOrWhiteSpace(toMonth))
-            {
-                MessageBox.Show("From Month and To Month are required.", "Missing Input", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var validation = ValidateImportMonths(fromMonth, toMonth);
-
-            if (!validation.IsValid)
-            {
-                string errorMessage = "Parameter Validation Failed:\n" + string.Join("\n", validation.Errors);
-                MessageBox.Show(errorMessage, "Invalid Parameters", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Parse lists (Txt_Exporter textbox is repurposed as Importer list when Import mode selected)
-            var ports = importInputs.Ports;
-            var hsCodes = importInputs.HSCodes;
-            var products = importInputs.Products;
-            var importers = importInputs.Importers; // importer names
-            var foreignCountries = importInputs.ForeignCountries;
-            var foreignNames = importInputs.ForeignNames;
-            var iecs = importInputs.IECs;
-
-            int filesGenerated = 0;
-            int combinationsProcessed = 0;
-            int combinationsSkipped = 0;
-            int skippedNoData = 0;
-            int skippedRowLimit = 0;
-            int cancelledCombinations = 0;
-
-            await Task.Run(() =>
-            {
-                foreach (var port in ports)
-                {
-                    foreach (var hsCode in hsCodes)
-                    {
-                        foreach (var product in products)
-                        {
-                            foreach (var importer in importers)
-                            {
-                                foreach (var iec in iecs)
-                                {
-                                    foreach (var country in foreignCountries)
-                                    {
-                                        foreach (var name in foreignNames)
-                                        {
-                                            // Check for cancellation at the start of each combination
-                                            if (cancellationToken.IsCancellationRequested)
-                                            {
-                                                cancellationToken.ThrowIfCancellationRequested();
-                                            }
-
-                                            combinationsProcessed++;
-                                            var comboNumber = combinationsProcessed; // capture for closure
-                                            Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Running, $"Processing (Import) combination {comboNumber}...", "Import"));
-
-                                            try
-                                            {
-                                                var result = _importService.CreateReport(
-                                                    fromMonth, 
-                                                    toMonth, 
-                                                    hsCode, 
-                                                    product, 
-                                                    iec, 
-                                                    importer, 
-                                                    country, 
-                                                    name, 
-                                                    port, 
-                                                    cancellationToken,
-                                                    selectedView,
-                                                    selectedSP);
-                                                if (result.Success)
-                                                {
-                                                    filesGenerated++;
-                                                }
-                                                else if (result.IsCancelled)
-                                                {
-                                                    cancelledCombinations++;
-                                                    cancellationToken.ThrowIfCancellationRequested();
-                                                }
-                                                else
-                                                {
-                                                    combinationsSkipped++;
-                                                    if (result.SkipReason == "NoData")
-                                                    {
-                                                        skippedNoData++;
-                                                        SkippedDatasetLogger.LogSkippedDataset(comboNumber, 0, fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, "NoData");
-                                                    }
-                                                    else if (result.SkipReason == "ExcelRowLimit")
-                                                    {
-                                                        skippedRowLimit++;
-                                                        SkippedDatasetLogger.LogSkippedDataset(comboNumber, result.RowCount, fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, "RowLimit");
-                                                    }
-                                                }
-                                            }
-                                            catch (OperationCanceledException)
-                                            {
-                                                cancelledCombinations++;
-                                                throw; // Re-throw to exit the loops
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                var errorMsg = $"Import error combination {comboNumber}: {ex.Message}";
-                                                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Error, errorMsg, "Import"));
-                                                _monitoringService.AddLog(MonitoringLogLevel.Error, errorMsg, "Import");
-                                                System.Diagnostics.Debug.WriteLine($"ERROR: {errorMsg}");
-                                                System.Diagnostics.Debug.WriteLine($"Filters - HSCode:{hsCode}, Product:{product}, IEC:{iec}, Importer:{importer}, Country:{country}, Name:{name}, Port:{port}");
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }, cancellationToken);
-
-            // Check if operation was cancelled
-            if (cancellationToken.IsCancellationRequested)
-            {
-                Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Cancelled, $"Import cancelled - {filesGenerated} files generated before cancellation"));
-                return;
-            }
-
-            SkippedDatasetLogger.LogProcessingSummary(combinationsProcessed, filesGenerated, combinationsSkipped);
-
-            var summaryMessage = "Import Processing Complete\n\n";
-            summaryMessage += $"Files Generated: {filesGenerated:N0} Excel files created successfully\n";
-            summaryMessage += $"Total Processed: {combinationsProcessed:N0} parameter combinations checked\n\n";
-
-            if (combinationsSkipped > 0)
-            {
-                summaryMessage += $"Skipped Combinations: {combinationsSkipped:N0} total\n";
-                if (skippedNoData > 0)
-                    summaryMessage += $"  • No Data Found: {skippedNoData:N0} combinations had zero matching records\n";
-                if (skippedRowLimit > 0)
-                    summaryMessage += $"  • Excel Row Limit: {skippedRowLimit:N0} combinations exceeded 1,048,575 row limit\n";
-                summaryMessage += $"\nNote: Skipped datasets are logged in: Logs\\SkippedDatasets_{DateTime.Now:yyyyMMdd}.log\n";
-            }
-
-            if (filesGenerated > 0)
-            {
-                summaryMessage += $"\nSuccess Rate: {(double)filesGenerated / combinationsProcessed * 100:F1}% of combinations produced files";
-            }
-
-            var messageType = MessageBoxImage.Information;
-            var messageTitle = "Import Batch Complete";
-            if (filesGenerated == 0)
-            {
-                messageType = MessageBoxImage.Warning;
-                messageTitle = "No Files Generated";
-                summaryMessage += "\n\nNext Steps: Review your filter criteria - all combinations resulted in no data or exceeded limits.";
-            }
-            else if (skippedRowLimit > 0)
-            {
-                messageType = MessageBoxImage.Warning;
-                messageTitle = "Processing Complete - Some Data Limits Exceeded";
-                summaryMessage += "\n\nSuggestion: Consider adding more specific filters to reduce row counts for large datasets.";
-            }
-
-            var importStatusMessage = filesGenerated == 0
-                ? (skippedNoData > 0 && skippedRowLimit == 0 ? "Import complete: All combinations had no data" :
-                   skippedRowLimit > 0 && skippedNoData == 0 ? "Import complete: All combinations exceeded row limits" :
-                   (skippedNoData > 0 && skippedRowLimit > 0 ? $"Import complete: 0 files - {skippedNoData} no data, {skippedRowLimit} over limits" : "Import complete: No files"))
-                : (combinationsSkipped == 0 ? $"Import complete: {filesGenerated} files" : $"Import complete: {filesGenerated} files, {combinationsSkipped} skipped");
-
-            Dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Completed, importStatusMessage));
-
-            MessageBox.Show(summaryMessage, messageTitle, MessageBoxButton.OK, messageType);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -813,130 +363,44 @@ namespace TradeDataHub
             }
         }
 
+        #region Public Methods for Services
+
+        /// <summary>
+        /// Public method to handle reset functionality for menu service
+        /// </summary>
+        public void HandleResetFields()
+        {
+            ResetButton_Click(this, new RoutedEventArgs());
+        }
+
+        #endregion
+
         #region Menu Event Handlers
 
         // File Menu Handlers
         private void MenuNew_Click(object sender, RoutedEventArgs e)
         {
-            // Reset all fields to create a "new" session
-            ResetButton_Click(sender, e);
+            _menuService.HandleNewCommand();
         }
 
         private void MenuOpen_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                var openFileDialog = new Microsoft.Win32.OpenFileDialog
-                {
-                    Title = "Open Configuration File",
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    InitialDirectory = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config")
-                };
-
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    MessageBox.Show($"Configuration file selected: {openFileDialog.FileName}\n\nConfiguration loading will be implemented in future updates.", 
-                                  "File Selected", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error opening file dialog: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _menuService.HandleOpenCommand();
         }
 
         private void MenuSave_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // Get current parameters
-                var config = new
-                {
-                    FromMonth = FromMonthPicker.SelectedYearMonth,
-                    ToMonth = ToMonthPicker.SelectedYearMonth,
-                    HSCodes = Txt_HS.Text,
-                    PortCodes = txt_Port.Text,
-                    Products = Txt_Product.Text,
-                    Exporters = Txt_Exporter.Text,
-                    Importers = Txt_Importer.Text,
-                    ForeignCountries = txt_ForCount.Text,
-                    ForeignCompanies = Txt_ForName.Text,
-                    IECCodes = Txt_IEC.Text,
-                    Mode = rbExport.IsChecked == true ? "Export" : "Import",
-                    View = MenuAdvancedView.IsChecked ? "Advanced" : "Basic"
-                };
-
-                var json = System.Text.Json.JsonSerializer.Serialize(config, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                var configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "user_settings.json");
-                
-                System.IO.File.WriteAllText(configPath, json);
-                MessageBox.Show($"Current settings saved to: {configPath}", "Settings Saved", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving settings: {ex.Message}", "Save Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _menuService.HandleSaveCommand();
         }
 
         private void MenuSaveAs_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                var saveFileDialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    Title = "Save Configuration As",
-                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    DefaultExt = "json",
-                    InitialDirectory = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config"),
-                    FileName = $"TradeDataHub_Config_{DateTime.Now:yyyyMMdd_HHmmss}.json"
-                };
-
-                if (saveFileDialog.ShowDialog() == true)
-                {
-                    var config = new
-                    {
-                        FromMonth = FromMonthPicker.SelectedYearMonth,
-                        ToMonth = ToMonthPicker.SelectedYearMonth,
-                        HSCodes = Txt_HS.Text,
-                        PortCodes = txt_Port.Text,
-                        Products = Txt_Product.Text,
-                        Exporters = Txt_Exporter.Text,
-                        Importers = Txt_Importer.Text,
-                        ForeignCountries = txt_ForCount.Text,
-                        ForeignCompanies = Txt_ForName.Text,
-                        IECCodes = Txt_IEC.Text,
-                        Mode = rbExport.IsChecked == true ? "Export" : "Import",
-                        View = MenuAdvancedView.IsChecked ? "Advanced" : "Basic"
-                    };
-
-                    var json = System.Text.Json.JsonSerializer.Serialize(config, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                    System.IO.File.WriteAllText(saveFileDialog.FileName, json);
-                    MessageBox.Show($"Configuration saved to: {saveFileDialog.FileName}", "Configuration Saved", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving configuration: {ex.Message}", "Save Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _menuService.HandleSaveAsCommand();
         }
 
         private void MenuExit_Click(object sender, RoutedEventArgs e)
         {
-            // Check if there's an ongoing operation
-            if (_currentCancellationSource != null && !_currentCancellationSource.IsCancellationRequested)
-            {
-                var result = MessageBox.Show("An operation is currently running. Do you want to cancel it and exit?", 
-                                           "Confirm Exit", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (result == MessageBoxResult.Yes)
-                {
-                    _currentCancellationSource.Cancel();
-                    this.Close();
-                }
-            }
-            else
-            {
-                this.Close();
-            }
+            _menuService.HandleExitCommand(this);
         }
 
         // Edit Menu Handlers
@@ -1571,7 +1035,7 @@ namespace TradeDataHub
             }
         }
 
-
+        #endregion
 
         #endregion
     }

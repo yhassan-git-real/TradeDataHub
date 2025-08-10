@@ -268,8 +268,8 @@
                     <!-- Mode Selection -->
                     <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Mode:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                        <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" Margin="0,0,20,0" GroupName="ProcessType" Checked="ProcessType_CheckedChanged"/>
-                        <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" GroupName="ProcessType" Checked="ProcessType_CheckedChanged"/>
+                        <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" Margin="0,0,20,0" GroupName="ProcessType"/>
+                        <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" GroupName="ProcessType"/>
                     </StackPanel>
 
                     <!-- Database Objects Selection -->
