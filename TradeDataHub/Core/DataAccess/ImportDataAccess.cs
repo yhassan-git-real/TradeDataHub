@@ -64,22 +64,15 @@ namespace TradeDataHub.Features.Import
                     }
                 }
                 
-                // Execute stored procedure once
-                using (var cmd = new SqlCommand(effectiveStoredProcedureName, con))
+                // Execute stored procedure - Use string formatting like the VB implementation
+                // This matches the legacy VB code's approach where SQL was constructed as a string
+                string sqlCommand = $"EXEC {effectiveStoredProcedureName} {fromMonth}, {toMonth}, '{hsCode}', '{product}', '{iec}', '{importer}', '{country}', '{name}', '{port}'";
+                
+                using (var cmd = new SqlCommand(sqlCommand, con))
                 {
                     currentCommand = cmd;
-                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandType = CommandType.Text; // Changed to text since we're using string formatting
                     cmd.CommandTimeout = 50000;
-
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_FROM_MONTH, int.Parse(fromMonth));
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_TO_MONTH, int.Parse(toMonth));
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_HS_CODE, hsCode);
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_PRODUCT, product);
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_IEC, iec);
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_IMPORTER, importer);
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_FOREIGN_COUNTRY, country);
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_FOREIGN_NAME, name);
-                    cmd.Parameters.AddWithValue(Core.Helpers.ImportParameterHelper.StoredProcedureParameters.SP_PORT, port);
 
                     // Register cancellation callback to cancel the command
                     using var registration = cancellationToken.Register(() => 

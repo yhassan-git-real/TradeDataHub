@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -211,13 +213,13 @@ namespace TradeDataHub.Core.Services
             return new ExportInputs(
                 _fromMonthPicker?.SelectedYearMonth ?? "",
                 _toMonthPicker?.SelectedYearMonth ?? "",
-                new() { _txtPort?.Text ?? "" },
-                new() { _txtHS?.Text ?? "" },
-                new() { _txtProduct?.Text ?? "" },
-                new() { _txtExporter?.Text ?? "" },
-                new() { _txtIEC?.Text ?? "" },
-                new() { _txtForCount?.Text ?? "" },
-                new() { _txtForName?.Text ?? "" }
+                SplitCommaSeparated(_txtPort?.Text),
+                SplitCommaSeparated(_txtHS?.Text),
+                SplitCommaSeparated(_txtProduct?.Text),
+                SplitCommaSeparated(_txtExporter?.Text),
+                SplitCommaSeparated(_txtIEC?.Text),
+                SplitCommaSeparated(_txtForCount?.Text),
+                SplitCommaSeparated(_txtForName?.Text)
             );
         }
 
@@ -226,14 +228,38 @@ namespace TradeDataHub.Core.Services
             return new ImportInputs(
                 _fromMonthPicker?.SelectedYearMonth ?? "",
                 _toMonthPicker?.SelectedYearMonth ?? "",
-                new() { _txtPort?.Text ?? "" },
-                new() { _txtHS?.Text ?? "" },
-                new() { _txtProduct?.Text ?? "" },
-                new() { _txtImporter?.Text ?? "" },
-                new() { _txtIEC?.Text ?? "" },
-                new() { _txtForCount?.Text ?? "" },
-                new() { _txtForName?.Text ?? "" }
+                SplitCommaSeparated(_txtPort?.Text),
+                SplitCommaSeparated(_txtHS?.Text),
+                SplitCommaSeparated(_txtProduct?.Text),
+                SplitCommaSeparated(_txtImporter?.Text),
+                SplitCommaSeparated(_txtIEC?.Text),
+                SplitCommaSeparated(_txtForCount?.Text),
+                SplitCommaSeparated(_txtForName?.Text)
             );
+        }
+        
+        private System.Collections.Generic.List<string> SplitCommaSeparated(string? input)
+        {
+            // If input is null, empty or just whitespace, return a list with a single "%" wildcard
+            // This matches the VB behavior: If Txt_HS.Text = "" Then Txt_HS.Text = "%"
+            if (string.IsNullOrWhiteSpace(input))
+                return new() { "%" };
+                
+            // If there are no commas, return as a single item list
+            if (!input.Contains(','))
+                return new() { input.Trim() };
+                
+            // Split by comma, trim each value, and ensure no empty values
+            var result = input.Split(',')
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToList();
+                
+            // If after processing we have no items (e.g., only had empty values), return a "%" wildcard
+            if (result.Count == 0)
+                result.Add("%");
+                
+            return result;
         }
     }
 }

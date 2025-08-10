@@ -49,10 +49,27 @@ namespace TradeDataHub.Core.Helpers
         public static string NormalizeParameter(string parameter) =>
             string.IsNullOrWhiteSpace(parameter) ? WILDCARD : parameter.Trim();
 
-        public static List<string> ParseFilterList(string rawText) =>
-            string.IsNullOrWhiteSpace(rawText)
-                ? new List<string> { WILDCARD }
-                : rawText.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+        public static List<string> ParseFilterList(string rawText)
+        {
+            if (string.IsNullOrWhiteSpace(rawText))
+                return new List<string> { WILDCARD };
+                
+            // If there are no commas, return as a single item list
+            if (!rawText.Contains(','))
+                return new List<string> { rawText.Trim() };
+                
+            // Split by comma, trim each value, and ensure no empty values
+            var result = rawText.Split(',')
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToList();
+                
+            // If after processing we have no items, return a "%" wildcard
+            if (result.Count == 0)
+                result.Add(WILDCARD);
+                
+            return result;
+        }
 
         public static Dictionary<string,string> CreateImportParameterSet(
             string fromMonth, string toMonth, string hsCode, string product,

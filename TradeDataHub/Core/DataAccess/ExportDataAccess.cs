@@ -72,20 +72,15 @@ namespace TradeDataHub.Core.DataAccess
                     }
                 }
                 
-                using (var cmd = new SqlCommand(effectiveStoredProcedureName, con))
+                // Execute stored procedure - Use string formatting like the VB implementation
+                // This matches the legacy VB code's approach where SQL was constructed as a string
+                string sqlCommand = $"EXEC {effectiveStoredProcedureName} {fromMonth}, {toMonth}, '{hsCode}', '{product}', '{iec}', '{exporter}', '{country}', '{name}', '{port}'";
+                
+                using (var cmd = new SqlCommand(sqlCommand, con))
                 {
                     currentCommand = cmd;
-                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandType = CommandType.Text; // Changed to text since we're using string formatting
                     cmd.CommandTimeout = 50000;
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_FROM_MONTH, int.Parse(fromMonth));
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_TO_MONTH, int.Parse(toMonth));
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_HS_CODE, hsCode);
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_PRODUCT, product);
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_IEC, iec);
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_EXPORTER, exporter);
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_FOREIGN_COUNTRY, country);
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_FOREIGN_NAME, name);
-                    cmd.Parameters.AddWithValue(ExportParameterHelper.StoredProcedureParameters.SP_PORT, port);
 
                     // Register cancellation callback to cancel the command
                     using var registration = cancellationToken.Register(() => 
