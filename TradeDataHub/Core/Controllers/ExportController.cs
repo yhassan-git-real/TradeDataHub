@@ -11,6 +11,7 @@ using TradeDataHub.Features.Monitoring.Services;
 using TradeDataHub.Features.Monitoring.Models;
 using MonitoringLogLevel = TradeDataHub.Features.Monitoring.Models.LogLevel;
 using TradeDataHub.Core.Logging;
+using TradeDataHub.Core.Services;
 
 namespace TradeDataHub.Core.Controllers
 {
@@ -20,49 +21,32 @@ namespace TradeDataHub.Core.Controllers
     public class ExportController : IExportController
     {
         private readonly ExportExcelService _excelService;
-        private readonly IParameterValidator _parameterValidator;
+        private readonly IValidationService _validationService;
+        private readonly IResultProcessorService _resultProcessorService;
         private readonly MonitoringService _monitoringService;
-        private readonly ExportObjectValidationService _exportObjectValidationService;
         private readonly Dispatcher _dispatcher;
 
         public ExportController(
             ExportExcelService excelService, 
-            IParameterValidator parameterValidator, 
+            IValidationService validationService,
+            IResultProcessorService resultProcessorService,
             MonitoringService monitoringService,
-            ExportObjectValidationService exportObjectValidationService,
             Dispatcher dispatcher)
         {
             _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
-            _parameterValidator = parameterValidator ?? throw new ArgumentNullException(nameof(parameterValidator));
+            _validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
+            _resultProcessorService = resultProcessorService ?? throw new ArgumentNullException(nameof(resultProcessorService));
             _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
-            _exportObjectValidationService = exportObjectValidationService ?? throw new ArgumentNullException(nameof(exportObjectValidationService));
             _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
         }
 
         public async Task RunAsync(ExportInputs exportInputs, CancellationToken cancellationToken, string selectedView, string selectedStoredProcedure)
         {
-            // Validate inputs
-            if (exportInputs == null)
+            // Validate using ValidationService
+            var validationResult = _validationService.ValidateExportOperation(exportInputs, selectedView, selectedStoredProcedure);
+            if (!validationResult.IsValid)
             {
-                MessageBox.Show("Export inputs cannot be null.", "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            // Validate selected database objects
-            if (!_exportObjectValidationService.ValidateObjects(selectedView, selectedStoredProcedure))
-            {
-                MessageBox.Show("The selected View or Stored Procedure is not valid. Please select valid database objects.", 
-                    "Invalid Database Objects", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Centralized validation (months + format)
-            var validation = _parameterValidator.ValidateExport(exportInputs);
-            
-            if (!validation.IsValid)
-            {
-                string errorMessage = "Parameter Validation Failed:\n" + string.Join("\n", validation.Errors);
-                MessageBox.Show(errorMessage, "Invalid Parameters", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(validationResult.ErrorMessage, validationResult.Title, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -74,12 +58,8 @@ namespace TradeDataHub.Core.Controllers
             var foreignNames = exportInputs.ForeignNames;
             var iecs = exportInputs.IECs;
 
-            int filesGenerated = 0;
-            int combinationsProcessed = 0;
-            int combinationsSkipped = 0;
-            int skippedNoData = 0;
-            int skippedRowLimit = 0;
-            int cancelledCombinations = 0;
+            // Initialize processing counters
+            var counters = _resultProcessorService.InitializeCounters();
 
             await Task.Run(() =>
             {
@@ -103,14 +83,14 @@ namespace TradeDataHub.Core.Controllers
                                                 cancellationToken.ThrowIfCancellationRequested();
                                             }
 
-                                            combinationsProcessed++;
-                                            _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Running, $"Processing combination {combinationsProcessed}...", "Export"));
+                                            counters.CombinationsProcessed++;
+                                            _resultProcessorService.UpdateProcessingStatus(counters.CombinationsProcessed, _monitoringService, "Export");
 
                                             try
                                             {
                                                 // Step 1: Execute SP and get data reader with row count (single SP execution)
                                                 var result = _excelService.CreateReport(
-                                                    combinationsProcessed, 
+                                                    counters.CombinationsProcessed, 
                                                     exportInputs.FromMonth, 
                                                     exportInputs.ToMonth, 
                                                     hsCode, 
@@ -124,43 +104,24 @@ namespace TradeDataHub.Core.Controllers
                                                     selectedView,
                                                     selectedStoredProcedure);
                                                 
-                                                if (result.Success)
+                                                // Process the result using ResultProcessorService
+                                                _resultProcessorService.ProcessExportResult(counters, result, counters.CombinationsProcessed, _monitoringService);
+                                                
+                                                if (result.IsCancelled)
                                                 {
-                                                    filesGenerated++;
-                                                }
-                                                else if (result.IsCancelled)
-                                                {
-                                                    cancelledCombinations++;
                                                     cancellationToken.ThrowIfCancellationRequested();
-                                                }
-                                                else
-                                                {
-                                                    combinationsSkipped++;
-                                                    
-                                                    // Track skip reasons for better completion message
-                                                    if (result.SkipReason == SkipReason.NoData)
-                                                    {
-                                                        skippedNoData++;
-                                                    }
-                                                    else if (result.SkipReason == SkipReason.ExcelRowLimit)
-                                                    {
-                                                        skippedRowLimit++;
-                                                    }
                                                 }
                                             }
                                             catch (OperationCanceledException)
                                             {
-                                                cancelledCombinations++;
+                                                counters.CancelledCombinations++;
                                                 throw; // Re-throw to exit the loops
                                             }
                                             catch (Exception ex)
                                             {
-                                                // Log individual combination errors but continue processing
-                                                var errorMsg = $"Error processing combination {combinationsProcessed}: {ex.Message}";
-                                                _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Error, errorMsg, "Export"));
-                                                _monitoringService.AddLog(MonitoringLogLevel.Error, errorMsg, "Export");
-                                                System.Diagnostics.Debug.WriteLine($"ERROR: {errorMsg}");
-                                                System.Diagnostics.Debug.WriteLine($"Filters - HSCode:{hsCode}, Product:{product}, IEC:{iec}, Exporter:{exporter}, Country:{country}, Name:{name}, Port:{port}");
+                                                // Handle error using ResultProcessorService
+                                                var filterDetails = $"HSCode:{hsCode}, Product:{product}, IEC:{iec}, Exporter:{exporter}, Country:{country}, Name:{name}, Port:{port}";
+                                                _resultProcessorService.HandleProcessingError(ex, counters.CombinationsProcessed, _monitoringService, "Export", filterDetails);
                                             }
                                         }
                                     }
@@ -174,63 +135,21 @@ namespace TradeDataHub.Core.Controllers
             // Check if operation was cancelled
             if (cancellationToken.IsCancellationRequested)
             {
-                _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Cancelled, $"Export cancelled - {filesGenerated} files generated before cancellation"));
+                _resultProcessorService.HandleCancellation(counters, _monitoringService, "Export");
                 return;
             }
 
-            // Log processing summary
-            SkippedDatasetLogger.LogProcessingSummary(combinationsProcessed, filesGenerated, combinationsSkipped);
+            // Log processing summary using ResultProcessorService
+            _resultProcessorService.LogProcessingSummary(counters);
 
-            // Create enhanced completion summary with clear skip reasons
-            var summaryMessage = "Export Processing Complete\n\n";
-            
-            // Success metrics
-            summaryMessage += $"Files Generated: {filesGenerated:N0} Excel files created successfully\n";
-            summaryMessage += $"Total Processed: {combinationsProcessed:N0} parameter combinations checked\n\n";
-            
-            // Skip details with clear explanations
-            if (combinationsSkipped > 0)
-            {
-                summaryMessage += $"Skipped Combinations: {combinationsSkipped:N0} total\n";
-                
-                if (skippedNoData > 0)
-                {
-                    summaryMessage += $"  • No Data Found: {skippedNoData:N0} combinations had zero matching records\n";
-                }
-                
-                if (skippedRowLimit > 0)
-                {
-                    summaryMessage += $"  • Excel Row Limit: {skippedRowLimit:N0} combinations exceeded 1,048,575 row limit\n";
-                }
-                
-                summaryMessage += $"\nNote: Skipped datasets are logged in: Logs\\SkippedDatasets_{DateTime.Now:yyyyMMdd}.log\n";
-            }
-            
-            // Performance summary
-            if (filesGenerated > 0)
-            {
-                summaryMessage += $"\nSuccess Rate: {(double)filesGenerated / combinationsProcessed * 100:F1}% of combinations produced files";
-            }
+            // Generate completion summary using ResultProcessorService
+            var summaryMessage = _resultProcessorService.GenerateCompletionSummary(counters, "Export");
 
-            // Determine message type and icon based on results
-            var messageType = MessageBoxImage.Information;
-            var messageTitle = "Export Batch Processing Complete";
-            
-            if (filesGenerated == 0)
-            {
-                messageType = MessageBoxImage.Warning;
-                messageTitle = "No Files Generated";
-                summaryMessage += "\n\nNext Steps: Review your filter criteria - all combinations resulted in no data or exceeded limits.";
-            }
-            else if (skippedRowLimit > 0)
-            {
-                messageType = MessageBoxImage.Warning;
-                messageTitle = "Export Processing Complete - Some Data Limits Exceeded";
-                summaryMessage += "\n\nSuggestion: Consider adding more specific filters to reduce row counts for large datasets.";
-            }
+            // Show completion message
+            MessageBox.Show(summaryMessage, "Export Processing Complete", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Completed, GetStatusSummary(filesGenerated, skippedNoData, skippedRowLimit)));
-            MessageBox.Show(summaryMessage, messageTitle, MessageBoxButton.OK, messageType);
+            // Update final status
+            _dispatcher.Invoke(() => _monitoringService.UpdateStatus(StatusType.Completed, GetStatusSummary(counters.FilesGenerated, counters.SkippedNoData, counters.SkippedRowLimit)));
         }
 
         private string GetStatusSummary(int filesGenerated, int skippedNoData, int skippedRowLimit)

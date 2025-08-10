@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace TradeDataHub.Core.Helpers
 {
@@ -59,18 +60,16 @@ namespace TradeDataHub.Core.Helpers
             string mon2 = GetMonthAbbreviation(toMonth);
             string mon = (mon1 == mon2) ? mon1 : $"{mon1}-{mon2}";
 
-            var fileName1 = "";
-            if (hsCode != "%") fileName1 += hsCode;
-            if (product != "%") fileName1 += "_" + product.Replace(' ', '_');
-            if (iec != "%") fileName1 += "_" + iec;
-            if (exporter != "%") fileName1 += "_" + exporter.Replace(' ', '_');
-            if (country != "%") fileName1 += "_" + country.Replace(' ', '_');
-            if (name != "%") fileName1 += "_" + name.Replace(' ', '_');
-            if (port != "%") fileName1 += "_" + port.Replace(' ', '_');
+            // Use the same robust filtering logic as Import service
+            string[] parts = new string[] { hsCode, product, iec, exporter, country, name, port }
+                .Where(p => !string.IsNullOrWhiteSpace(p) && p != "%")
+                .Select(p => p.Replace(' ', '_'))
+                .ToArray();
 
-            if (fileName1.StartsWith("_"))
+            string fileName1 = string.Join("_", parts);
+            if (string.IsNullOrWhiteSpace(fileName1))
             {
-                fileName1 = fileName1.Substring(1);
+                fileName1 = "ALL";
             }
 
             return $"{fileName1}_{mon}EXP.xlsx";
