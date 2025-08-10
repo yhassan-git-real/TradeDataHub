@@ -528,80 +528,17 @@ namespace TradeDataHub.Core.Services
 
         public void HandleUserManualCommand()
         {
-            var manualText = "Trade Data Hub - User Manual\n\n" +
-                           "GETTING STARTED:\n" +
-                           "1. Set the date range using From Month and To Month (YYYYMM format)\n" +
-                           "2. Optionally specify HS Codes for filtering\n" +
-                           "3. Choose Export or Import mode\n" +
-                           "4. Click 'Generate Reports' to process data\n\n" +
-                           "BASIC VIEW:\n" +
-                           "- From/To Month: Date range for data (required)\n" +
-                           "- HS Codes: Product classification codes (optional)\n\n" +
-                           "ADVANCED VIEW:\n" +
-                           "- Port Codes: Filter by specific ports\n" +
-                           "- Products: Filter by product names\n" +
-                           "- Exporters/Importers: Filter by company names\n" +
-                           "- Foreign Countries: Filter by country codes\n" +
-                           "- Foreign Companies: Filter by foreign company names\n" +
-                           "- IEC Codes: Import Export Code filtering\n\n" +
-                           "MONITORING:\n" +
-                           "- System Monitor shows current application status\n" +
-                           "- Activity Monitor displays processing logs\n" +
-                           "- Use Cancel button to stop ongoing operations\n\n" +
-                           "OUTPUT:\n" +
-                           "- Excel files are saved to EXPORT_Excel or IMPORT_Excel folders\n" +
-                           "- Log files are saved to Logs folder\n\n" +
-                           "For more detailed documentation, please refer to the README.md file.";
-            
-            MessageBox.Show(manualText, "User Manual", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(TradeDataHub.Resources.TextResources.UserManualText, "User Manual", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         public void HandleQuickStartCommand()
         {
-            var quickStartText = "Quick Start Guide\n\n" +
-                               "1. BASIC SETUP:\n" +
-                               "   • Enter From Month: 202501 (for January 2025)\n" +
-                               "   • Enter To Month: 202501 (same month for single month)\n" +
-                               "   • Leave HS Codes empty for all products\n\n" +
-                               "2. SELECT MODE:\n" +
-                               "   • Choose 'Export' for export data analysis\n" +
-                               "   • Choose 'Import' for import data analysis\n\n" +
-                               "3. GENERATE REPORT:\n" +
-                               "   • Click 'Generate Reports' button\n" +
-                               "   • Monitor progress in the System Monitor\n" +
-                               "   • Check Activity Monitor for detailed logs\n\n" +
-                               "4. VIEW RESULTS:\n" +
-                               "   • Excel files will be saved automatically\n" +
-                               "   • Location: EXPORT_Excel or IMPORT_Excel folder\n" +
-                               "   • Check logs in Logs folder for any issues\n\n" +
-                               "TIP: Use Advanced View for more detailed filtering options!";
-            
-            MessageBox.Show(quickStartText, "Quick Start Guide", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(TradeDataHub.Resources.TextResources.QuickStartText, "Quick Start Guide", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         public void HandleKeyboardShortcutsCommand()
         {
-            string shortcuts = "Keyboard Shortcuts:\n\n" +
-                              "File Operations:\n" +
-                              "Ctrl+N - New\n" +
-                              "Ctrl+O - Open\n" +
-                              "Ctrl+S - Save\n" +
-                              "Ctrl+Shift+S - Save As\n" +
-                              "Alt+F4 - Exit\n\n" +
-                              "Edit Operations:\n" +
-                              "Ctrl+Z - Undo\n" +
-                              "Ctrl+Y - Redo\n" +
-                              "Ctrl+X - Cut\n" +
-                              "Ctrl+C - Copy\n" +
-                              "Ctrl+V - Paste\n" +
-                              "Ctrl+A - Select All\n\n" +
-                              "View Operations:\n" +
-                              "F5 - Refresh\n" +
-                              "F11 - Full Screen\n\n" +
-                              "Help:\n" +
-                              "F1 - User Manual";
-            
-            MessageBox.Show(shortcuts, "Keyboard Shortcuts", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(TradeDataHub.Resources.TextResources.KeyboardShortcutsText, "Keyboard Shortcuts", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         public void HandleOnlineHelpCommand()
@@ -644,41 +581,7 @@ namespace TradeDataHub.Core.Services
 
         public void HandleAboutCommand()
         {
-            try
-            {
-                var assemblyVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-                var buildDate = File.GetCreationTime(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                
-                var aboutText = "Trade Data Hub\n" +
-                              $"Version {assemblyVersion?.ToString() ?? "1.0.0"}\n" +
-                              $"Build Date: {buildDate:yyyy-MM-dd HH:mm}\n\n" +
-                              "A professional application for managing and analyzing international trade data.\n\n" +
-                              "KEY FEATURES:\n" +
-                              "• Export and Import trade data processing\n" +
-                              "• Advanced filtering and search capabilities\n" +
-                              "• Real-time monitoring and logging\n" +
-                              "• Professional Excel report generation\n" +
-                              "• Configurable data parameters\n" +
-                              "• Comprehensive error handling\n\n" +
-                              "SUPPORTED FORMATS:\n" +
-                              "• Excel (.xlsx) input and output\n" +
-                              "• JSON configuration files\n" +
-                              "• SQL Server database connectivity\n\n" +
-                              "SYSTEM REQUIREMENTS:\n" +
-                              "• Windows 10/11\n" +
-                              "• .NET 8.0 Runtime\n" +
-                              "• SQL Server connection\n\n" +
-                              "© 2025 Trade Data Hub Development Team\n" +
-                              "All rights reserved.\n\n" +
-                              "For support and documentation:\n" +
-                              "https://github.com/yhassan-git-real/TradeDataHub.02";
-                
-                MessageBox.Show(aboutText, "About Trade Data Hub", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error displaying about information: {ex.Message}", "About Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            MessageBox.Show(TradeDataHub.Resources.TextResources.AboutText, "About Trade Data Hub", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         #endregion
