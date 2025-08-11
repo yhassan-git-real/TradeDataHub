@@ -14,6 +14,7 @@ namespace TradeDataHub
         #region Fields
 
         private readonly ServiceContainer _services;
+        private readonly DatabaseConnectionService _databaseConnectionService;
 
         #endregion
 
@@ -52,6 +53,12 @@ namespace TradeDataHub
         {
             InitializeComponent();
             
+            // Initialize database connection service
+            _databaseConnectionService = DatabaseConnectionService.Instance;
+            
+            // Set DataContext for binding
+            this.DataContext = _databaseConnectionService;
+            
             // Initialize all services through container
             _services = new ServiceContainer();
             _services.InitializeServices(this);
@@ -70,6 +77,70 @@ namespace TradeDataHub
             InitializeServices();
             InitializeEventHandlers();
             ApplyInitialUIState();
+            InitializeDatabaseConnectionUI();
+        }
+
+        /// <summary>
+        /// Initialize database connection UI updates
+        /// </summary>
+        private void InitializeDatabaseConnectionUI()
+        {
+            // Subscribe to database connection changes
+            _databaseConnectionService.PropertyChanged += OnDatabaseConnectionChanged;
+            
+            // Initial update of database connection info
+            UpdateDatabaseConnectionUI();
+        }
+
+        private void OnDatabaseConnectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            // Update UI on UI thread
+            if (this.Dispatcher.CheckAccess())
+            {
+                UpdateDatabaseConnectionUI();
+            }
+            else
+            {
+                this.Dispatcher.BeginInvoke(UpdateDatabaseConnectionUI);
+            }
+        }
+
+        private void UpdateDatabaseConnectionUI()
+        {
+            var connectionInfo = _databaseConnectionService.ConnectionInfo;
+            
+            // Update server name
+            if (this.FindName("ServerNameText") is TextBlock serverNameText)
+            {
+                serverNameText.Text = connectionInfo.ServerName;
+            }
+            
+            // Update database name
+            if (this.FindName("DatabaseNameText") is TextBlock databaseNameText)
+            {
+                databaseNameText.Text = connectionInfo.DatabaseName;
+            }
+            
+            // Update user account
+            if (this.FindName("UserAccountText") is TextBlock userAccountText)
+            {
+                userAccountText.Text = connectionInfo.UserAccount;
+            }
+            
+            // Update connection status
+            if (this.FindName("ConnectionStatusText") is TextBlock connectionStatusText)
+            {
+                connectionStatusText.Text = connectionInfo.ConnectionStatus;
+                connectionStatusText.Foreground = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(connectionInfo.StatusColor));
+            }
+            
+            // Update status indicator
+            if (this.FindName("DatabaseStatusIndicator") is System.Windows.Shapes.Ellipse statusIndicator)
+            {
+                statusIndicator.Fill = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(connectionInfo.StatusColor));
+            }
         }
 
         /// <summary>
@@ -154,7 +225,6 @@ namespace TradeDataHub
         {
             ApplyModeUI();
         }
-        
 
 
 

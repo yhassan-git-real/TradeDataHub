@@ -38,16 +38,41 @@ namespace TradeDataHub.Features.Monitoring.Controls
             
             // Set up data binding
             DataContext = this; // Changed to bind to this control for IsExpanded property
-            LogsListView.ItemsSource = _monitoringService.LogEntries;
             
             // Subscribe to events
             _monitoringService.StatusChanged += OnStatusChanged;
             _monitoringService.LogAdded += OnLogAdded;
             _monitoringService.PropertyChanged += OnMonitoringServicePropertyChanged;
             
-            // Initialize UI
-            UpdateStatusDisplay();
-            UpdateLogCounts();
+            // Initialize UI components that exist
+            InitializeUIComponents();
+        }
+
+        private void InitializeUIComponents()
+        {
+            try
+            {
+                // Try to initialize components that may exist
+                if (this.FindName("LogsListView") is ListView logsListView)
+                {
+                    logsListView.ItemsSource = _monitoringService.LogEntries;
+                }
+                
+                // Wire up search functionality after initialization
+                if (this.FindName("LogSearchTextBox") is TextBox searchTextBox)
+                {
+                    searchTextBox.TextChanged += LogSearchTextBox_TextChanged;
+                }
+                
+                // Initialize other UI elements
+                UpdateStatusDisplay();
+                UpdateLogCounts();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash
+                System.Diagnostics.Debug.WriteLine($"Error initializing UI components: {ex.Message}");
+            }
         }
 
         private void OnStatusChanged(object sender, MonitorStatus status)
@@ -66,9 +91,9 @@ namespace TradeDataHub.Features.Monitoring.Controls
                 UpdateLogCounts();
                 
                 // Auto-scroll to bottom if enabled
-                if (_isAutoScrollEnabled && LogsListView.Items.Count > 0)
+                if (_isAutoScrollEnabled && this.FindName("LogsListView") is ListView logsListView && logsListView.Items.Count > 0)
                 {
-                    LogsListView.ScrollIntoView(LogsListView.Items[LogsListView.Items.Count - 1]);
+                    logsListView.ScrollIntoView(logsListView.Items[logsListView.Items.Count - 1]);
                 }
             });
         }
@@ -88,23 +113,44 @@ namespace TradeDataHub.Features.Monitoring.Controls
         {
             var status = _monitoringService.CurrentStatus;
             
-            // Update status badge
-            StatusText.Text = status.StatusDisplayText;
-            StatusMessage.Text = status.StatusMessage;
-            
-            // Update status badge color
-            var color = (SolidColorBrush)new BrushConverter().ConvertFromString(status.StatusColor);
-            StatusBadge.Background = color;
-            StatusIndicator.Fill = color;
-            
-            // Update progress
-            ProgressBar.Value = status.ProgressPercentage;
-            ProgressText.Text = $"{status.ProgressPercentage}%";
-            
-            // Show/hide progress based on status
-            var showProgress = status.CurrentStatus == StatusType.Running;
-            ProgressBar.Visibility = showProgress ? Visibility.Visible : Visibility.Collapsed;
-            ProgressText.Visibility = showProgress ? Visibility.Visible : Visibility.Collapsed;
+            try
+            {
+                // Update status badge
+                if (this.FindName("StatusText") is TextBlock statusText)
+                    statusText.Text = status.StatusDisplayText;
+                if (this.FindName("StatusMessage") is TextBlock statusMessage)
+                    statusMessage.Text = status.StatusMessage;
+                
+                // Update status badge color
+                var color = (SolidColorBrush?)new BrushConverter().ConvertFromString(status.StatusColor);
+                if (color != null)
+                {
+                    if (this.FindName("StatusBadge") is Border statusBadge)
+                        statusBadge.Background = color;
+                    if (this.FindName("StatusIndicator") is System.Windows.Shapes.Ellipse statusIndicator)
+                        statusIndicator.Fill = color;
+                }
+                
+                // Update progress
+                if (this.FindName("ProgressBar") is ProgressBar progressBar)
+                {
+                    progressBar.Value = status.ProgressPercentage;
+                    // Show/hide progress based on status
+                    var showProgress = status.CurrentStatus == StatusType.Running;
+                    progressBar.Visibility = showProgress ? Visibility.Visible : Visibility.Collapsed;
+                }
+                
+                if (this.FindName("ProgressText") is TextBlock progressText)
+                {
+                    progressText.Text = $"{status.ProgressPercentage}%";
+                    var showProgress = status.CurrentStatus == StatusType.Running;
+                    progressText.Visibility = showProgress ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating status display: {ex.Message}");
+            }
             
             // Update detailed information
             UpdateDetailedInformation();
@@ -112,27 +158,43 @@ namespace TradeDataHub.Features.Monitoring.Controls
 
         private void UpdateLogCounts()
         {
-            LogCountText.Text = $"{_monitoringService.LogEntries.Count} entries";
-            // LastUpdateText was removed in UI modernization - timestamp now handled by status message
-            // LastUpdateText.Text = $"Last: {DateTime.Now:HH:mm:ss}";
+            try
+            {
+                if (this.FindName("LogCountText") is TextBlock logCountText)
+                    logCountText.Text = $"{_monitoringService.LogEntries.Count} entries";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating log counts: {ex.Message}");
+            }
         }
 
         private void UpdateDetailedInformation()
         {
             var status = _monitoringService.CurrentStatus;
             
-            // Update detailed information with clean text (icons are in XAML)
-            CurrentFileText.Text = !string.IsNullOrEmpty(status.CurrentFileName) 
-                ? status.CurrentFileName 
-                : "No file active";
-                
-            RecordCountText.Text = !string.IsNullOrEmpty(status.RecordCount) 
-                ? $"{status.RecordCount} records" 
-                : "0 records";
-                
-            ElapsedTimeText.Text = !string.IsNullOrEmpty(status.ElapsedTime) 
-                ? status.ElapsedTime 
-                : "00:00.000";
+            try
+            {
+                // Update detailed information with clean text (icons are in XAML)
+                if (this.FindName("CurrentFileText") is TextBlock currentFileText)
+                    currentFileText.Text = !string.IsNullOrEmpty(status.CurrentFileName) 
+                        ? status.CurrentFileName 
+                        : "No file active";
+                    
+                if (this.FindName("RecordCountText") is TextBlock recordCountText)
+                    recordCountText.Text = !string.IsNullOrEmpty(status.RecordCount) 
+                        ? $"{status.RecordCount} records" 
+                        : "0 records";
+                    
+                if (this.FindName("ElapsedTimeText") is TextBlock elapsedTimeText)
+                    elapsedTimeText.Text = !string.IsNullOrEmpty(status.ElapsedTime) 
+                        ? status.ElapsedTime 
+                        : "00:00.000";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating detailed information: {ex.Message}");
+            }
         }
 
         private void ClearLogsButton_Click(object sender, RoutedEventArgs e)
@@ -142,8 +204,11 @@ namespace TradeDataHub.Features.Monitoring.Controls
 
         private void AutoScrollToggle_Click(object sender, RoutedEventArgs e)
         {
-            _isAutoScrollEnabled = AutoScrollToggle.IsChecked ?? false;
-            _monitoringService.IsAutoScrollEnabled = _isAutoScrollEnabled;
+            if (this.FindName("AutoScrollToggle") is System.Windows.Controls.Primitives.ToggleButton autoScrollToggle)
+            {
+                _isAutoScrollEnabled = autoScrollToggle.IsChecked ?? false;
+                _monitoringService.IsAutoScrollEnabled = _isAutoScrollEnabled;
+            }
         }
 
         // Public methods for external control
@@ -184,16 +249,22 @@ namespace TradeDataHub.Features.Monitoring.Controls
 
         private void AnimateExpandCollapseIcon()
         {
-            var iconElement = ExpandCollapseIcon;
-            if (iconElement?.RenderTransform is RotateTransform rotateTransform)
+            try
             {
-                var rotateAnimation = new DoubleAnimation
+                if (this.FindName("ExpandCollapseIcon") is FrameworkElement iconElement && iconElement.RenderTransform is RotateTransform rotateTransform)
                 {
-                    To = IsExpanded ? 0 : 180,
-                    Duration = TimeSpan.FromMilliseconds(250),
-                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
-                };
-                rotateTransform.BeginAnimation(RotateTransform.AngleProperty, rotateAnimation);
+                    var rotateAnimation = new DoubleAnimation
+                    {
+                        To = IsExpanded ? 0 : 180,
+                        Duration = TimeSpan.FromMilliseconds(250),
+                        EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+                    };
+                    rotateTransform.BeginAnimation(RotateTransform.AngleProperty, rotateAnimation);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error animating expand/collapse icon: {ex.Message}");
             }
         }
 
@@ -210,6 +281,91 @@ namespace TradeDataHub.Features.Monitoring.Controls
         public void SetWarning(string warningMessage)
         {
             _monitoringService.SetWarning(warningMessage);
+        }
+
+        private void LogSearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var searchBox = sender as TextBox;
+            var searchText = searchBox?.Text ?? string.Empty;
+            
+            // Don't apply filter if showing placeholder text
+            if (searchText == "Search logs..." || searchBox?.Foreground == System.Windows.Media.Brushes.Gray)
+            {
+                if (this.FindName("ClearSearchButton") is Button clearSearchButton)
+                    clearSearchButton.Visibility = Visibility.Collapsed;
+                // Remove any existing filter
+                if (this.FindName("LogsListView") is ListView logsListView && logsListView.ItemsSource != null)
+                {
+                    var collectionView = System.Windows.Data.CollectionViewSource.GetDefaultView(logsListView.ItemsSource);
+                    if (collectionView != null)
+                        collectionView.Filter = null;
+                }
+                return;
+            }
+            
+            // Show/hide clear button based on text content
+            if (this.FindName("ClearSearchButton") is Button clearBtn)
+                clearBtn.Visibility = string.IsNullOrEmpty(searchText) ? Visibility.Collapsed : Visibility.Visible;
+            
+            // Apply filter to the ListView
+            ApplyLogFilter(searchText);
+        }
+
+        private void LogSearchTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox != null && textBox.Text == "Search logs..." && textBox.Foreground == System.Windows.Media.Brushes.Gray)
+            {
+                textBox.Text = "";
+                textBox.Foreground = System.Windows.Media.Brushes.Black;
+            }
+        }
+
+        private void LogSearchTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (textBox != null && string.IsNullOrWhiteSpace(textBox.Text))
+            {
+                textBox.Text = "Search logs...";
+                textBox.Foreground = System.Windows.Media.Brushes.Gray;
+            }
+        }
+
+        private void ClearSearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.FindName("LogSearchTextBox") is TextBox logSearchTextBox)
+            {
+                logSearchTextBox.Text = string.Empty;
+                logSearchTextBox.Focus();
+            }
+        }
+
+        private void ApplyLogFilter(string searchText)
+        {
+            if (this.FindName("LogsListView") is ListView logsListView && logsListView.Items != null)
+            {
+                var collectionView = System.Windows.Data.CollectionViewSource.GetDefaultView(logsListView.ItemsSource);
+                
+                if (string.IsNullOrWhiteSpace(searchText))
+                {
+                    // Remove filter if search text is empty
+                    collectionView.Filter = null;
+                }
+                else
+                {
+                    // Apply filter based on search text
+                    collectionView.Filter = item =>
+                    {
+                        if (item is LogEntry logEntry)
+                        {
+                            return logEntry.Message.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                   logEntry.Level.ToString().IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                   logEntry.Source.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0;
+                        }
+                        return false;
+                    };
+                }
+            }
         }
     }
 }
