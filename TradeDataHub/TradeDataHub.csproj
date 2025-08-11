@@ -9,6 +9,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>TradeDataHub</RootNamespace>
     <AssemblyName>TradeDataHub</AssemblyName>
+    <ApplicationIcon>Resources\tradedatahub_excel_theme.ico</ApplicationIcon>
+    <Title>TradeDataHub</Title>
+    <Description>Professional Trade Data Management Hub</Description>
+    <Company>Your Company Name</Company>
+    <Product>TradeDataHub</Product>
+    <Copyright>Copyright © 2025 Your Company Name</Copyright>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
