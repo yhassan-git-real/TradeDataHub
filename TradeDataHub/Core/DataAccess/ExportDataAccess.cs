@@ -7,6 +7,7 @@ using TradeDataHub.Features.Export;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using TradeDataHub.Core.Database;
+using TradeDataHub.Core.Services;
 using System.Threading;
 using TradeDataHub.Core.Cancellation;
 
@@ -21,26 +22,9 @@ namespace TradeDataHub.Core.DataAccess
         public ExportDataAccess()
         {
             _logger = LoggingHelper.Instance;
-            _exportSettings = LoadExportSettings();
-            _dbSettings = LoadSharedDatabaseSettings();
-        }
-
-        private ExportSettings LoadExportSettings()
-        {
-            const string json = "Config/export.appsettings.json";
-            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json,false);
-            var cfg = builder.Build();
-            var root = cfg.Get<ExportSettingsRoot>() ?? throw new InvalidOperationException("Failed to bind ExportSettingsRoot");
-            return root.ExportSettings;
-        }
-
-        private SharedDatabaseSettings LoadSharedDatabaseSettings()
-        {
-            const string json = "Config/database.appsettings.json";
-            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json,false);
-            var cfg = builder.Build();
-            var root = cfg.Get<SharedDatabaseSettingsRoot>() ?? throw new InvalidOperationException("Failed to bind SharedDatabaseSettingsRoot");
-            return root.DatabaseConfig;
+            // Use cached configuration loading for better performance
+            _exportSettings = ConfigurationCacheService.GetExportSettings();
+            _dbSettings = ConfigurationCacheService.GetSharedDatabaseSettings();
         }
 
         public (SqlConnection connection, SqlDataReader reader, long recordCount) GetDataReader(string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port, CancellationToken cancellationToken = default, string? viewName = null, string? storedProcedureName = null)
@@ -72,15 +56,23 @@ namespace TradeDataHub.Core.DataAccess
                     }
                 }
                 
-                // Execute stored procedure - Use string formatting like the VB implementation
-                // This matches the legacy VB code's approach where SQL was constructed as a string
-                string sqlCommand = $"EXEC {effectiveStoredProcedureName} {fromMonth}, {toMonth}, '{hsCode}', '{product}', '{iec}', '{exporter}', '{country}', '{name}', '{port}'";
-                
-                using (var cmd = new SqlCommand(sqlCommand, con))
+                // Execute stored procedure using parameterized query for better performance and security
+                using (var cmd = new SqlCommand(effectiveStoredProcedureName, con))
                 {
                     currentCommand = cmd;
-                    cmd.CommandType = CommandType.Text; // Changed to text since we're using string formatting
-                    cmd.CommandTimeout = 50000;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandTimeout = _dbSettings.CommandTimeoutSeconds; // Use configurable timeout for long-running operations
+
+                    // Add parameters with correct names matching the stored procedure
+                    cmd.Parameters.AddWithValue("@fromMonth", fromMonth);
+                    cmd.Parameters.AddWithValue("@ToMonth", toMonth);
+                    cmd.Parameters.AddWithValue("@hs", hsCode);
+                    cmd.Parameters.AddWithValue("@prod", product);
+                    cmd.Parameters.AddWithValue("@Iec", iec);
+                    cmd.Parameters.AddWithValue("@ExpCmp", exporter);
+                    cmd.Parameters.AddWithValue("@forcount", country);
+                    cmd.Parameters.AddWithValue("@forname", name);
+                    cmd.Parameters.AddWithValue("@port", port);
 
                     // Register cancellation callback to cancel the command
                     using var registration = cancellationToken.Register(() => 
@@ -98,7 +90,7 @@ namespace TradeDataHub.Core.DataAccess
                 using (var countCmd = new SqlCommand($"SELECT COUNT(*) FROM {effectiveViewName}", con))
                 {
                     currentCommand = countCmd;
-                    countCmd.CommandTimeout = 50000;
+                    countCmd.CommandTimeout = _dbSettings.CommandTimeoutSeconds; // Use configurable timeout for long-running operations
 
                     using var registration = cancellationToken.Register(() => 
                     {
@@ -111,7 +103,7 @@ namespace TradeDataHub.Core.DataAccess
 
                 var dataCmd = new SqlCommand($"SELECT * FROM {effectiveViewName} ORDER BY [{effectiveOrderByColumn}]", con);
                 currentCommand = dataCmd;
-                dataCmd.CommandTimeout = 50000;
+                dataCmd.CommandTimeout = _dbSettings.CommandTimeoutSeconds; // Use configurable timeout for long-running operations
 
                 using var dataRegistration = cancellationToken.Register(() => 
                 {

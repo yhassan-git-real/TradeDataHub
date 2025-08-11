@@ -1,6 +1,7 @@
 {
   "DatabaseConfig": {
-    "ConnectionString": "Server=MATRIX;Database=Raw_Process;User Id=module;Password=tcs@2015;TrustServerCertificate=true;Encrypt=false;Integrated Security=false;MultipleActiveResultSets=true;",
+    "ConnectionString": "Server=MATRIX;Database=Raw_Process;User Id=module;Password=tcs@2015;TrustServerCertificate=true;Encrypt=false;Integrated Security=false;MultipleActiveResultSets=true;Connection Timeout=3600;",
+    "CommandTimeoutSeconds": 3600,
     "LogDirectory": "F:\\TradeDataHub.02\\Logs"
   }
 }

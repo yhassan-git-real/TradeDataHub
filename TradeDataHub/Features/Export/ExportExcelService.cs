@@ -11,6 +11,7 @@ using TradeDataHub.Core.DataAccess;
 using TradeDataHub.Core.Database;
 using TradeDataHub.Core.Helpers;
 using TradeDataHub.Core.Logging;
+using TradeDataHub.Core.Services;
 using System.Threading;
 using TradeDataHub.Core.Cancellation;
 
@@ -46,38 +47,11 @@ public class ExportExcelService
 
 	public ExportExcelService()
 	{
-		_formatSettings = LoadExcelFormatSettings();
+		// Use cached configuration loading for better performance
+		_formatSettings = ConfigurationCacheService.GetExcelFormatSettings();
 		_logger = ModuleLoggerFactory.GetExportLogger();
-		_exportSettings = LoadExportSettings();
-		_dbSettings = LoadSharedDatabaseSettings();
-	}
-
-	private ExcelFormatSettings LoadExcelFormatSettings()
-	{
-		const string jsonFileName = "Config/excelFormatting.json";
-		if (!File.Exists(jsonFileName))
-			throw new FileNotFoundException($"Excel formatting file '{jsonFileName}' not found.");
-		var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(jsonFileName, false);
-		var config = builder.Build();
-		return config.Get<ExcelFormatSettings>()!;
-	}
-
-	private ExportSettings LoadExportSettings()
-	{
-		const string json = "Config/export.appsettings.json";
-		var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json, false);
-		var cfg = builder.Build();
-		var root = cfg.Get<ExportSettingsRoot>() ?? throw new InvalidOperationException("Failed to bind ExportSettingsRoot");
-		return root.ExportSettings;
-	}
-
-	private SharedDatabaseSettings LoadSharedDatabaseSettings()
-	{
-		const string json = "Config/database.appsettings.json";
-		var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json, false);
-		var cfg = builder.Build();
-		var root = cfg.Get<SharedDatabaseSettingsRoot>() ?? throw new InvalidOperationException("Failed to bind SharedDatabaseSettingsRoot");
-		return root.DatabaseConfig;
+		_exportSettings = ConfigurationCacheService.GetExportSettings();
+		_dbSettings = ConfigurationCacheService.GetSharedDatabaseSettings();
 	}
 
 	public ExcelResult CreateReport(int combinationNumber, string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port, CancellationToken cancellationToken = default, string? viewName = null, string? storedProcedureName = null)
@@ -136,29 +110,24 @@ public class ExportExcelService
 				cancellationToken.ThrowIfCancellationRequested();
 
 				int fieldCount = reader.FieldCount;
-				worksheet.Cells.Style.Font.Name = _formatSettings.FontName;
-				worksheet.Cells.Style.Font.Size = _formatSettings.FontSize;
-				worksheet.Cells.Style.WrapText = _formatSettings.WrapText;
-				foreach (int dateCol in _formatSettings.DateColumns)
-					if (dateCol > 0 && dateCol <= fieldCount)
-						worksheet.Column(dateCol).Style.Numberformat.Format = _formatSettings.DateFormat;
-				foreach (int textCol in _formatSettings.TextColumns)
-					if (textCol > 0 && textCol <= fieldCount)
-						worksheet.Column(textCol).Style.Numberformat.Format = "@";
-
+				
 				cancellationToken.ThrowIfCancellationRequested();
 
+				// Add headers first
 				for (int col = 0; col < fieldCount; col++)
 					worksheet.Cells[1, col + 1].Value = reader.GetName(col);
 				
 				cancellationToken.ThrowIfCancellationRequested();
 
+				// Load data from reader
 				worksheet.Cells[2, 1].LoadFromDataReader(reader, false);
 				
 				cancellationToken.ThrowIfCancellationRequested();
-
+				
 				int lastRow = (int)recordCount + 1; // include header
-				ApplyExcelFormatting(worksheet, lastRow, fieldCount);
+				
+				// Apply range-based formatting for better performance
+				ApplyOptimizedExcelFormatting(worksheet, lastRow, fieldCount);
 				
 				cancellationToken.ThrowIfCancellationRequested();
 
@@ -168,7 +137,18 @@ public class ExportExcelService
 				partialFilePath = outputPath; // Track for cleanup if cancelled
 
 				using var saveTimer = _logger.StartTimer("File Save", processId);
-				package.SaveAs(new FileInfo(outputPath));
+				// Use memory stream for better performance with smaller files
+				if (recordCount < 50000) // Use memory stream for smaller datasets
+				{
+					using var memoryStream = new MemoryStream();
+					package.SaveAs(memoryStream);
+					File.WriteAllBytes(outputPath, memoryStream.ToArray());
+				}
+				else
+				{
+					// For larger datasets, use direct file save
+					package.SaveAs(new FileInfo(outputPath));
+				}
 				_logger.LogFileSave("Completed", saveTimer.Elapsed, processId);
 				saveTimer.Dispose();
 
@@ -202,11 +182,29 @@ public class ExportExcelService
 		}
 	}
 
-	private void ApplyExcelFormatting(ExcelWorksheet worksheet, int lastRow, int colCount)
+	private void ApplyOptimizedExcelFormatting(ExcelWorksheet worksheet, int lastRow, int colCount)
 	{
 		if (lastRow <= 1) return;
+
+		// Apply font settings to entire worksheet range at once (much faster than cell-by-cell)
+		var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
+		allCellsRange.Style.Font.Name = _formatSettings.FontName;
+		allCellsRange.Style.Font.Size = _formatSettings.FontSize;
+		allCellsRange.Style.WrapText = _formatSettings.WrapText;
+
+		// Apply column-specific formatting in batches
+		foreach (int dateCol in _formatSettings.DateColumns)
+			if (dateCol > 0 && dateCol <= colCount)
+				worksheet.Column(dateCol).Style.Numberformat.Format = _formatSettings.DateFormat;
+				
+		foreach (int textCol in _formatSettings.TextColumns)
+			if (textCol > 0 && textCol <= colCount)
+				worksheet.Column(textCol).Style.Numberformat.Format = "@";
+
 		var borderStyle = (_formatSettings.BorderStyle?.Equals("none", StringComparison.OrdinalIgnoreCase) == true)
 			? ExcelBorderStyle.None : ExcelBorderStyle.Thin;
+
+		// Apply header formatting to entire header row at once
 		var headerRange = worksheet.Cells[1, 1, 1, colCount];
 		headerRange.Style.Font.Bold = true;
 		headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
@@ -215,6 +213,8 @@ public class ExportExcelService
 		headerRange.Style.Border.Left.Style = borderStyle;
 		headerRange.Style.Border.Right.Style = borderStyle;
 		headerRange.Style.Border.Bottom.Style = borderStyle;
+
+		// Apply data formatting to entire data range at once
 		if (lastRow > 1)
 		{
 			var dataRange = worksheet.Cells[2, 1, lastRow, colCount];
@@ -223,6 +223,8 @@ public class ExportExcelService
 			dataRange.Style.Border.Right.Style = borderStyle;
 			dataRange.Style.Border.Bottom.Style = borderStyle;
 		}
+
+		// Auto-fit columns using sample data for performance
 		if (_formatSettings.AutoFitColumns)
 		{
 			int sampleLimit = _formatSettings.AutoFitSampleRows > 0 ? _formatSettings.AutoFitSampleRows : 1000;
