@@ -35,11 +35,10 @@ namespace TradeDataHub.Core.Services
         private MenuItem? _menuBasicView;
         private MenuItem? _menuMonitoringPanel;
         private Grid? _monitoringPanel;
-        private Border? _activeIndicator;
+        private Border? _basicOption;
+        private Border? _allOption;
         private TextBlock? _basicText;
-        private System.Windows.Shapes.Path? _basicIcon;
         private TextBlock? _allText;
-        private System.Windows.Shapes.Path? _allIcon;
 
         public MenuService()
         {
@@ -68,11 +67,10 @@ namespace TradeDataHub.Core.Services
             _menuMonitoringPanel = window.FindName("MenuMonitoringPanel") as MenuItem;
             _monitoringPanel = window.FindName("MonitoringPanel") as Grid;
             _advancedParametersGrid = window.FindName("AdvancedParametersGrid") as Grid;
-            _activeIndicator = window.FindName("ActiveIndicator") as Border;
+            _basicOption = window.FindName("BasicOption") as Border;
+            _allOption = window.FindName("AllOption") as Border;
             _basicText = window.FindName("BasicText") as TextBlock;
-            _basicIcon = window.FindName("BasicIcon") as System.Windows.Shapes.Path;
             _allText = window.FindName("AllText") as TextBlock;
-            _allIcon = window.FindName("AllIcon") as System.Windows.Shapes.Path;
         }
 
         #region File Menu Operations
@@ -639,19 +637,11 @@ namespace TradeDataHub.Core.Services
             if (_advancedParametersGrid != null)
                 _advancedParametersGrid.Visibility = Visibility.Visible;
             
-            // Move active indicator to right (All mode)
-            if (_activeIndicator != null)
-                _activeIndicator.SetValue(Grid.ColumnProperty, 1);
-            
-            // Update colors for All mode
-            if (_basicText != null)
-                _basicText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(108, 117, 125)); // #6C757D
-            if (_basicIcon != null)
-                _basicIcon.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(108, 117, 125));
-            if (_allText != null)
-                _allText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-            if (_allIcon != null)
-                _allIcon.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
+            // Update toggle switch visual state - Set All option as active
+            if (_allOption != null)
+                _allOption.Tag = "Active";
+            if (_basicOption != null)
+                _basicOption.Tag = "Inactive";
             
             // Update menu checkboxes
             if (_menuBasicView != null) _menuBasicView.IsChecked = false;
@@ -664,19 +654,11 @@ namespace TradeDataHub.Core.Services
             if (_advancedParametersGrid != null)
                 _advancedParametersGrid.Visibility = Visibility.Collapsed;
             
-            // Move active indicator to left (Basic mode)
-            if (_activeIndicator != null)
-                _activeIndicator.SetValue(Grid.ColumnProperty, 0);
-            
-            // Update colors for Basic mode
-            if (_basicText != null)
-                _basicText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-            if (_basicIcon != null)
-                _basicIcon.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White);
-            if (_allText != null)
-                _allText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(108, 117, 125)); // #6C757D
-            if (_allIcon != null)
-                _allIcon.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(108, 117, 125));
+            // Update toggle switch visual state - Set Basic option as active
+            if (_basicOption != null)
+                _basicOption.Tag = "Active";
+            if (_allOption != null)
+                _allOption.Tag = "Inactive";
             
             // Update menu checkboxes
             if (_menuBasicView != null) _menuBasicView.IsChecked = true;

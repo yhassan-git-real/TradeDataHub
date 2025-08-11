@@ -95,7 +95,8 @@ namespace TradeDataHub.Features.Monitoring.Controls
         private void UpdateLogCounts()
         {
             LogCountText.Text = $"{_monitoringService.LogEntries.Count} entries";
-            LastUpdateText.Text = $"Last: {DateTime.Now:HH:mm:ss}";
+            // LastUpdateText was removed in UI modernization - timestamp now handled by status message
+            // LastUpdateText.Text = $"Last: {DateTime.Now:HH:mm:ss}";
         }
 
         private void UpdateDetailedInformation()
