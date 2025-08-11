@@ -6,6 +6,7 @@ using OfficeOpenXml.Style;
 using System.Drawing;
 using TradeDataHub.Core.Logging;
 using TradeDataHub.Core.Helpers;
+using TradeDataHub.Core.Services;
 using System.Threading;
 using TradeDataHub.Core.Cancellation;
 
@@ -32,8 +33,9 @@ namespace TradeDataHub.Features.Import
         public ImportExcelService()
         {
             _logger = ModuleLoggerFactory.GetImportLogger();
-            _settings = LoadImportSettings();
-            _format = LoadImportFormatting();
+            // Use cached configuration loading for better performance
+            _settings = ConfigurationCacheService.GetImportSettings();
+            _format = ConfigurationCacheService.GetImportExcelFormatSettings();
         }
 
         private ImportSettings LoadImportSettings()
@@ -109,35 +111,24 @@ namespace TradeDataHub.Features.Import
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    worksheet.Cells.Style.Font.Name = _format.FontName;
-                    worksheet.Cells.Style.Font.Size = _format.FontSize;
-                    worksheet.Cells.Style.WrapText = _format.WrapText;
-
                     int fieldCount = reader.FieldCount;
-                    foreach (int dateCol in _format.DateColumns)
-                    {
-                        if (dateCol > 0 && dateCol <= fieldCount)
-                            worksheet.Column(dateCol).Style.Numberformat.Format = _format.DateFormat;
-                    }
-                    foreach (int textCol in _format.TextColumns)
-                    {
-                        if (textCol > 0 && textCol <= fieldCount)
-                            worksheet.Column(textCol).Style.Numberformat.Format = "@";
-                    }
 
                     cancellationToken.ThrowIfCancellationRequested();
 
+                    // Add headers first
                     for (int col = 0; col < fieldCount; col++)
                         worksheet.Cells[1, col + 1].Value = reader.GetName(col);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
+                    // Load data from reader
                     worksheet.Cells[2, 1].LoadFromDataReader(reader, false);
                     
                     cancellationToken.ThrowIfCancellationRequested();
 
                     int lastRow = (int)recordCount + 1;
-                    ApplyFormatting(worksheet, lastRow, fieldCount);
+                    // Apply optimized range-based formatting
+                    ApplyOptimizedFormatting(worksheet, lastRow, fieldCount);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -146,7 +137,18 @@ namespace TradeDataHub.Features.Import
                     partialFilePath = outputPath; // Track for cleanup if cancelled
 
                     using var saveTimer = _logger.StartTimer("File Save", processId);
-                    package.SaveAs(new FileInfo(outputPath));
+                    // Use memory stream for better performance with smaller files
+                    if (recordCount < 50000) // Use memory stream for smaller datasets
+                    {
+                        using var memoryStream = new MemoryStream();
+                        package.SaveAs(memoryStream);
+                        File.WriteAllBytes(outputPath, memoryStream.ToArray());
+                    }
+                    else
+                    {
+                        // For larger datasets, use direct file save
+                        package.SaveAs(new FileInfo(outputPath));
+                    }
                     _logger.LogFileSave("Completed", saveTimer.Elapsed, processId);
                     saveTimer.Dispose();
 
@@ -181,12 +183,32 @@ namespace TradeDataHub.Features.Import
             }
         }
 
-        private void ApplyFormatting(OfficeOpenXml.ExcelWorksheet worksheet, int lastRow, int colCount)
+        private void ApplyOptimizedFormatting(OfficeOpenXml.ExcelWorksheet worksheet, int lastRow, int colCount)
         {
             if (lastRow <= 1) return;
+
+            // Apply font settings to entire worksheet range at once (much faster than cell-by-cell)
+            var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
+            allCellsRange.Style.Font.Name = _format.FontName;
+            allCellsRange.Style.Font.Size = _format.FontSize;
+            allCellsRange.Style.WrapText = _format.WrapText;
+
+            // Apply column-specific formatting in batches
+            foreach (int dateCol in _format.DateColumns)
+            {
+                if (dateCol > 0 && dateCol <= colCount)
+                    worksheet.Column(dateCol).Style.Numberformat.Format = _format.DateFormat;
+            }
+            foreach (int textCol in _format.TextColumns)
+            {
+                if (textCol > 0 && textCol <= colCount)
+                    worksheet.Column(textCol).Style.Numberformat.Format = "@";
+            }
+
             var borderStyle = (_format.BorderStyle?.Equals("none", StringComparison.OrdinalIgnoreCase) == true)
                 ? ExcelBorderStyle.None : ExcelBorderStyle.Thin;
 
+            // Apply header formatting to entire header row at once
             var headerRange = worksheet.Cells[1,1,1,colCount];
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
@@ -196,6 +218,7 @@ namespace TradeDataHub.Features.Import
             headerRange.Style.Border.Right.Style = borderStyle;
             headerRange.Style.Border.Bottom.Style = borderStyle;
 
+            // Apply data formatting to entire data range at once
             if (lastRow > 1)
             {
                 var dataRange = worksheet.Cells[2,1,lastRow,colCount];
@@ -205,6 +228,7 @@ namespace TradeDataHub.Features.Import
                 dataRange.Style.Border.Bottom.Style = borderStyle;
             }
 
+            // Auto-fit columns using sample data for performance
             if (_format.AutoFitColumns)
             {
                 int sampleLimit = _format.AutoFitSampleRows > 0 ? _format.AutoFitSampleRows : 1000;

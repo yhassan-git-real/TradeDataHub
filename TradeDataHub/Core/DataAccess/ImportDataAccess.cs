@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using TradeDataHub.Core.Logging;
 using TradeDataHub.Core.Helpers;
 using TradeDataHub.Core.Database;
+using TradeDataHub.Core.Services;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Threading;
@@ -21,16 +22,8 @@ namespace TradeDataHub.Features.Import
         {
             _logger = LoggingHelper.Instance;
             _settings = settings;
-            _dbSettings = LoadSharedDatabaseSettings();
-        }
-
-        private SharedDatabaseSettings LoadSharedDatabaseSettings()
-        {
-            const string json = "Config/database.appsettings.json";
-            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json, false);
-            var cfg = builder.Build();
-            var root = cfg.Get<SharedDatabaseSettingsRoot>() ?? throw new InvalidOperationException("Failed to bind SharedDatabaseSettingsRoot");
-            return root.DatabaseConfig;
+            // Use cached configuration loading for better performance (consistent with ExportDataAccess)
+            _dbSettings = ConfigurationCacheService.GetSharedDatabaseSettings();
         }
 
         public (SqlConnection connection, SqlDataReader reader, long recordCount) GetDataReader(
@@ -64,15 +57,23 @@ namespace TradeDataHub.Features.Import
                     }
                 }
                 
-                // Execute stored procedure - Use string formatting like the VB implementation
-                // This matches the legacy VB code's approach where SQL was constructed as a string
-                string sqlCommand = $"EXEC {effectiveStoredProcedureName} {fromMonth}, {toMonth}, '{hsCode}', '{product}', '{iec}', '{importer}', '{country}', '{name}', '{port}'";
-                
-                using (var cmd = new SqlCommand(sqlCommand, con))
+                // Execute stored procedure using parameterized query for better performance and security
+                using (var cmd = new SqlCommand(effectiveStoredProcedureName, con))
                 {
                     currentCommand = cmd;
-                    cmd.CommandType = CommandType.Text; // Changed to text since we're using string formatting
-                    cmd.CommandTimeout = 50000;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandTimeout = _dbSettings.CommandTimeoutSeconds; // Use configurable timeout for long-running operations
+
+                    // Add parameters with correct names matching the stored procedure
+                    cmd.Parameters.AddWithValue("@fromMonth", fromMonth);
+                    cmd.Parameters.AddWithValue("@ToMonth", toMonth);
+                    cmd.Parameters.AddWithValue("@hs", hsCode);
+                    cmd.Parameters.AddWithValue("@prod", product);
+                    cmd.Parameters.AddWithValue("@Iec", iec);
+                    cmd.Parameters.AddWithValue("@ImpCmp", importer);
+                    cmd.Parameters.AddWithValue("@forcount", country);
+                    cmd.Parameters.AddWithValue("@forname", name);
+                    cmd.Parameters.AddWithValue("@port", port);
 
                     // Register cancellation callback to cancel the command
                     using var registration = cancellationToken.Register(() => 
@@ -91,7 +92,7 @@ namespace TradeDataHub.Features.Import
                 using (var countCmd = new SqlCommand($"SELECT COUNT(*) FROM {effectiveViewName}", con))
                 {
                     currentCommand = countCmd;
-                    countCmd.CommandTimeout = 50000;
+                    countCmd.CommandTimeout = _dbSettings.CommandTimeoutSeconds; // Use configurable timeout for long-running operations
 
                     using var registration = cancellationToken.Register(() => 
                     {
@@ -105,7 +106,7 @@ namespace TradeDataHub.Features.Import
                 // Open streaming reader
                 var dataCmd = new SqlCommand($"SELECT * FROM {effectiveViewName} ORDER BY [{effectiveOrderByColumn}]", con);
                 currentCommand = dataCmd;
-                dataCmd.CommandTimeout = 50000;
+                dataCmd.CommandTimeout = _dbSettings.CommandTimeoutSeconds; // Use configurable timeout for long-running operations
 
                 using var dataRegistration = cancellationToken.Register(() => 
                 {
