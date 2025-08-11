@@ -37,7 +37,7 @@ namespace TradeDataHub.Features.Monitoring.Controls
             _monitoringService = MonitoringService.Instance;
             
             // Set up data binding
-            DataContext = this; // Changed to bind to this control for IsExpanded property
+            DataContext = this;
             
             // Subscribe to events
             _monitoringService.StatusChanged += OnStatusChanged;

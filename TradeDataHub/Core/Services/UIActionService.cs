@@ -96,7 +96,6 @@ namespace TradeDataHub.Core.Services
         {
             try
             {
-                // Clean up any previous cancellation source
                 _currentCancellationSource?.Dispose();
                 _currentCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 

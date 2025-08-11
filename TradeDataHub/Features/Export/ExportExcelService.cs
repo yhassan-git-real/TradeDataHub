@@ -34,7 +34,6 @@ public class ExcelResult
 	public bool IsCancelled => SkipReason == SkipReason.Cancelled;
 }
 
-// Renamed from ExcelService to ExportExcelService for clarity
 public class ExportExcelService
 {
 	private readonly ExcelFormatSettings _formatSettings;

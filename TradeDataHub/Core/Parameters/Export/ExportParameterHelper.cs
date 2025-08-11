@@ -5,7 +5,7 @@ using System.Linq;
 namespace TradeDataHub.Core.Helpers
 {
     /// <summary>
-    /// Export parameter helper (formerly Export_ParameterHelper). Independent from import logic.
+    /// Export parameter helper for processing export-specific parameters.
     /// </summary>
     public static class ExportParameterHelper
     {

@@ -138,8 +138,6 @@ namespace TradeDataHub.Core.Logging
             EnqueueLog(LogLevel.INFO, $"🚀 PROCESS START: {processName}", null, processId);
             EnqueueLog(LogLevel.INFO, $"📋 Parameters: {parameters}", null, processId);
             EnqueueLog(LogLevel.INFO, new string('-', 80), null, null);
-            
-            // Removed forced flush - rely on 1-second timer for better performance
         }
 
         public void LogProcessComplete(string processName, TimeSpan elapsed, string result, string processId)
@@ -149,8 +147,6 @@ namespace TradeDataHub.Core.Logging
             EnqueueLog(LogLevel.INFO, $"⏱️  Total Time: {elapsed:mm\\:ss\\.fff}", null, processId);
             EnqueueLog(LogLevel.INFO, $"📊 Result: {result}", null, processId);
             EnqueueLog(LogLevel.INFO, new string('=', 80), null, null);
-            
-            // Removed forced flush - rely on 1-second timer for better performance
         }
 
         public void LogStep(string stepName, string details, string processId)

@@ -9,8 +9,6 @@ namespace TradeDataHub
 {
     public partial class App : Application
     {
-    // Central AppSettings removed (modular configs now used directly by services)
-
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -19,8 +17,6 @@ namespace TradeDataHub
             {
                 // EPPlus license context (non-commercial as per plan)
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                // No central configuration bootstrap needed; each module loads its own JSON.
             }
             catch (Exception ex)
             {
