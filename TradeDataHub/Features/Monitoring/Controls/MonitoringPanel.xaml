@@ -69,11 +69,77 @@
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
+                <!-- Fade-in on load -->
+                <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                           From="0" To="1"
+                                           Duration="{StaticResource Animation.Normal}"
+                                           EasingFunction="{StaticResource Ease.Decelerate}"/>
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                           From="0.95" To="1"
+                                           Duration="{StaticResource Animation.Normal}"
+                                           EasingFunction="{StaticResource Ease.Decelerate}"/>
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                           From="0.95" To="1"
+                                           Duration="{StaticResource Animation.Normal}"
+                                           EasingFunction="{StaticResource Ease.Decelerate}"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                
+                <!-- Enhanced Hover Effects with Animation -->
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource Brush.Background.Secondary}"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
-                    <Setter Property="BorderThickness" Value="1.5"/>
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                              To="{StaticResource Color.Neutral.Gray20}"
+                                              Duration="{StaticResource Animation.Fast}"
+                                              EasingFunction="{StaticResource Ease.Standard}"/>
+                                <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                              To="{StaticResource Color.Primary}"
+                                              Duration="{StaticResource Animation.Fast}"
+                                              EasingFunction="{StaticResource Ease.Standard}"/>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                               To="1.02"
+                                               Duration="{StaticResource Animation.Fast}"
+                                               EasingFunction="{StaticResource Ease.Standard}"/>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                               To="1.02"
+                                               Duration="{StaticResource Animation.Fast}"
+                                               EasingFunction="{StaticResource Ease.Standard}"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Trigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                              Duration="{StaticResource Animation.Fast}"
+                                              EasingFunction="{StaticResource Ease.Standard}"/>
+                                <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                              Duration="{StaticResource Animation.Fast}"
+                                              EasingFunction="{StaticResource Ease.Standard}"/>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                               To="1"
+                                               Duration="{StaticResource Animation.Fast}"
+                                               EasingFunction="{StaticResource Ease.Standard}"/>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                               To="1"
+                                               Duration="{StaticResource Animation.Fast}"
+                                               EasingFunction="{StaticResource Ease.Standard}"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.ExitActions>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -190,13 +256,26 @@
         </Border>
 
         <!-- Modern Activity Monitor Header -->
-        <Border Grid.Row="1" Background="{StaticResource Brush.Background}" 
-                BorderBrush="{StaticResource Brush.Border.Light}" BorderThickness="1,0,1,0" 
+        <Border x:Name="ActivityMonitorHeader"
+                Grid.Row="1" Background="{StaticResource Brush.Background}" 
+                BorderBrush="{StaticResource Brush.Border.Light}" 
                 Padding="16,12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="BorderThickness" Value="1,0,1,0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                            <Setter Property="BorderThickness" Value="1,0,1,1"/>
+                            <Setter Property="CornerRadius" Value="0,0,6,6"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
@@ -215,14 +294,130 @@
                            Margin="8,0,0,0" 
                            VerticalAlignment="Center"
                            HorizontalAlignment="Right"/>
+
+                <!-- Expand/Collapse Toggle Button -->
+                <Button x:Name="ExpandCollapseButton" 
+                        Grid.Column="2" 
+                        Width="32" Height="32"
+                        Margin="8,0,0,0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="ExpandCollapseButton_Click"
+                        Cursor="Hand"
+                        ToolTip="Expand/Collapse Activity Monitor">
+                    <Button.Content>
+                        <Border Background="{StaticResource Brush.Background.Secondary}"
+                                CornerRadius="16"
+                                Width="28" Height="28">
+                            <TextBlock x:Name="ExpandCollapseIcon"
+                                       Text="▼"
+                                       FontSize="10"
+                                       Foreground="{StaticResource Brush.Text.Primary}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       RenderTransformOrigin="0.5,0.5">
+                                <TextBlock.RenderTransform>
+                                    <RotateTransform x:Name="IconRotateTransform" Angle="0"/>
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                        </Border>
+                    </Button.Content>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <ContentPresenter/>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                                           To="1.1"
+                                                                           Duration="{StaticResource Animation.Fast}"
+                                                                           EasingFunction="{StaticResource Ease.Standard}"/>
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                           To="1.1"
+                                                                           Duration="{StaticResource Animation.Fast}"
+                                                                           EasingFunction="{StaticResource Ease.Standard}"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                                           To="1.0"
+                                                                           Duration="{StaticResource Animation.Fast}"
+                                                                           EasingFunction="{StaticResource Ease.Standard}"/>
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                                           To="1.0"
+                                                                           Duration="{StaticResource Animation.Fast}"
+                                                                           EasingFunction="{StaticResource Ease.Standard}"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.ExitActions>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                            <Setter Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </Grid>
         </Border>
 
         <!-- Modern Logs Viewer Section -->
-        <Border Grid.Row="2" Background="{StaticResource Brush.Background}" 
+        <Border x:Name="LogsViewerBorder"
+                Grid.Row="2" Background="{StaticResource Brush.Background}" 
                 BorderBrush="{StaticResource Brush.Border.Light}" 
                 BorderThickness="1,0,1,1" CornerRadius="0,0,6,6"
-                Height="200">
+                ClipToBounds="True">
+            <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource FadeInAnimation}">
+                    <Setter Property="Height" Value="200"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard x:Name="CollapseStoryboard">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Height"
+                                                       To="0"
+                                                       Duration="{StaticResource Animation.Normal}"
+                                                       EasingFunction="{StaticResource Ease.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                       To="0"
+                                                       Duration="{StaticResource Animation.Fast}"
+                                                       EasingFunction="{StaticResource Ease.Standard}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Height"
+                                                       To="200"
+                                                       Duration="{StaticResource Animation.Normal}"
+                                                       EasingFunction="{StaticResource Ease.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                       To="1"
+                                                       Duration="{StaticResource Animation.Normal}"
+                                                       EasingFunction="{StaticResource Ease.Standard}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <ListView x:Name="LogsListView" 
                       Background="Transparent" BorderThickness="0"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"

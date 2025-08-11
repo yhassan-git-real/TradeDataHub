@@ -2,16 +2,34 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.ComponentModel;
 using TradeDataHub.Features.Monitoring.Services;
 using TradeDataHub.Features.Monitoring.Models;
 
 namespace TradeDataHub.Features.Monitoring.Controls
 {
-    public partial class MonitoringPanel : UserControl
+    public partial class MonitoringPanel : UserControl, INotifyPropertyChanged
     {
         private readonly MonitoringService _monitoringService;
         private bool _isAutoScrollEnabled = true;
+        private bool _isExpanded = true;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                if (_isExpanded != value)
+                {
+                    _isExpanded = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+                    AnimateExpandCollapseIcon();
+                }
+            }
+        }
 
         public MonitoringPanel()
         {
@@ -19,7 +37,7 @@ namespace TradeDataHub.Features.Monitoring.Controls
             _monitoringService = MonitoringService.Instance;
             
             // Set up data binding
-            DataContext = _monitoringService;
+            DataContext = this; // Changed to bind to this control for IsExpanded property
             LogsListView.ItemsSource = _monitoringService.LogEntries;
             
             // Subscribe to events
@@ -157,6 +175,26 @@ namespace TradeDataHub.Features.Monitoring.Controls
         public void SetCompleted(string message = "Operation completed successfully")
         {
             _monitoringService.SetCompleted(message);
+        }
+
+        private void ExpandCollapseButton_Click(object sender, RoutedEventArgs e)
+        {
+            IsExpanded = !IsExpanded;
+        }
+
+        private void AnimateExpandCollapseIcon()
+        {
+            var iconElement = ExpandCollapseIcon;
+            if (iconElement?.RenderTransform is RotateTransform rotateTransform)
+            {
+                var rotateAnimation = new DoubleAnimation
+                {
+                    To = IsExpanded ? 0 : 180,
+                    Duration = TimeSpan.FromMilliseconds(250),
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+                };
+                rotateTransform.BeginAnimation(RotateTransform.AngleProperty, rotateAnimation);
+            }
         }
 
         public void SetError(string errorMessage)

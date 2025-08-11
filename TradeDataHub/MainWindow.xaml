@@ -91,7 +91,8 @@
                 </Grid.RowDefinitions>
 
             <!-- Input Parameters Header with Modern Toggle -->
-            <Border Grid.Row="0" Background="#F8F9FA" BorderBrush="#E9ECEF" BorderThickness="0,0,0,1" Padding="20,15" Margin="0,0,0,20">
+            <Border Grid.Row="0" Background="#F8F9FA" BorderBrush="#E9ECEF" BorderThickness="0,0,0,1" Padding="20,15" Margin="0,0,0,20"
+                    Style="{StaticResource FadeInAnimation}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -154,7 +155,8 @@
             <Border Grid.Row="2" BorderBrush="{StaticResource Brush.Border.Light}" BorderThickness="1" 
                     Padding="{StaticResource Spacing.Large}" Margin="{StaticResource Spacing.Medium}" 
                     Background="{StaticResource Brush.Background.Secondary}" 
-                    CornerRadius="{StaticResource CornerRadius.Medium}">
+                    CornerRadius="{StaticResource CornerRadius.Medium}"
+                    Style="{StaticResource SlideInFromRightAnimation}">
                 <Border.Effect>
                     <DropShadowEffect Color="Black" ShadowDepth="1" BlurRadius="6" Opacity="0.08"/>
                 </Border.Effect>
@@ -259,7 +261,8 @@
             <Border Grid.Row="4" BorderBrush="{StaticResource Brush.Border.Light}" BorderThickness="1" 
                     Padding="{StaticResource Spacing.Medium}" Margin="{StaticResource Spacing.Medium}" 
                     Background="{StaticResource Brush.Background.Tertiary}"
-                    CornerRadius="{StaticResource CornerRadius.Medium}">
+                    CornerRadius="{StaticResource CornerRadius.Medium}"
+                    Style="{StaticResource ScaleUpAnimation}">
                 <Border.Effect>
                     <DropShadowEffect Color="Black" ShadowDepth="1" BlurRadius="6" Opacity="0.08"/>
                 </Border.Effect>
