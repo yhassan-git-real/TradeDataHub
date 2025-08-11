@@ -86,6 +86,8 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
             <!-- Input Parameters Header with Modern Toggle -->
@@ -109,72 +111,53 @@
                         
                         <!-- Title Text -->
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Input Parameters" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" FontFamily="Segoe UI"/>
-                            <TextBlock Text="Configure your trade data filters" FontSize="13" Foreground="#6C757D" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                            <TextBlock Text="Input Parameters" Style="{StaticResource Typography.Header2}"/>
+                            <TextBlock Text="Configure your trade data filters" Style="{StaticResource Typography.Caption}" Margin="0,3,0,0"/>
                         </StackPanel>
-                    </StackPanel
-                    >
+                    </StackPanel>
                     
-                    <!-- Enhanced Toggle Switch -->
+                    <!-- Compact Modern Toggle Switch -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="View:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="14" 
-                                   Foreground="#495057" FontWeight="SemiBold" FontFamily="Segoe UI"/>
+                        <TextBlock Text="View:" VerticalAlignment="Center" Margin="0,0,12,0" 
+                                   Style="{StaticResource Typography.Label}" FontWeight="Bold" Foreground="#1F2937"/>
                         
-                        <!-- Professional Toggle Button -->
-                        <Border x:Name="ToggleContainer" Background="#F8F9FA" CornerRadius="20" Height="36" Width="120" 
-                                MouseLeftButtonDown="ToggleSwitch_Click" Cursor="Hand" BorderBrush="#DEE2E6" BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" ShadowDepth="0" BlurRadius="4" Opacity="0.1"/>
-                            </Border.Effect>
-                            
+                        <!-- Compact Toggle Container -->
+                        <Border x:Name="ToggleContainer" Style="{StaticResource ModernToggleSwitch}" 
+                                Width="100" MouseLeftButtonDown="ToggleSwitch_Click">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 
-                                <!-- Active Indicator -->
-                                <Border x:Name="ActiveIndicator" Grid.Column="0" Background="#0078D4" CornerRadius="18" 
-                                        Margin="2" HorizontalAlignment="Stretch">
-                                    <Border.Effect>
-                                        <DropShadowEffect Color="#0078D4" ShadowDepth="0" BlurRadius="6" Opacity="0.4"/>
-                                    </Border.Effect>
+                                <!-- Basic Option -->
+                                <Border x:Name="BasicOption" Grid.Column="0" Tag="Active" 
+                                        Style="{StaticResource ToggleOption}">
+                                    <TextBlock x:Name="BasicText" Text="Basic" Style="{StaticResource ToggleText}"/>
                                 </Border>
                                 
-                                <!-- Basic Mode Section -->
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Viewbox Width="14" Height="14" Margin="0,0,4,0">
-                                        <Canvas Width="24" Height="24">
-                                            <Path x:Name="BasicIcon" Fill="White" Data="M3,3H21V5H3V3M3,7H21V9H3V7M3,11H21V13H3V11M3,15H21V17H3V15M3,19H21V21H3V19Z"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                    <TextBlock x:Name="BasicText" Text="Basic" Foreground="White" FontWeight="Bold" 
-                                               FontSize="12" FontFamily="Segoe UI"/>
-                                </StackPanel>
-                                
-                                <!-- All Mode Section -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Viewbox Width="14" Height="14" Margin="0,0,4,0">
-                                        <Canvas Width="24" Height="24">
-                                            <Path x:Name="AllIcon" Fill="#6C757D" Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,6V8H13V6H11M11,10V18H13V10H11Z"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                    <TextBlock x:Name="AllText" Text="All" Foreground="#6C757D" FontWeight="Bold" 
-                                               FontSize="12" FontFamily="Segoe UI"/>
-                                </StackPanel>
+                                <!-- All Option -->
+                                <Border x:Name="AllOption" Grid.Column="1" Tag="Inactive" 
+                                        Style="{StaticResource ToggleOption}">
+                                    <TextBlock x:Name="AllText" Text="All" Style="{StaticResource ToggleText}"/>
+                                </Border>
                             </Grid>
                         </Border>
                     </StackPanel>
                 </Grid>
             </Border>
-            
-            <!-- Description -->
-            <TextBlock Grid.Row="1" Text="Specify the criteria for your trade data report." 
-                       FontStyle="Italic" Foreground="Gray" Margin="0,0,0,15"/>
+
+            <!-- Horizontal Separator Line -->
+            <Separator Grid.Row="1" Margin="0,10" Background="#D1D5DB" Height="1"/>
 
             <!-- Parameters Container -->
-            <Border Grid.Row="2" BorderBrush="LightGray" BorderThickness="1" 
-                    Padding="15" Margin="0,0,0,15" Background="#F9F9F9">
+            <Border Grid.Row="2" BorderBrush="{StaticResource Brush.Border.Light}" BorderThickness="1" 
+                    Padding="{StaticResource Spacing.Large}" Margin="{StaticResource Spacing.Medium}" 
+                    Background="{StaticResource Brush.Background.Secondary}" 
+                    CornerRadius="{StaticResource CornerRadius.Medium}">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" ShadowDepth="1" BlurRadius="6" Opacity="0.08"/>
+                </Border.Effect>
                 <StackPanel>
                     <!-- Basic Parameters (Always Visible) - First Row -->
                     <Grid x:Name="BasicParametersGrid">
@@ -185,21 +168,24 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Row 1: From Month, To Month, HS Codes -->
-                        <StackPanel Grid.Column="0" Margin="0,0,15,15">
-                            <TextBlock Text="From Month" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <controls:YearMonthPicker x:Name="FromMonthPicker" 
+                        <StackPanel Grid.Column="0" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock Text="From Month" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <controls:YearMonthPicker x:Name="FromMonthPicker" Height="32"
                                                       PlaceholderText="Select start month"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="1" Margin="0,0,15,15">
-                            <TextBlock Text="To Month" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <controls:YearMonthPicker x:Name="ToMonthPicker" 
+                        <StackPanel Grid.Column="1" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock Text="To Month" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <controls:YearMonthPicker x:Name="ToMonthPicker" Height="32"
                                                       PlaceholderText="Select end month"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="2" Margin="0,0,0,15">
-                            <TextBlock Text="HS Codes" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBox x:Name="Txt_HS" Height="32"/>
+                        <StackPanel Grid.Column="2" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock Text="HS Codes" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <TextBox x:Name="Txt_HS" Height="32" 
+                                     Text="Txt_HS"
+                                     ToolTip="Enter harmonized system codes (comma-separated)"
+                                     Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
                     </Grid>
 
@@ -216,47 +202,71 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Row 2: Port Codes, Products, Exporters/Importers -->
-                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,15,15">
-                            <TextBlock Text="Port Codes" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBox x:Name="txt_Port" Height="32"/>
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock Text="Port Codes" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <TextBox x:Name="txt_Port" Height="32" 
+                                     ToolTip="Enter port codes (comma-separated)"
+                                     Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,15,15">
-                            <TextBlock Text="Products" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBox x:Name="Txt_Product" Height="32"/>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock Text="Products" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <TextBox x:Name="Txt_Product" Height="32"
+                                     ToolTip="Enter product names or keywords"
+                                     Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,15">
-                            <TextBlock x:Name="Lbl_Exporter" Text="Exporters" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBox x:Name="Txt_Exporter" Height="32"/>
-                            <TextBlock x:Name="Lbl_Importer" Text="Importers" FontWeight="SemiBold" Margin="0,0,0,5" Visibility="Collapsed"/>
-                            <TextBox x:Name="Txt_Importer" Height="32" Visibility="Collapsed"/>
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock x:Name="Lbl_Exporter" Text="Exporters" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <TextBox x:Name="Txt_Exporter" Height="32"
+                                     ToolTip="Enter exporter company names"
+                                     Style="{StaticResource ModernTextBox}"/>
+                            <TextBlock x:Name="Lbl_Importer" Text="Importers" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}" Visibility="Collapsed"/>
+                            <TextBox x:Name="Txt_Importer" Height="32" Visibility="Collapsed"
+                                     ToolTip="Enter importer company names"
+                                     Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
                         <!-- Row 3: Foreign Countries, Foreign Companies, IEC Codes -->
-                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,15,15">
-                            <TextBlock Text="Foreign Countries" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBox x:Name="txt_ForCount" Height="32"/>
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock Text="Foreign Countries" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <TextBox x:Name="txt_ForCount" Height="32"
+                                     ToolTip="Enter country names or codes"
+                                     Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,15,15">
-                            <TextBlock Text="Foreign Companies" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBox x:Name="Txt_ForName" Height="32"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock Text="Foreign Companies" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <TextBox x:Name="Txt_ForName" Height="32"
+                                     ToolTip="Enter foreign company names"
+                                     Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,15">
-                            <TextBlock Text="IEC Codes" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                            <TextBox x:Name="Txt_IEC" Height="32"/>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="{StaticResource Spacing.Medium}">
+                            <TextBlock Text="IEC Codes" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
+                            <TextBox x:Name="Txt_IEC" Height="32"
+                                     ToolTip="Enter Import Export Code numbers"
+                                     Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
 
+            <!-- Horizontal Separator Line -->
+            <Separator Grid.Row="3" Margin="0,10" Background="#D1D5DB" Height="1"/>
+
             <!-- Mode Section -->
-            <Border Grid.Row="3" BorderBrush="LightGray" BorderThickness="1" Padding="15" Margin="0,0,0,15" Background="#F5F5F5">
+            <Border Grid.Row="4" BorderBrush="{StaticResource Brush.Border.Light}" BorderThickness="1" 
+                    Padding="{StaticResource Spacing.Medium}" Margin="{StaticResource Spacing.Medium}" 
+                    Background="{StaticResource Brush.Background.Tertiary}"
+                    CornerRadius="{StaticResource CornerRadius.Medium}">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" ShadowDepth="1" BlurRadius="6" Opacity="0.08"/>
+                </Border.Effect>
+                
+                <!-- Two Row Layout -->
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
@@ -265,81 +275,69 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Mode Selection -->
-                    <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Mode:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                        <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" Margin="0,0,20,0" GroupName="ProcessType"/>
-                        <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" GroupName="ProcessType"/>
+                    <!-- Top Row: Mode Selection -->
+                    <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" 
+                              Margin="0,0,0,16">
+                        <TextBlock Text="Mode:" Style="{StaticResource Typography.Label}" VerticalAlignment="Center" 
+                                 Margin="0,0,16,0" FontWeight="Medium"/>
+                        <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" VerticalAlignment="Center" 
+                                   Margin="0,0,24,0" GroupName="ProcessType" FontSize="14" Padding="4,0,0,0"/>
+                        <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" VerticalAlignment="Center" 
+                                   GroupName="ProcessType" FontSize="14" Padding="4,0,0,0"/>
                     </StackPanel>
 
-                    <!-- Database Objects Selection -->
-                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,15,0,0">
+                    <!-- Bottom Row: View and Stored Procedure -->
+                    <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- View Dropdown -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,20,0">
-                            <TextBlock Text="View:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <ComboBox x:Name="ViewComboBox" Width="200" Height="32" 
+                        <StackPanel Orientation="Horizontal" Margin="0,0,32,0">
+                            <TextBlock Text="View:" Style="{StaticResource Typography.Label}" VerticalAlignment="Center" 
+                                     Margin="0,0,12,0" FontWeight="Medium"/>
+                            <ComboBox x:Name="ViewComboBox" Width="140" Height="32" VerticalAlignment="Center"
                                       DisplayMemberPath="DisplayName" 
                                       SelectedValuePath="Name" 
-                                      SelectionChanged="ViewComboBox_SelectionChanged"/>
+                                      SelectionChanged="ViewComboBox_SelectionChanged"
+                                      Style="{StaticResource ModernComboBox}"/>
                         </StackPanel>
                         
                         <!-- Stored Procedure Dropdown -->
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Stored Procedure:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <ComboBox x:Name="StoredProcedureComboBox" Width="200" Height="32" 
+                            <TextBlock Text="Stored Procedure:" Style="{StaticResource Typography.Label}" VerticalAlignment="Center" 
+                                     Margin="0,0,12,0" FontWeight="Medium"/>
+                            <ComboBox x:Name="StoredProcedureComboBox" Width="140" Height="32" VerticalAlignment="Center"
                                       DisplayMemberPath="DisplayName" 
                                       SelectedValuePath="Name" 
-                                      SelectionChanged="StoredProcedureComboBox_SelectionChanged"/>
+                                      SelectionChanged="StoredProcedureComboBox_SelectionChanged"
+                                      Style="{StaticResource ModernComboBox}"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Buttons -->
-                    <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button x:Name="ResetButton" Content="Reset" Width="80" Height="32" Margin="0,0,10,0" Click="ResetButton_Click"/>
-                        <Button x:Name="GenerateButton" Content="Generate Reports" Width="130" Height="32" Margin="0,0,10,0" Click="GenerateButton_Click"/>
-                        <Button x:Name="CancelButton" Content="Cancel" Width="80" Height="32" Click="CancelButton_Click"/>
-                    </StackPanel>
+                    <!-- Action Buttons - Right Side, Vertically Centered -->
+                    <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Margin="0,0,0,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0">
+                            <Button x:Name="ResetButton" Content="Reset" Width="75" Height="34" Margin="0,0,8,0" 
+                                  Click="ResetButton_Click" Style="{StaticResource NeutralButton}" FontSize="13" FontWeight="Medium"/>
+                            <Button x:Name="GenerateButton" Content="Generate Report" Width="140" Height="34" Margin="0,0,8,0" 
+                                  Click="GenerateButton_Click" Style="{StaticResource SuccessButton}" FontSize="13" FontWeight="SemiBold"/>
+                            <Button x:Name="CancelButton" Content="Cancel" Width="75" Height="34" 
+                                  Click="CancelButton_Click" Style="{StaticResource DangerButton}" FontSize="13" FontWeight="Medium"/>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
 
-            <!-- Monitoring Section Header -->
-            <Border Grid.Row="4" Background="#e9ecef" BorderBrush="#dee2e6" BorderThickness="1,1,1,0" Padding="15,10" 
-                    CornerRadius="6,6,0,0" Margin="0,0,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <!-- Section Title -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal">
-                        <Viewbox Width="18" Height="18" Margin="0,0,10,0">
-                            <Canvas Width="24" Height="24">
-                                <Path Fill="#495057" Data="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21M19.75,3.19L18.33,4.61C20.04,6.3 21,8.6 21,11H23C23,8.07 21.84,5.25 19.75,3.19M1,11H3C3,8.6 3.96,6.3 5.67,4.61L4.25,3.19C2.16,5.25 1,8.07 1,11Z"/>
-                            </Canvas>
-                        </Viewbox>
-                        <TextBlock Text="Monitoring &amp; Logs" FontSize="16" FontWeight="SemiBold" Foreground="#212529" FontFamily="Segoe UI"/>
-                    </StackPanel>
-                    
-                    <!-- Help Text -->
-                    <TextBlock Grid.Column="1" Text="View real-time processing status and activity logs" 
-                               Foreground="#6c757d" VerticalAlignment="Center" Margin="20,0,0,0"/>
-                    
-                    <!-- Toggle Button -->
-                    <ToggleButton Grid.Column="2" Content="Show/Hide" Width="100" IsChecked="True" 
-                                  Checked="MenuMonitoringPanel_Click" Unchecked="MenuMonitoringPanel_Click"/>
-                </Grid>
-            </Border>
+            <!-- Horizontal Separator Line -->
+            <Separator Grid.Row="5" Margin="0,10" Background="#D1D5DB" Height="1"/>
 
             <!-- Monitoring Status Panel with improved height -->
-            <monitoring:MonitoringPanel Grid.Row="5" x:Name="MonitoringPanel" Margin="0"/>
+            <monitoring:MonitoringPanel Grid.Row="6" x:Name="MonitoringPanel" Margin="0"/>
         </Grid>
         </ScrollViewer>
 
         <!-- Professional Footer Section -->
-        <Border Grid.Row="2" Background="#f8f9fa" BorderBrush="#e9ecef" BorderThickness="0,1,0,0">
-            <Grid Margin="15,8">
+        <Border Grid.Row="2" Background="{StaticResource Brush.Background.Secondary}" 
+                BorderBrush="{StaticResource Brush.Border.Light}" BorderThickness="0,1,0,0"
+                MinHeight="30">
+            <Grid Margin="12,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -348,26 +346,53 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Application Info -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <TextBlock Text="Trade Data Hub" FontWeight="SemiBold" Foreground="#2C3E50" FontSize="12"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Trade Data Hub" 
+                               Style="{StaticResource Typography.Label}" 
+                               FontWeight="SemiBold" 
+                               Foreground="{StaticResource Brush.Text.Primary}"
+                               VerticalAlignment="Center"/>
                     <!-- Separator -->
-                    <TextBlock Text=" | " Foreground="#6c757d" Margin="5,0"/>
-                    <TextBlock Text="v1.0.0" Foreground="#6c757d" FontSize="12"/>
+                    <TextBlock Text=" | " 
+                               Style="{StaticResource Typography.Caption}" 
+                               Foreground="{StaticResource Brush.Text.Secondary}"
+                               Margin="6,0"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="v1.0.0" 
+                               Style="{StaticResource Typography.Caption}"
+                               Foreground="{StaticResource Brush.Text.Secondary}"
+                               VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Center Status -->
-                <StackPanel Grid.Column="1" HorizontalAlignment="Center" Orientation="Horizontal">
-                    <Ellipse x:Name="FooterStatusIndicator" Width="8" Height="8" Fill="#28a745" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="FooterStatusText" Text="System Ready" Foreground="#495057" FontSize="12"/>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse x:Name="FooterStatusIndicator" 
+                             Width="8" Height="8" 
+                             Fill="#28a745" 
+                             Margin="0,0,8,0" 
+                             VerticalAlignment="Center"/>
+                    <TextBlock x:Name="FooterStatusText" 
+                               Text="System Ready" 
+                               Style="{StaticResource Typography.Caption}" 
+                               Foreground="{StaticResource Brush.Text.Primary}"
+                               VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- System Info -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,20,0">
-                    <TextBlock x:Name="MemoryUsageText" Text="Memory: 128 MB" Foreground="#6c757d" FontSize="11"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBlock x:Name="MemoryUsageText" 
+                               Text="Memory: 128 MB" 
+                               Style="{StaticResource Typography.Caption}"
+                               Foreground="{StaticResource Brush.Text.Secondary}"
+                               VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Copyright -->
-                <TextBlock Grid.Column="3" Text="© 2025 Trade Data Hub" Foreground="#6c757d" FontSize="11"/>
+                <TextBlock Grid.Column="3" 
+                           Text="© 2025 Trade Data Hub" 
+                           Style="{StaticResource Typography.Caption}"
+                           Foreground="{StaticResource Brush.Text.Secondary}"
+                           VerticalAlignment="Center"/>
             </Grid>
         </Border>
     </Grid>
