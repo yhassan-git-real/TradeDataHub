@@ -26,6 +26,10 @@ namespace TradeDataHub.Core.Logging
         private string _currentLogFile = string.Empty;
         private DateTime _currentLogDate = DateTime.MinValue;
         private bool _disposed = false;
+        
+        // Performance optimization: Cache DateTime.Now for reduced syscalls
+        private DateTime _lastTimestampCache = DateTime.Now;
+        private long _lastTickCount = Environment.TickCount64;
 
         private LoggingHelper()
         {
@@ -84,9 +88,22 @@ namespace TradeDataHub.Core.Logging
             return $"P{Interlocked.Increment(ref _processCounter):D4}";
         }
 
+        // Performance optimization: Get timestamp with reduced DateTime.Now calls
+        private DateTime GetOptimizedTimestamp()
+        {
+            var currentTicks = Environment.TickCount64;
+            // Only call DateTime.Now if more than 100ms have passed
+            if (currentTicks - _lastTickCount > 100)
+            {
+                _lastTimestampCache = DateTime.Now;
+                _lastTickCount = currentTicks;
+            }
+            return _lastTimestampCache.AddMilliseconds(currentTicks - _lastTickCount);
+        }
+
         private void UpdateLogFileName()
         {
-            var today = DateTime.Now.Date;
+            var today = _lastTimestampCache.Date; // Use cached timestamp instead of DateTime.Now
             if (_currentLogDate != today)
             {
                 _currentLogDate = today;
@@ -122,8 +139,7 @@ namespace TradeDataHub.Core.Logging
             EnqueueLog(LogLevel.INFO, $"📋 Parameters: {parameters}", null, processId);
             EnqueueLog(LogLevel.INFO, new string('-', 80), null, null);
             
-            // Force immediate flush for critical process start information
-            Task.Run(async () => await FlushLogsAsync());
+            // Removed forced flush - rely on 1-second timer for better performance
         }
 
         public void LogProcessComplete(string processName, TimeSpan elapsed, string result, string processId)
@@ -134,8 +150,7 @@ namespace TradeDataHub.Core.Logging
             EnqueueLog(LogLevel.INFO, $"📊 Result: {result}", null, processId);
             EnqueueLog(LogLevel.INFO, new string('=', 80), null, null);
             
-            // Force immediate flush for critical process completion information
-            Task.Run(async () => await FlushLogsAsync());
+            // Removed forced flush - rely on 1-second timer for better performance
         }
 
         public void LogStep(string stepName, string details, string processId)
@@ -203,7 +218,7 @@ namespace TradeDataHub.Core.Logging
 
             _logQueue.Enqueue(new LogEntry
             {
-                Timestamp = DateTime.Now,
+                Timestamp = GetOptimizedTimestamp(), // Use optimized timestamp instead of DateTime.Now
                 Level = level,
                 Message = message,
                 StackTrace = stackTrace,
