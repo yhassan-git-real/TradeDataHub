@@ -543,7 +543,7 @@ namespace TradeDataHub.Core.Services
         {
             try
             {
-                var helpUrl = "https://github.com/yhassan-git-real/TradeDataHub.02/wiki"; // Assuming GitHub wiki
+                var helpUrl = "https://github.com/yhassan-git-real/TradeDataHub/wiki"; // Assuming GitHub wiki
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = helpUrl,
@@ -566,7 +566,7 @@ namespace TradeDataHub.Core.Services
                                $"Build Date: {File.GetCreationTime(System.Reflection.Assembly.GetExecutingAssembly().Location):yyyy-MM-dd}\n" +
                                $"Installation Path: {AppDomain.CurrentDomain.BaseDirectory}\n\n" +
                                "To check for updates, please visit:\n" +
-                               "https://github.com/yhassan-git-real/TradeDataHub.02/releases\n\n" +
+                               "https://github.com/yhassan-git-real/TradeDataHub/releases\n\n" +
                                "Automatic update checking will be available in future versions.";
                 
                 MessageBox.Show(updateInfo, "Check for Updates", MessageBoxButton.OK, MessageBoxImage.Information);

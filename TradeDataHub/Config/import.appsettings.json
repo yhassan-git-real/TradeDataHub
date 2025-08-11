@@ -7,7 +7,7 @@
       "WorksheetName": "Import Data"
     },
     "Files": {
-      "OutputDirectory": "F:\\TradeDataHub.02\\IMPORT_Excel",
+      "OutputDirectory": "F:\\TradeDataHub\\IMPORT_Excel",
       "FileSuffix": "IMP"
     },
     "Logging": {

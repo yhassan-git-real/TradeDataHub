@@ -7,7 +7,7 @@
       "WorksheetName": "Export Data"
     },
     "Files": {
-      "OutputDirectory": "F:\\TradeDataHub.02\\EXPORT_Excel"
+      "OutputDirectory": "F:\\TradeDataHub\\EXPORT_Excel"
     },
     "Logging": {
       "OperationLabel": "Excel Export Generation",
