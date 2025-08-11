@@ -77,6 +77,26 @@
     <SolidColorBrush x:Key="Brush.Info" Color="{StaticResource Color.Info}"/>
     <SolidColorBrush x:Key="Brush.Info.Light" Color="{StaticResource Color.Info.Light}"/>
 
+    <!-- Professional Gradient Backgrounds -->
+    <LinearGradientBrush x:Key="Brush.Background.Professional" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#F8FBFF" Offset="0"/>
+        <GradientStop Color="#F0F4F8" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <LinearGradientBrush x:Key="Brush.Background.Corporate" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FAFBFC" Offset="0"/>
+        <GradientStop Color="#F1F3F4" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Enhanced Card Background -->
+    <SolidColorBrush x:Key="Brush.Card.Background" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.Card.Border" Color="#E0E0E0"/>
+
+    <!-- Professional Shadow Effects -->
+    <DropShadowEffect x:Key="Shadow.Card" Color="#000000" ShadowDepth="2" BlurRadius="8" Opacity="0.1"/>
+    <DropShadowEffect x:Key="Shadow.Container" Color="#000000" ShadowDepth="1" BlurRadius="6" Opacity="0.08"/>
+    <DropShadowEffect x:Key="Shadow.Elevated" Color="#000000" ShadowDepth="4" BlurRadius="12" Opacity="0.12"/>
+
     <!-- Corner Radius -->
     <CornerRadius x:Key="CornerRadius.None">0</CornerRadius>
     <CornerRadius x:Key="CornerRadius.Small">2</CornerRadius>
