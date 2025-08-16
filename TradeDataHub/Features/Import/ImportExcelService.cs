@@ -51,7 +51,7 @@ namespace TradeDataHub.Features.Import
 
         private ImportExcelFormatSettings LoadImportFormatting()
         {
-            const string json = "Config/importFormatting.json";
+            const string json = "Config/ImportExcelFormatSettings.json";
             if (!File.Exists(json)) throw new FileNotFoundException($"Missing import formatting file: {json}");
             var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile(json, false);
             var cfg = builder.Build();

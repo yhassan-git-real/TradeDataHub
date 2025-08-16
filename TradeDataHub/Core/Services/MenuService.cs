@@ -376,7 +376,8 @@ namespace TradeDataHub.Core.Services
                             "  - Export: " + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EXPORT_Excel") + "\n" +
                             "  - Import: " + Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "IMPORT_Excel") + "\n\n" +
                             "• Database connection settings are in Config/database.appsettings.json\n" +
-                            "• Excel formatting settings are in Config/excelFormatting.json\n\n" +
+                            "• Export Excel formatting settings are in Config/ExportExcelFormatSettings.json\n" +
+                            "• Import Excel formatting settings are in Config/ImportExcelFormatSettings.json\n\n" +
                             "Advanced preferences dialog will be available in future updates.";
             
             MessageBox.Show(prefMessage, "Preferences", MessageBoxButton.OK, MessageBoxImage.Information);
