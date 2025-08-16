@@ -174,7 +174,7 @@ TradeDataHub/
 
 ## ⚙️ Configuration Reference
 
-### Excel Formatting (`Config/excelFormatting.json`)
+### Excel Formatting (`Config/ExportExcelFormatSettings.json`)
 ```json
 {
   "FontName": "Times New Roman",

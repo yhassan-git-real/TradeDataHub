@@ -483,7 +483,8 @@
                                                    Style="{StaticResource Typography.Caption}"
                                                    Foreground="Black"
                                                    FontWeight="SemiBold"
-                                                   FontSize="12"/>
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Left"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -503,7 +504,8 @@
                                                        LineHeight="18"
                                                        FontSize="12"
                                                        FontWeight="Medium"
-                                                       Foreground="Black"/>
+                                                       Foreground="Black"
+                                                       HorizontalAlignment="Left"/>
                                         </Border>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>

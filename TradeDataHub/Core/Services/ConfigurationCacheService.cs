@@ -85,7 +85,7 @@ namespace TradeDataHub.Core.Services
 
         private static ExcelFormatSettings LoadExcelFormatSettings()
         {
-            const string jsonFileName = "Config/excelFormatting.json";
+            const string jsonFileName = "Config/ExportExcelFormatSettings.json";
             if (!File.Exists(jsonFileName))
                 throw new FileNotFoundException($"Excel formatting file '{jsonFileName}' not found.");
             
@@ -134,7 +134,7 @@ namespace TradeDataHub.Core.Services
 
         private static ImportExcelFormatSettings LoadImportExcelFormatSettings()
         {
-            const string json = "Config/importFormatting.json";
+            const string json = "Config/ImportExcelFormatSettings.json";
             if (!File.Exists(json)) throw new FileNotFoundException($"Missing import formatting file: {json}");
             
             var builder = new ConfigurationBuilder()
