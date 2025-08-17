@@ -135,13 +135,36 @@ namespace TradeDataHub.Core.Services
         private static ImportExcelFormatSettings LoadImportExcelFormatSettings()
         {
             const string json = "Config/ImportExcelFormatSettings.json";
-            if (!File.Exists(json)) throw new FileNotFoundException($"Missing import formatting file: {json}");
+            if (!File.Exists(json)) 
+                throw new FileNotFoundException($"Missing import formatting file: {json}");
             
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile(json, false);
-            var cfg = builder.Build();
-            return cfg.Get<ImportExcelFormatSettings>()!;
+            try
+            {
+                var builder = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile(json, false);
+                var cfg = builder.Build();
+                var settings = cfg.Get<ImportExcelFormatSettings>();
+                
+                if (settings == null)
+                    throw new InvalidOperationException($"Failed to bind ImportExcelFormatSettings from {json}");
+                
+                // Validate required properties
+                if (string.IsNullOrEmpty(settings.FontName))
+                    throw new InvalidOperationException("FontName is required in ImportExcelFormatSettings");
+                if (string.IsNullOrEmpty(settings.HeaderBackgroundColor))
+                    throw new InvalidOperationException("HeaderBackgroundColor is required in ImportExcelFormatSettings");
+                if (settings.DateColumns == null)
+                    throw new InvalidOperationException("DateColumns is required in ImportExcelFormatSettings");
+                if (settings.TextColumns == null)
+                    throw new InvalidOperationException("TextColumns is required in ImportExcelFormatSettings");
+                
+                return settings;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error loading ImportExcelFormatSettings from {json}: {ex.Message}", ex);
+            }
         }
 
         #endregion
