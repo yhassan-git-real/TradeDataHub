@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Corner Radius -->
+    <CornerRadius x:Key="CornerRadius.None">0</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Small">2</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Medium">4</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Large">6</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.XLarge">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Pill">16</CornerRadius>
+
+    <!-- Spacing Tokens -->
+    <Thickness x:Key="Spacing.None">0</Thickness>
+    <Thickness x:Key="Spacing.XSmall">2</Thickness>
+    <Thickness x:Key="Spacing.Small">4</Thickness>
+    <Thickness x:Key="Spacing.Medium">8</Thickness>
+    <Thickness x:Key="Spacing.Large">12</Thickness>
+    <Thickness x:Key="Spacing.XLarge">16</Thickness>
+    <Thickness x:Key="Spacing.XXLarge">20</Thickness>
+    <Thickness x:Key="Spacing.XXXLarge">24</Thickness>
+
+    <!-- Animation Durations -->
+    <Duration x:Key="Animation.Fast">0:0:0.15</Duration>
+    <Duration x:Key="Animation.Normal">0:0:0.25</Duration>
+    <Duration x:Key="Animation.Slow">0:0:0.35</Duration>
+
+    <!-- Animation Easing -->
+    <CubicEase x:Key="Ease.Standard" EasingMode="EaseInOut"/>
+    <QuadraticEase x:Key="Ease.Decelerate" EasingMode="EaseOut"/>
+    <QuadraticEase x:Key="Ease.Accelerate" EasingMode="EaseIn"/>
+
+    <!-- Shadow Effects -->
+    <DropShadowEffect x:Key="Shadow.Small" Color="Black" ShadowDepth="1" BlurRadius="4" Opacity="0.1"/>
+    <DropShadowEffect x:Key="Shadow.Medium" Color="Black" ShadowDepth="2" BlurRadius="8" Opacity="0.15"/>
+    <DropShadowEffect x:Key="Shadow.Large" Color="Black" ShadowDepth="4" BlurRadius="16" Opacity="0.2"/>
+
+    <!-- Professional Shadow Effects -->
+    <DropShadowEffect x:Key="Shadow.Card" Color="#000000" ShadowDepth="2" BlurRadius="8" Opacity="0.1"/>
+    <DropShadowEffect x:Key="Shadow.Container" Color="#000000" ShadowDepth="1" BlurRadius="6" Opacity="0.08"/>
+    <DropShadowEffect x:Key="Shadow.Elevated" Color="#000000" ShadowDepth="4" BlurRadius="12" Opacity="0.12"/>
+
+</ResourceDictionary>

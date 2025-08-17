@@ -6,150 +6,7 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     
-    <UserControl.Resources>
-        <!-- Modern Status Badge Style -->
-        <Style x:Key="ModernStatusBadge" TargetType="Border">
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="MinWidth" Value="80"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-        </Style>
-        
-        <!-- Log Entry Style with Alternating Rows -->
-        <Style x:Key="ModernLogEntry" TargetType="ListViewItem">
-            <Setter Property="Padding" Value="8,6"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
-            <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Style.Triggers>
-                <!-- Alternating Row Colors -->
-                <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                    <Setter Property="Background" Value="{StaticResource Brush.Background}"/>
-                </Trigger>
-                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                    <Setter Property="Background" Value="{StaticResource Brush.Background.Secondary}"/>
-                </Trigger>
-                
-                <!-- Hover Effect -->
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource Brush.Background.Tertiary}"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
-                </Trigger>
-                
-                <!-- Selected State -->
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{StaticResource Brush.Primary}"/>
-                    <Setter Property="Foreground" Value="{StaticResource Brush.Text.OnPrimary}"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource Brush.Primary}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
 
-        <!-- Column Header Style -->
-        <Style x:Key="ModernColumnHeader" TargetType="GridViewColumnHeader">
-            <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="Black"/>
-            <Setter Property="Background" Value="{StaticResource Brush.Background.Secondary}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
-            <Setter Property="BorderThickness" Value="0,0,1,1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        </Style>
-        
-        <!-- Modern Info Card Style with Hover Effects -->
-        <Style x:Key="ModernInfoCard" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource Brush.Card.Background}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Brush.Card.Border}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-            <Setter Property="RenderTransform">
-                <Setter.Value>
-                    <ScaleTransform ScaleX="1" ScaleY="1"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" 
-                                      Color="#000000" Opacity="0.08" Direction="270"/>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <!-- Fade-in on load -->
-                <EventTrigger RoutedEvent="FrameworkElement.Loaded">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                           From="0" To="1"
-                                           Duration="{StaticResource Animation.Normal}"
-                                           EasingFunction="{StaticResource Ease.Decelerate}"/>
-                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                           From="0.95" To="1"
-                                           Duration="{StaticResource Animation.Normal}"
-                                           EasingFunction="{StaticResource Ease.Decelerate}"/>
-                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                           From="0.95" To="1"
-                                           Duration="{StaticResource Animation.Normal}"
-                                           EasingFunction="{StaticResource Ease.Decelerate}"/>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-                
-                <!-- Enhanced Hover Effects with Animation -->
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Trigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                              To="{StaticResource Color.Neutral.Gray20}"
-                                              Duration="{StaticResource Animation.Fast}"
-                                              EasingFunction="{StaticResource Ease.Standard}"/>
-                                <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
-                                              To="{StaticResource Color.Primary}"
-                                              Duration="{StaticResource Animation.Fast}"
-                                              EasingFunction="{StaticResource Ease.Standard}"/>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                               To="1.02"
-                                               Duration="{StaticResource Animation.Fast}"
-                                               EasingFunction="{StaticResource Ease.Standard}"/>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                               To="1.02"
-                                               Duration="{StaticResource Animation.Fast}"
-                                               EasingFunction="{StaticResource Ease.Standard}"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.EnterActions>
-                    <Trigger.ExitActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                              Duration="{StaticResource Animation.Fast}"
-                                              EasingFunction="{StaticResource Ease.Standard}"/>
-                                <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
-                                              Duration="{StaticResource Animation.Fast}"
-                                              EasingFunction="{StaticResource Ease.Standard}"/>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                               To="1"
-                                               Duration="{StaticResource Animation.Fast}"
-                                               EasingFunction="{StaticResource Ease.Standard}"/>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                               To="1"
-                                               Duration="{StaticResource Animation.Fast}"
-                                               EasingFunction="{StaticResource Ease.Standard}"/>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.ExitActions>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </UserControl.Resources>
 
     <Grid Margin="8">
         <Grid.RowDefinitions>
@@ -189,9 +46,7 @@
                     </StackPanel>
                     <TextBlock x:Name="StatusMessage" Text="Application ready" 
                                Style="{StaticResource Typography.Body}" 
-                               Foreground="Black"
                                FontWeight="Medium"
-                               FontSize="13"
                                Margin="0,0,0,2"/>
                 </StackPanel>
 
@@ -201,14 +56,14 @@
                     <ToggleButton x:Name="StartStopToggle" Content="Start" Width="76" Height="36" 
                                   IsChecked="False" Click="StartStopToggle_Click"
                                   Style="{StaticResource ModernToggleButton}" 
-                                  Margin="0,0,8,0" FontSize="11" FontWeight="SemiBold"
+                                  Margin="0,0,8,0" FontSize="{StaticResource FontSize.XSmall}" FontWeight="SemiBold"
                                   ToolTip="Start/Stop real-time log display"/>
                     <Button x:Name="ClearLogsButton" Content="Clear" Width="76" Height="36" 
                             Click="ClearLogsButton_Click" Style="{StaticResource NeutralButton}"
-                            Margin="0,0,8,0" FontSize="11" FontWeight="SemiBold"/>
+                            Margin="0,0,8,0" FontSize="{StaticResource FontSize.XSmall}" FontWeight="SemiBold"/>
                     <ToggleButton x:Name="AutoScrollToggle" Content="Auto" Width="76" Height="36" 
                                   IsChecked="True" Click="AutoScrollToggle_Click"
-                                  Style="{StaticResource ModernToggleButton}" FontSize="11" FontWeight="SemiBold"/>
+                                  Style="{StaticResource ModernToggleButton}" FontSize="{StaticResource FontSize.XSmall}" FontWeight="SemiBold"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -245,21 +100,16 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Activity Monitor" 
                                Style="{StaticResource Typography.Header3}" 
-                               Foreground="Black"
                                FontWeight="SemiBold"
-                               FontSize="16"
                                Margin="0,0,12,0"/>
                     <TextBlock x:Name="LogCountText" Text="0 entries" 
                                Style="{StaticResource Typography.Caption}" 
-                               Foreground="Black"
                                FontWeight="Medium"
-                               FontSize="12"
                                VerticalAlignment="Center"/>
                 </StackPanel>
                 
                 <!-- Search Bar for Activity Monitor -->
-                <Border Grid.Column="1" Background="White" BorderBrush="#D1D5DB" BorderThickness="1"
-                        CornerRadius="6" Margin="16,0,16,0" Height="28" VerticalAlignment="Center">
+                <Border Grid.Column="1" Style="{StaticResource ModernSearchBox}" Margin="16,0,16,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -275,19 +125,17 @@
                         
                         <!-- Search TextBox -->
                         <TextBox x:Name="LogSearchTextBox" Grid.Column="1"
-                                 Background="Transparent" BorderThickness="0"
                                  Text="Search logs..."
-                                 FontSize="13" FontWeight="Medium" Padding="8,0,0,0"
-                                 VerticalAlignment="Center" VerticalContentAlignment="Center"
-                                 Foreground="Black" GotFocus="LogSearchTextBox_GotFocus" 
+                                 Style="{StaticResource ModernSearchTextBox}"
+                                 GotFocus="LogSearchTextBox_GotFocus" 
                                  LostFocus="LogSearchTextBox_LostFocus"/>
                         
                         <!-- Clear Button -->
                         <Button x:Name="ClearSearchButton" Grid.Column="2"
-                                Width="20" Height="20" Background="Transparent" BorderThickness="0"
-                                Margin="0,0,4,0" VerticalAlignment="Center"
+                                Style="{StaticResource ModernClearButton}"
+                                Margin="0,0,4,0"
                                 Visibility="Collapsed" Click="ClearSearchButton_Click"
-                                Cursor="Hand" ToolTip="Clear search">
+                                ToolTip="Clear search">
                             <Path Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                   Fill="{StaticResource Brush.Text.Secondary}" Width="10" Height="10" 
                                   Stretch="Uniform"/>
@@ -297,9 +145,7 @@
                 
                 <TextBlock Grid.Column="2" Text="Real-time processing logs and system activity" 
                            Style="{StaticResource Typography.Caption}"
-                           Foreground="Black"
                            FontWeight="Medium"
-                           FontSize="12"
                            Margin="0,0,16,0" 
                            VerticalAlignment="Center"
                            HorizontalAlignment="Right"/>
@@ -307,20 +153,15 @@
                 <!-- Expand/Collapse Toggle Button -->
                 <Button x:Name="ExpandCollapseButton" 
                         Grid.Column="3" 
-                        Width="32" Height="32"
+                        Style="{StaticResource ModernExpandCollapseButton}"
                         Margin="0,0,0,0"
-                        Background="Transparent"
-                        BorderThickness="0"
                         Click="ExpandCollapseButton_Click"
-                        Cursor="Hand"
                         ToolTip="Expand/Collapse Activity Monitor">
                     <Button.Content>
-                        <Border Background="{StaticResource Brush.Background.Secondary}"
-                                CornerRadius="16"
-                                Width="28" Height="28">
+                        <Border Style="{StaticResource ModernExpandCollapseIcon}">
                             <TextBlock x:Name="ExpandCollapseIcon"
                                        Text="▼"
-                                       FontSize="10"
+                                       FontSize="{StaticResource FontSize.XSmall}"
                                        Foreground="{StaticResource Brush.Text.Primary}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
@@ -331,55 +172,7 @@
                             </TextBlock>
                         </Border>
                     </Button.Content>
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <ContentPresenter/>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Trigger.EnterActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                                           To="1.1"
-                                                                           Duration="{StaticResource Animation.Fast}"
-                                                                           EasingFunction="{StaticResource Ease.Standard}"/>
-                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                                           To="1.1"
-                                                                           Duration="{StaticResource Animation.Fast}"
-                                                                           EasingFunction="{StaticResource Ease.Standard}"/>
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </Trigger.EnterActions>
-                                                <Trigger.ExitActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                                           To="1.0"
-                                                                           Duration="{StaticResource Animation.Fast}"
-                                                                           EasingFunction="{StaticResource Ease.Standard}"/>
-                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                                           To="1.0"
-                                                                           Duration="{StaticResource Animation.Fast}"
-                                                                           EasingFunction="{StaticResource Ease.Standard}"/>
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </Trigger.ExitActions>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-                            <Setter Property="RenderTransform">
-                                <Setter.Value>
-                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </Button.Style>
+
                 </Button>
             </Grid>
         </Border>
@@ -448,13 +241,9 @@
                                 </GridViewColumn.HeaderContainerStyle>
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource Brush.Background.Tertiary}" 
-                                                CornerRadius="4" Padding="6,3">
+                                        <Border Style="{StaticResource TimeBadge}">
                                             <TextBlock Text="{Binding FormattedTimestamp}" 
-                                                       FontSize="11" 
-                                                       FontFamily="Consolas, monospace" 
-                                                       Foreground="Black"
-                                                       FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                       Style="{StaticResource MonospaceText}"/>
                                         </Border>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
@@ -467,10 +256,11 @@
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border Background="{Binding LevelColor}" 
-                                                CornerRadius="3" Padding="6,2" MinWidth="45">
+                                                Style="{StaticResource LogLevelBadge}">
                                             <TextBlock Text="{Binding LevelText}" 
-                                                       FontSize="10" FontWeight="Bold" 
-                                                       Foreground="White" 
+                                                       FontSize="{StaticResource FontSize.XSmall}" 
+                                                       FontWeight="{StaticResource FontWeight.Bold}" 
+                                                       Foreground="{StaticResource Brush.Text.OnPrimary}" 
                                                        HorizontalAlignment="Center"
                                                        FontFamily="{StaticResource PrimaryFontFamily}"/>
                                         </Border>
@@ -486,9 +276,7 @@
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Source}" 
                                                    Style="{StaticResource Typography.Caption}"
-                                                   Foreground="Black"
                                                    FontWeight="SemiBold"
-                                                   FontSize="12"
                                                    HorizontalAlignment="Left"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>

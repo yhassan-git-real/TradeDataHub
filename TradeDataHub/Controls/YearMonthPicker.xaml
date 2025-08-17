@@ -6,11 +6,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="200">
     
-    <Border Background="White" 
-            BorderBrush="#ABADB3" 
-            BorderThickness="1" 
-            CornerRadius="6" 
-            Height="32">
+    <Border Style="{StaticResource YearMonthPickerContainer}">
         <Grid Margin="8,4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -23,32 +19,18 @@
                       Grid.Column="0"
                       SelectionChanged="YearComboBox_SelectionChanged"
                       ToolTip="Select Year"
-                      FontSize="13"
-                      FontFamily="Segoe UI"
-                      MaxDropDownHeight="200"
-                      VerticalContentAlignment="Center"
-                      BorderThickness="0"
-                      Background="Transparent"
+                      Style="{StaticResource YearMonthPickerComboBox}"
                       Margin="0,0,4,0"/>
             
             <!-- Separator -->
-            <Border Grid.Column="1" 
-                    Width="1" 
-                    Background="#D0D0D0" 
-                    VerticalAlignment="Stretch"
-                    Margin="4,2"/>
+            <Border Grid.Column="1" Style="{StaticResource YearMonthPickerSeparator}"/>
             
             <!-- Month ComboBox -->
             <ComboBox x:Name="MonthComboBox" 
                       Grid.Column="2"
                       SelectionChanged="MonthComboBox_SelectionChanged"
                       ToolTip="Select Month"
-                      FontSize="13"
-                      FontFamily="Segoe UI"
-                      MaxDropDownHeight="200"
-                      VerticalContentAlignment="Center"
-                      BorderThickness="0"
-                      Background="Transparent"
+                      Style="{StaticResource YearMonthPickerComboBox}"
                       Margin="4,0,0,0"/>
         </Grid>
     </Border>
