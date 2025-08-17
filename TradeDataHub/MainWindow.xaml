@@ -124,14 +124,15 @@
                         </StackPanel>
                     </StackPanel>
                     
-                    <!-- Compact Modern Toggle Switch -->
+                    <!-- Compact Modern Toggle Switch with enhanced styling -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="View:" VerticalAlignment="Center" Margin="0,0,12,0" 
-                                   Style="{StaticResource Typography.Label}" FontWeight="Bold" Foreground="#1F2937"/>
+                        <TextBlock Text="View:" VerticalAlignment="Center" Margin="0,0,16,0" 
+                                   Style="{StaticResource Typography.Label}" FontWeight="SemiBold" 
+                                   Foreground="#374151" FontSize="14"/>
                         
-                        <!-- Compact Toggle Container -->
+                        <!-- Enhanced Toggle Container -->
                         <Border x:Name="ToggleContainer" Style="{StaticResource ModernToggleSwitch}" 
-                                Width="100" MouseLeftButtonDown="ToggleSwitch_Click">
+                                Width="120" MouseLeftButtonDown="ToggleSwitch_Click">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -177,22 +178,27 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Row 1: From Month, To Month, HS Codes -->
-                        <StackPanel Grid.Column="0" Margin="6">
-                            <TextBlock Text="From Month" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <controls:YearMonthPicker x:Name="FromMonthPicker" Height="32"
+                        <!-- Row 1: Date Range Card and HS Codes with enhanced styling -->
+                        <!-- Compact Date Range Card -->
+                        <StackPanel Grid.Column="0" Margin="4">
+                            <TextBlock Text="From Month" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,4" FontWeight="SemiBold" Foreground="#374151"/>
+                            <controls:YearMonthPicker x:Name="FromMonthPicker" Height="44"
                                                       PlaceholderText="Select start month"/>
                         </StackPanel>
-
-                        <StackPanel Grid.Column="1" Margin="6">
-                            <TextBlock Text="To Month" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <controls:YearMonthPicker x:Name="ToMonthPicker" Height="32"
+                        
+                        <StackPanel Grid.Column="1" Margin="4">
+                            <TextBlock Text="To Month" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,4" FontWeight="SemiBold" Foreground="#374151"/>
+                            <controls:YearMonthPicker x:Name="ToMonthPicker" Height="44"
                                                       PlaceholderText="Select end month"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="2" Margin="6">
-                            <TextBlock Text="HS Codes" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <TextBox x:Name="Txt_HS" Height="32" 
+                        <StackPanel Grid.Column="2" Margin="4">
+                            <TextBlock Text="HS Codes" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,4" FontWeight="SemiBold" Foreground="#374151"/>
+                            <TextBox x:Name="Txt_HS" Height="44" 
+                                     Tag="Enter HS codes (comma-separated)"
                                      ToolTip="Enter harmonized system codes (comma-separated)"
                                      Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
@@ -210,50 +216,64 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Row 2: Port Codes, Products, Exporters/Importers -->
-                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="6">
-                            <TextBlock Text="Port Codes" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <TextBox x:Name="txt_Port" Height="32" 
+                        <!-- Row 2: Port Codes, Products, Exporters/Importers with enhanced styling -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="8">
+                            <TextBlock Text="Port Codes" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,6" FontWeight="SemiBold" Foreground="#374151"/>
+                            <TextBox x:Name="txt_Port" Height="44" 
+                                     Tag="Enter port codes (comma-separated)"
                                      ToolTip="Enter port codes (comma-separated)"
                                      Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="6">
-                            <TextBlock Text="Products" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <TextBox x:Name="Txt_Product" Height="32"
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="8">
+                            <TextBlock Text="Products" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,6" FontWeight="SemiBold" Foreground="#374151"/>
+                            <TextBox x:Name="Txt_Product" Height="44"
+                                     Tag="Enter product names or keywords"
                                      ToolTip="Enter product names or keywords"
                                      Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="6">
-                            <TextBlock x:Name="Lbl_Exporter" Text="Exporters" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <TextBox x:Name="Txt_Exporter" Height="32"
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="8">
+                            <TextBlock x:Name="Lbl_Exporter" Text="Exporters" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,6" FontWeight="SemiBold" Foreground="#374151"/>
+                            <TextBox x:Name="Txt_Exporter" Height="44"
+                                     Tag="Enter exporter company names"
                                      ToolTip="Enter exporter company names"
                                      Style="{StaticResource ModernTextBox}"/>
-                            <TextBlock x:Name="Lbl_Importer" Text="Importers" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}" Visibility="Collapsed"/>
-                            <TextBox x:Name="Txt_Importer" Height="32" Visibility="Collapsed"
+                            <TextBlock x:Name="Lbl_Importer" Text="Importers" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,6" FontWeight="SemiBold" Foreground="#374151" Visibility="Collapsed"/>
+                            <TextBox x:Name="Txt_Importer" Height="44" Visibility="Collapsed"
+                                     Tag="Enter importer company names"
                                      ToolTip="Enter importer company names"
                                      Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <!-- Row 3: Foreign Countries, Foreign Companies, IEC Codes -->
-                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="6">
-                            <TextBlock Text="Foreign Countries" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <TextBox x:Name="txt_ForCount" Height="32"
+                        <!-- Row 3: Foreign Countries, Foreign Companies, IEC Codes with enhanced styling -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="8">
+                            <TextBlock Text="Foreign Countries" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,6" FontWeight="SemiBold" Foreground="#374151"/>
+                            <TextBox x:Name="txt_ForCount" Height="44"
+                                     Tag="Enter country names or codes"
                                      ToolTip="Enter country names or codes"
                                      Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="6">
-                            <TextBlock Text="Foreign Companies" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <TextBox x:Name="Txt_ForName" Height="32"
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="8">
+                            <TextBlock Text="Foreign Companies" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,6" FontWeight="SemiBold" Foreground="#374151"/>
+                            <TextBox x:Name="Txt_ForName" Height="44"
+                                     Tag="Enter foreign company names"
                                      ToolTip="Enter foreign company names"
                                      Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="6">
-                            <TextBlock Text="IEC Codes" Style="{StaticResource Typography.Label}" Margin="{StaticResource Spacing.XSmall}"/>
-                            <TextBox x:Name="Txt_IEC" Height="32"
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="8">
+                            <TextBlock Text="IEC Codes" Style="{StaticResource Typography.Label}" 
+                                     Margin="0,0,0,6" FontWeight="SemiBold" Foreground="#374151"/>
+                            <TextBox x:Name="Txt_IEC" Height="44"
+                                     Tag="Enter Import Export Code numbers"
                                      ToolTip="Enter Import Export Code numbers"
                                      Style="{StaticResource ModernTextBox}"/>
                         </StackPanel>
@@ -286,51 +306,75 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Top Row: Mode Selection -->
+                    <!-- Top Row: Enhanced Mode Selection -->
                     <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" 
-                              Margin="0,0,0,8">
+                              Margin="0,0,0,12">
                         <TextBlock Text="Mode:" Style="{StaticResource Typography.Label}" VerticalAlignment="Center" 
-                                 Margin="0,0,16,0" FontWeight="Medium"/>
+                                 Margin="0,0,20,0" FontWeight="SemiBold" FontSize="14" Foreground="#374151"/>
                         <RadioButton x:Name="rbExport" Content="Export" IsChecked="True" VerticalAlignment="Center" 
-                                   Margin="0,0,24,0" GroupName="ProcessType" FontSize="14" Padding="4,0,0,0"/>
+                                   Margin="0,0,32,0" GroupName="ProcessType" FontSize="14"/>
                         <RadioButton x:Name="rbImport" Content="Import" IsChecked="False" VerticalAlignment="Center" 
-                                   GroupName="ProcessType" FontSize="14" Padding="4,0,0,0"/>
+                                   GroupName="ProcessType" FontSize="14"/>
                     </StackPanel>
 
-                    <!-- Bottom Row: View and Stored Procedure -->
+                    <!-- Bottom Row: Enhanced View and Stored Procedure -->
                     <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- View Dropdown -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,32,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
                             <TextBlock Text="View:" Style="{StaticResource Typography.Label}" VerticalAlignment="Center" 
-                                     Margin="0,0,12,0" FontWeight="Medium"/>
+                                     Margin="0,0,8,0" FontWeight="SemiBold" FontSize="12" Foreground="#374151"/>
                             <ComboBox x:Name="ViewComboBox" Width="140" Height="32" VerticalAlignment="Center"
-                                      DisplayMemberPath="DisplayName" 
                                       SelectedValuePath="Name" 
                                       SelectionChanged="ViewComboBox_SelectionChanged"
-                                      Style="{StaticResource ModernComboBox}"/>
+                                      Style="{StaticResource ModernComboBox}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+                                        <Setter Property="Padding" Value="8,4"/>
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
                         </StackPanel>
                         
                         <!-- Stored Procedure Dropdown -->
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Stored Procedure:" Style="{StaticResource Typography.Label}" VerticalAlignment="Center" 
-                                     Margin="0,0,12,0" FontWeight="Medium"/>
-                            <ComboBox x:Name="StoredProcedureComboBox" Width="140" Height="32" VerticalAlignment="Center"
-                                      DisplayMemberPath="DisplayName" 
+                                     Margin="0,0,8,0" FontWeight="SemiBold" FontSize="12" Foreground="#374151"/>
+                            <ComboBox x:Name="StoredProcedureComboBox" Width="180" Height="32" VerticalAlignment="Center"
                                       SelectedValuePath="Name" 
                                       SelectionChanged="StoredProcedureComboBox_SelectionChanged"
-                                      Style="{StaticResource ModernComboBox}"/>
+                                      Style="{StaticResource ModernComboBox}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+                                        <Setter Property="Padding" Value="8,4"/>
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Action Buttons - Right Side, Vertically Centered -->
+                    <!-- Enhanced Action Buttons - Right Side, Vertically Centered -->
                     <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Margin="0,0,0,0">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0">
-                            <Button x:Name="ResetButton" Content="Reset" Width="75" Height="34" Margin="0,0,8,0" 
-                                  Click="ResetButton_Click" Style="{StaticResource NeutralButton}" FontSize="13" FontWeight="Medium"/>
-                            <Button x:Name="GenerateButton" Content="Generate Report" Width="140" Height="34" Margin="0,0,8,0" 
-                                  Click="GenerateButton_Click" Style="{StaticResource SuccessButton}" FontSize="13" FontWeight="SemiBold"/>
-                            <Button x:Name="CancelButton" Content="Cancel" Width="75" Height="34" 
-                                  Click="CancelButton_Click" Style="{StaticResource DangerButton}" FontSize="13" FontWeight="Medium"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" 
+                                  Margin="0,0,4,0">
+                            <Button x:Name="ResetButton" Content="Reset" MinWidth="80" Height="38" Margin="0,0,8,0" 
+                                  Click="ResetButton_Click" Style="{StaticResource NeutralButton}" 
+                                  FontSize="13" FontWeight="SemiBold" Padding="14,8"/>
+                            <Button x:Name="GenerateButton" Content="Generate Report" MinWidth="140" Height="38" Margin="0,0,8,0" 
+                                  Click="GenerateButton_Click" Style="{StaticResource SuccessButton}" 
+                                  FontSize="13" FontWeight="SemiBold" Padding="16,8"/>
+                            <Button x:Name="CancelButton" Content="Cancel" MinWidth="80" Height="38" 
+                                  Click="CancelButton_Click" Style="{StaticResource DangerButton}" 
+                                  FontSize="13" FontWeight="SemiBold" Padding="14,8"/>
                         </StackPanel>
                     </Grid>
                 </Grid>

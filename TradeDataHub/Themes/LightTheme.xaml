@@ -20,12 +20,17 @@
     <FontWeight x:Key="FontWeight.SemiBold">SemiBold</FontWeight>
     <FontWeight x:Key="FontWeight.Bold">Bold</FontWeight>
 
-    <!-- Primary Colors -->
-    <Color x:Key="Color.Primary">#0078D4</Color>
-    <Color x:Key="Color.Primary.Light">#40E0FF</Color>
-    <Color x:Key="Color.Primary.Dark">#005A9E</Color>
-    <Color x:Key="Color.Primary.Hover">#106EBE</Color>
-    <Color x:Key="Color.Primary.Pressed">#005A9E</Color>
+    <!-- Enhanced Primary Colors -->
+    <Color x:Key="Color.Primary">#2563EB</Color>
+    <Color x:Key="Color.Primary.Light">#60A5FA</Color>
+    <Color x:Key="Color.Primary.Dark">#1D4ED8</Color>
+    <Color x:Key="Color.Primary.Hover">#3B82F6</Color>
+    <Color x:Key="Color.Primary.Pressed">#1E40AF</Color>
+    
+    <!-- Enhanced UI Colors -->
+    <Color x:Key="Color.Accent">#8B5CF6</Color>
+    <Color x:Key="Color.Accent.Light">#A78BFA</Color>
+    <Color x:Key="Color.Accent.Dark">#7C3AED</Color>
 
     <!-- Neutral Colors -->
     <Color x:Key="Color.Neutral.White">#FFFFFF</Color>
@@ -40,15 +45,19 @@
     <Color x:Key="Color.Neutral.Gray90">#4A4A4A</Color>
     <Color x:Key="Color.Neutral.Gray100">#323130</Color>
 
-    <!-- Semantic Colors -->
-    <Color x:Key="Color.Success">#107C10</Color>
-    <Color x:Key="Color.Success.Light">#DFF6DD</Color>
-    <Color x:Key="Color.Warning">#F7630C</Color>
-    <Color x:Key="Color.Warning.Light">#FEF7E3</Color>
-    <Color x:Key="Color.Error">#D13438</Color>
-    <Color x:Key="Color.Error.Light">#FDE7E9</Color>
-    <Color x:Key="Color.Info">#0078D4</Color>
-    <Color x:Key="Color.Info.Light">#DEECF9</Color>
+    <!-- Enhanced Semantic Colors -->
+    <Color x:Key="Color.Success">#10B981</Color>
+    <Color x:Key="Color.Success.Light">#D1FAE5</Color>
+    <Color x:Key="Color.Success.Hover">#059669</Color>
+    <Color x:Key="Color.Warning">#F59E0B</Color>
+    <Color x:Key="Color.Warning.Light">#FEF3C7</Color>
+    <Color x:Key="Color.Warning.Hover">#D97706</Color>
+    <Color x:Key="Color.Error">#EF4444</Color>
+    <Color x:Key="Color.Error.Light">#FEE2E2</Color>
+    <Color x:Key="Color.Error.Hover">#DC2626</Color>
+    <Color x:Key="Color.Info">#2563EB</Color>
+    <Color x:Key="Color.Info.Light">#DBEAFE</Color>
+    <Color x:Key="Color.Info.Hover">#1D4ED8</Color>
 
     <!-- Brushes -->
     <SolidColorBrush x:Key="Brush.Primary" Color="{StaticResource Color.Primary}"/>
@@ -70,12 +79,16 @@
 
     <SolidColorBrush x:Key="Brush.Success" Color="{StaticResource Color.Success}"/>
     <SolidColorBrush x:Key="Brush.Success.Light" Color="{StaticResource Color.Success.Light}"/>
+    <SolidColorBrush x:Key="Brush.Success.Hover" Color="{StaticResource Color.Success.Hover}"/>
     <SolidColorBrush x:Key="Brush.Warning" Color="{StaticResource Color.Warning}"/>
     <SolidColorBrush x:Key="Brush.Warning.Light" Color="{StaticResource Color.Warning.Light}"/>
+    <SolidColorBrush x:Key="Brush.Warning.Hover" Color="{StaticResource Color.Warning.Hover}"/>
     <SolidColorBrush x:Key="Brush.Error" Color="{StaticResource Color.Error}"/>
     <SolidColorBrush x:Key="Brush.Error.Light" Color="{StaticResource Color.Error.Light}"/>
+    <SolidColorBrush x:Key="Brush.Error.Hover" Color="{StaticResource Color.Error.Hover}"/>
     <SolidColorBrush x:Key="Brush.Info" Color="{StaticResource Color.Info}"/>
     <SolidColorBrush x:Key="Brush.Info.Light" Color="{StaticResource Color.Info.Light}"/>
+    <SolidColorBrush x:Key="Brush.Info.Hover" Color="{StaticResource Color.Info.Hover}"/>
 
     <!-- Professional Gradient Backgrounds -->
     <LinearGradientBrush x:Key="Brush.Background.Professional" StartPoint="0,0" EndPoint="0,1">
@@ -200,10 +213,12 @@
         <Setter Property="FontSize" Value="{StaticResource FontSize.Medium}"/>
         <Setter Property="FontWeight" Value="{StaticResource FontWeight.Medium}"/>
         <Setter Property="Background" Value="{StaticResource Brush.Background.Secondary}"/>
-        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="Foreground" Value="#1F2937"/>
+        <Setter Property="BorderBrush" Value="#D1D5DB"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="MinWidth" Value="100"/>
+        <Setter Property="MinHeight" Value="40"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -212,107 +227,23 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}"
-                            RenderTransformOrigin="0.5,0.5">
-                        <Border.RenderTransform>
-                            <ScaleTransform x:Name="ScaleTransform" ScaleX="1" ScaleY="1"/>
-                        </Border.RenderTransform>
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" 
                                         VerticalAlignment="Center"
-                                        Content="{TemplateBinding Content}"/>
+                                        Content="{TemplateBinding Content}"
+                                        TextBlock.Foreground="{TemplateBinding Foreground}"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Border"
-                                                      Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                      To="{StaticResource Color.Primary}"
-                                                      Duration="{StaticResource Animation.Fast}"
-                                                      EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <ColorAnimation Storyboard.TargetProperty="(Control.Foreground).(SolidColorBrush.Color)"
-                                                      To="{StaticResource Color.Neutral.White}"
-                                                      Duration="{StaticResource Animation.Fast}"
-                                                      EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <ColorAnimation Storyboard.TargetName="Border"
-                                                      Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
-                                                      To="{StaticResource Color.Primary}"
-                                                      Duration="{StaticResource Animation.Fast}"
-                                                      EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <DoubleAnimation Storyboard.TargetName="ScaleTransform"
-                                                       Storyboard.TargetProperty="ScaleX"
-                                                       To="1.02"
-                                                       Duration="{StaticResource Animation.Fast}"
-                                                       EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <DoubleAnimation Storyboard.TargetName="ScaleTransform"
-                                                       Storyboard.TargetProperty="ScaleY"
-                                                       To="1.02"
-                                                       Duration="{StaticResource Animation.Fast}"
-                                                       EasingFunction="{StaticResource Ease.Standard}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Border"
-                                                      Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                      Duration="{StaticResource Animation.Fast}"
-                                                      EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <ColorAnimation Storyboard.TargetProperty="(Control.Foreground).(SolidColorBrush.Color)"
-                                                      Duration="{StaticResource Animation.Fast}"
-                                                      EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <ColorAnimation Storyboard.TargetName="Border"
-                                                      Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
-                                                      Duration="{StaticResource Animation.Fast}"
-                                                      EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <DoubleAnimation Storyboard.TargetName="ScaleTransform"
-                                                       Storyboard.TargetProperty="ScaleX"
-                                                       To="1.0"
-                                                       Duration="{StaticResource Animation.Fast}"
-                                                       EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <DoubleAnimation Storyboard.TargetName="ScaleTransform"
-                                                       Storyboard.TargetProperty="ScaleY"
-                                                       To="1.0"
-                                                       Duration="{StaticResource Animation.Fast}"
-                                                       EasingFunction="{StaticResource Ease.Standard}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
+                            <Setter TargetName="Border" Property="Background" Value="#2563EB"/>
+                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#2563EB"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="ScaleTransform"
-                                                       Storyboard.TargetProperty="ScaleX"
-                                                       To="0.98"
-                                                       Duration="0:0:0.1"
-                                                       EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <DoubleAnimation Storyboard.TargetName="ScaleTransform"
-                                                       Storyboard.TargetProperty="ScaleY"
-                                                       To="0.98"
-                                                       Duration="0:0:0.1"
-                                                       EasingFunction="{StaticResource Ease.Standard}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="ScaleTransform"
-                                                       Storyboard.TargetProperty="ScaleX"
-                                                       Duration="0:0:0.1"
-                                                       EasingFunction="{StaticResource Ease.Standard}"/>
-                                        <DoubleAnimation Storyboard.TargetName="ScaleTransform"
-                                                       Storyboard.TargetProperty="ScaleY"
-                                                       Duration="0:0:0.1"
-                                                       EasingFunction="{StaticResource Ease.Standard}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
+                            <Setter TargetName="Border" Property="Background" Value="#1D4ED8"/>
+                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#1D4ED8"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Border" Property="Background" Value="{StaticResource Brush.Background.Tertiary}"/>
@@ -364,12 +295,14 @@
         </Setter>
     </Style>
 
-    <!-- Success/Generate Button Style (Light Green) -->
+    <!-- Enhanced Success/Generate Button Style -->
     <Style x:Key="SuccessButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
-        <Setter Property="Background" Value="#28A745"/>
+        <Setter Property="Background" Value="{StaticResource Brush.Success}"/>
         <Setter Property="Foreground" Value="White"/>
-        <Setter Property="BorderBrush" Value="#28A745"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Success}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="20,10"/>
+        <Setter Property="BorderThickness" Value="2"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -377,8 +310,11 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
+                            CornerRadius="8"
                             Padding="{TemplateBinding Padding}">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#10B981" ShadowDepth="0" BlurRadius="8" Opacity="0.3"/>
+                        </Border.Effect>
                         <ContentPresenter x:Name="ContentPresenter"
                                         HorizontalAlignment="Center" 
                                         VerticalAlignment="Center"
@@ -389,20 +325,22 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#34CE57"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#34CE57"/>
-                            <Setter Property="Foreground" Value="White"/>
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource Brush.Success.Hover}"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource Brush.Success.Hover}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#1E7E34"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#1E7E34"/>
-                            <Setter Property="Foreground" Value="White"/>
+                            <Setter TargetName="Border" Property="Background" Value="#047857"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#047857"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Border" Property="Background" Value="#A0A0A0"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#A0A0A0"/>
-                            <Setter Property="Foreground" Value="#E0E0E0"/>
-                            <Setter TargetName="Border" Property="BorderThickness" Value="1"/>
+                            <Setter TargetName="Border" Property="Background" Value="#9CA3AF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#9CA3AF"/>
+                            <Setter Property="Foreground" Value="#E5E7EB"/>
+                            <Setter TargetName="Border" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="Transparent" ShadowDepth="0" BlurRadius="0" Opacity="0"/>
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -410,12 +348,14 @@
         </Setter>
     </Style>
 
-    <!-- Danger/Cancel Button Style (Light Red) -->
+    <!-- Enhanced Danger/Cancel Button Style -->
     <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
-        <Setter Property="Background" Value="#DC3545"/>
+        <Setter Property="Background" Value="{StaticResource Brush.Error}"/>
         <Setter Property="Foreground" Value="White"/>
-        <Setter Property="BorderBrush" Value="#DC3545"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Error}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="BorderThickness" Value="2"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -423,7 +363,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
+                            CornerRadius="8"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" 
                                         VerticalAlignment="Center"
@@ -431,17 +371,17 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#E85A67"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#E85A67"/>
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource Brush.Error.Hover}"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource Brush.Error.Hover}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#C82333"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#C82333"/>
+                            <Setter TargetName="Border" Property="Background" Value="#B91C1C"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#B91C1C"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource Brush.Background.Tertiary}"/>
-                            <Setter Property="Foreground" Value="{StaticResource Brush.Text.Tertiary}"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
+                            <Setter TargetName="Border" Property="Background" Value="#9CA3AF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#9CA3AF"/>
+                            <Setter Property="Foreground" Value="#E5E7EB"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -449,12 +389,14 @@
         </Setter>
     </Style>
 
-    <!-- Neutral/Reset Button Style (Light Gray) -->
+    <!-- Enhanced Neutral/Reset Button Style -->
     <Style x:Key="NeutralButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
-        <Setter Property="Background" Value="#6C757D"/>
+        <Setter Property="Background" Value="#6B7280"/>
         <Setter Property="Foreground" Value="White"/>
-        <Setter Property="BorderBrush" Value="#6C757D"/>
+        <Setter Property="BorderBrush" Value="#6B7280"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="BorderThickness" Value="2"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -462,7 +404,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
+                            CornerRadius="8"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" 
                                         VerticalAlignment="Center"
@@ -470,17 +412,17 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#868E96"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#868E96"/>
+                            <Setter TargetName="Border" Property="Background" Value="#9CA3AF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#9CA3AF"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#5A6268"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#5A6268"/>
+                            <Setter TargetName="Border" Property="Background" Value="#4B5563"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#4B5563"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource Brush.Background.Tertiary}"/>
-                            <Setter Property="Foreground" Value="{StaticResource Brush.Text.Tertiary}"/>
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
+                            <Setter TargetName="Border" Property="Background" Value="#D1D5DB"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#D1D5DB"/>
+                            <Setter Property="Foreground" Value="#9CA3AF"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -532,27 +474,13 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Scale Up Animation Style -->
+    <!-- Simple Fade In Animation Style -->
     <Style x:Key="ScaleUpAnimation" TargetType="FrameworkElement">
-        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-        <Setter Property="RenderTransform">
-            <Setter.Value>
-                <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
-            </Setter.Value>
-        </Setter>
         <Setter Property="Opacity" Value="0"/>
         <Style.Triggers>
             <EventTrigger RoutedEvent="FrameworkElement.Loaded">
                 <BeginStoryboard>
                     <Storyboard>
-                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                       To="1.0"
-                                       Duration="{StaticResource Animation.Normal}"
-                                       EasingFunction="{StaticResource Ease.Decelerate}"/>
-                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                       To="1.0"
-                                       Duration="{StaticResource Animation.Normal}"
-                                       EasingFunction="{StaticResource Ease.Decelerate}"/>
                         <DoubleAnimation Storyboard.TargetProperty="Opacity"
                                        To="1.0"
                                        Duration="{StaticResource Animation.Normal}"
@@ -571,12 +499,6 @@
         <Setter Property="CornerRadius" Value="{StaticResource CornerRadius.Medium}"/>
         <Setter Property="Effect" Value="{StaticResource Shadow.Small}"/>
         <Setter Property="ClipToBounds" Value="True"/>
-        <Setter Property="RenderTransformOrigin" Value="0.5,0"/>
-        <Setter Property="RenderTransform">
-            <Setter.Value>
-                <ScaleTransform ScaleY="1"/>
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <!-- Collapsible Content Style -->
@@ -617,78 +539,425 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Modern ComboBox Style -->
+    <!-- Enhanced Modern ComboBox Style -->
     <Style x:Key="ModernComboBox" TargetType="ComboBox">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource FontSize.Medium}"/>
-        <Setter Property="FontWeight" Value="{StaticResource FontWeight.Normal}"/>
-        <Setter Property="Background" Value="{StaticResource Brush.Background}"/>
-        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-
-    <!-- Modern TextBox Style -->
-    <Style x:Key="ModernTextBox" TargetType="TextBox">
-        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontSize" Value="{StaticResource FontSize.Medium}"/>
-        <Setter Property="FontWeight" Value="{StaticResource FontWeight.Normal}"/>
-        <Setter Property="Background" Value="{StaticResource Brush.Background}"/>
-        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-
-    <!-- Set Default Styles for Buttons Only -->
-    <Style TargetType="Button" BasedOn="{StaticResource ModernButton}"/>
-
-    <!-- Modern Toggle Switch Style -->
-    <Style x:Key="ModernToggleSwitch" TargetType="Border">
-        <Setter Property="Background" Value="#F8F9FA"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Foreground" Value="#000000"/>
         <Setter Property="BorderBrush" Value="#D1D5DB"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="16"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Effect">
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Padding" Value="6,4"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+        <Setter Property="Template">
             <Setter.Value>
-                <DropShadowEffect Color="Black" ShadowDepth="0" BlurRadius="4" Opacity="0.08"/>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="30"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <ContentPresenter x:Name="ContentSite"
+                                                Grid.Column="0"
+                                                Content="{TemplateBinding SelectionBoxItem}"
+                                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                IsHitTestVisible="False"
+                                                Margin="6,4"
+                                                TextElement.Foreground="{TemplateBinding Foreground}"/>
+                                
+                                <!-- Clipping for text overflow -->
+                                <Border Grid.Column="0" Background="Transparent" Margin="6,4" ClipToBounds="True"/>
+                                
+                                
+                                <!-- Invisible ToggleButton over entire area for full clickability -->
+                                <ToggleButton x:Name="ToggleButton"
+                                            Grid.Column="0"
+                                            Grid.ColumnSpan="2"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Focusable="False"
+                                            IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                            ClickMode="Press"
+                                            Content=""/>
+                                
+                                <TextBox x:Name="PART_EditableTextBox"
+                                        Grid.Column="0"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Focusable="True"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Center"
+                                        Visibility="Hidden"
+                                        IsReadOnly="{TemplateBinding IsReadOnly}"
+                                        Margin="6,4"
+                                        Foreground="{TemplateBinding Foreground}"/>
+                                
+                                <!-- Dropdown Arrow positioned last to render on top -->
+                                <Path Grid.Column="1"
+                                      HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"
+                                      Data="M 0 0 L 4 4 L 8 0 Z" 
+                                      Fill="#374151"
+                                      Stroke="#374151"
+                                      StrokeThickness="0.5"
+                                      IsHitTestVisible="False"
+                                      Panel.ZIndex="10"/>
+                            </Grid>
+                        </Border>
+                        
+                        <Popup x:Name="PART_Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Slide">
+                            <Grid MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                  MinWidth="{TemplateBinding ActualWidth}">
+                                <Border Background="White"
+                                        BorderBrush="#E5E7EB"
+                                        BorderThickness="2"
+                                        CornerRadius="8"
+                                        Effect="{StaticResource Shadow.Medium}">
+                                    <ScrollViewer Margin="4" 
+                                                  HorizontalScrollBarVisibility="Auto"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  Background="Transparent">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#3B82F6"/>
+                            <Setter TargetName="Border" Property="Background" Value="#FAFBFC"/>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#2563EB"/>
+                            <Setter TargetName="Border" Property="Background" Value="#FFFFFF"/>
+                            <Setter TargetName="Border" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#2563EB" ShadowDepth="0" BlurRadius="4" Opacity="0.2"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Border" Property="Background" Value="#F3F4F6"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#E5E7EB"/>
+                            <Setter Property="Foreground" Value="#9CA3AF"/>
+                        </Trigger>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
-    <!-- Toggle Option Style -->
-    <Style x:Key="ToggleOption" TargetType="Border">
-        <Setter Property="CornerRadius" Value="14"/>
-        <Setter Property="Margin" Value="2"/>
-        <Setter Property="Cursor" Value="Hand"/>
+    <!-- ComboBox Item Style for better visibility -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="#000000"/>
         <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Grid Background="Transparent">
+                        <Border x:Name="ItemBorder"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
+                                Opacity="1"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                            TextElement.Foreground="{TemplateBinding Foreground}"
+                                            UseLayoutRounding="True"
+                                            SnapsToDevicePixels="True"/>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- Completely transparent hover - no visual effects -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="Transparent"/>
+                            <Setter TargetName="ItemBorder" Property="BorderBrush" Value="Transparent"/>
+                            <Setter TargetName="ItemBorder" Property="Opacity" Value="1"/>
+                            <Setter Property="Foreground" Value="#000000"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="Transparent"/>
+                            <Setter TargetName="ItemBorder" Property="BorderBrush" Value="Transparent"/>
+                            <Setter TargetName="ItemBorder" Property="Opacity" Value="1"/>
+                            <Setter Property="Foreground" Value="#000000"/>
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="Transparent"/>
+                            <Setter TargetName="ItemBorder" Property="BorderBrush" Value="Transparent"/>
+                            <Setter TargetName="ItemBorder" Property="Opacity" Value="1"/>
+                            <Setter Property="Foreground" Value="#000000"/>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="Transparent"/>
+                            <Setter TargetName="ItemBorder" Property="BorderBrush" Value="Transparent"/>
+                            <Setter TargetName="ItemBorder" Property="Opacity" Value="1"/>
+                            <Setter Property="Foreground" Value="#000000"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#9CA3AF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Enhanced Modern TextBox Style -->
+    <Style x:Key="ModernTextBox" TargetType="TextBox">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="BorderBrush" Value="#D1D5DB"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="CaretBrush" Value="#000000"/>
+        <Setter Property="SelectionBrush" Value="#3B82F6"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                        Focusable="False"
+                                        HorizontalScrollBarVisibility="Hidden"
+                                        VerticalScrollBarVisibility="Hidden"
+                                        Background="Transparent"/>
+                            <TextBlock x:Name="PlaceholderText"
+                                       Text="{TemplateBinding Tag}"
+                                       Foreground="#9CA3AF"
+                                       FontStyle="Italic"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False"
+                                       Visibility="Collapsed"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value=""/>
+                                <Condition Property="IsFocused" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible"/>
+                        </MultiTrigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#3B82F6"/>
+                            <Setter TargetName="Border" Property="Background" Value="#FAFBFC"/>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#2563EB"/>
+                            <Setter TargetName="Border" Property="Background" Value="#FFFFFF"/>
+                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="Border" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#2563EB" ShadowDepth="0" BlurRadius="4" Opacity="0.2"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Border" Property="Background" Value="#F3F4F6"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#E5E7EB"/>
+                            <Setter Property="Foreground" Value="#9CA3AF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Enhanced Modern RadioButton Style -->
+    <Style x:Key="ModernRadioButton" TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="#374151"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Custom Radio Circle -->
+                        <Border x:Name="RadioBorder" 
+                                Grid.Column="0"
+                                Width="20" Height="20"
+                                Background="#FFFFFF"
+                                BorderBrush="#D1D5DB"
+                                BorderThickness="2"
+                                CornerRadius="10"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center">
+                            <Ellipse x:Name="RadioIndicator"
+                                   Width="8" Height="8"
+                                   Fill="#2563EB"
+                                   Opacity="0"/>
+                        </Border>
+                        
+                        <!-- Content -->
+                        <ContentPresenter Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Content="{TemplateBinding Content}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                    </Grid>
+                    
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="RadioIndicator" Property="Opacity" Value="1"/>
+                            <Setter TargetName="RadioBorder" Property="BorderBrush" Value="#2563EB"/>
+                        </Trigger>
+                        
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RadioBorder" Property="BorderBrush" Value="#3B82F6"/>
+                            <Setter TargetName="RadioBorder" Property="Background" Value="#F8FAFC"/>
+                        </Trigger>
+                        
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="RadioBorder" Property="Background" Value="#F3F4F6"/>
+                            <Setter TargetName="RadioBorder" Property="BorderBrush" Value="#E5E7EB"/>
+                            <Setter Property="Foreground" Value="#9CA3AF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Set Default RadioButton Style -->
+    <Style TargetType="RadioButton" BasedOn="{StaticResource ModernRadioButton}"/>
+    
+    <!-- Set Default ComboBox Style -->
+    <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBox}"/>
+    
+    <!-- Set Default TextBox Style -->
+    <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBox}"/>
+    
+    <!-- Set Default Styles for Buttons -->
+    <Style TargetType="Button" BasedOn="{StaticResource ModernButton}"/>
+
+    <!-- Enhanced Modern Toggle Switch Style -->
+    <Style x:Key="ModernToggleSwitch" TargetType="Border">
+        <Setter Property="Background" Value="#F1F5F9"/>
+        <Setter Property="BorderBrush" Value="#E2E8F0"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="20"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#000000" ShadowDepth="2" BlurRadius="8" Opacity="0.1"/>
+            </Setter.Value>
+        </Setter>
         <Style.Triggers>
-            <Trigger Property="Tag" Value="Active">
-                <Setter Property="Background" Value="#0078D4"/>
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect Color="#0078D4" ShadowDepth="0" BlurRadius="4" Opacity="0.2"/>
-                    </Setter.Value>
-                </Setter>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                          To="#CBD5E1"
+                                          Duration="0:0:0.2"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                          To="#F8FAFC"
+                                          Duration="0:0:0.2"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                          Duration="0:0:0.2"/>
+                            <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                          Duration="0:0:0.2"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.ExitActions>
             </Trigger>
         </Style.Triggers>
     </Style>
 
-    <!-- Toggle Text Style -->
+    <!-- Enhanced Toggle Option Style -->
+    <Style x:Key="ToggleOption" TargetType="Border">
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Margin" Value="3"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Style.Triggers>
+            <Trigger Property="Tag" Value="Active">
+                <Setter Property="Background" Value="#2563EB"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="#2563EB" ShadowDepth="0" BlurRadius="8" Opacity="0.4"/>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+            <Trigger Property="Tag" Value="Inactive">
+                <Setter Property="Background" Value="Transparent"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Opacity" Value="0.9"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Enhanced Toggle Text Style -->
     <Style x:Key="ToggleText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
-        <Setter Property="FontWeight" Value="Bold"/>
-        <Setter Property="Foreground" Value="#374151"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#64748B"/>
         <Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="13"/>
         <Style.Triggers>
             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Border}, Path=Tag}" Value="Active">
                 <Setter Property="Foreground" Value="White"/>
