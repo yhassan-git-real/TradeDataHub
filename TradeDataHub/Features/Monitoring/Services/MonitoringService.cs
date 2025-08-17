@@ -18,6 +18,7 @@ namespace TradeDataHub.Features.Monitoring.Services
         private MonitorStatus _currentStatus;
         private ObservableCollection<LogEntry> _logEntries;
         private bool _isAutoScrollEnabled = true;
+        private bool _isRealTimeDisplayEnabled = false; // Default to stopped/paused state
 
         public MonitorStatus CurrentStatus
         {
@@ -46,6 +47,16 @@ namespace TradeDataHub.Features.Monitoring.Services
             {
                 _isAutoScrollEnabled = value;
                 OnPropertyChanged(nameof(IsAutoScrollEnabled));
+            }
+        }
+
+        public bool IsRealTimeDisplayEnabled
+        {
+            get => _isRealTimeDisplayEnabled;
+            set
+            {
+                _isRealTimeDisplayEnabled = value;
+                OnPropertyChanged(nameof(IsRealTimeDisplayEnabled));
             }
         }
 
@@ -158,6 +169,12 @@ namespace TradeDataHub.Features.Monitoring.Services
 
         private void ProcessPendingLogs(object sender, EventArgs e)
         {
+            // Only process UI updates if real-time display is enabled
+            if (!_isRealTimeDisplayEnabled)
+            {
+                return; // Backend logging continues, but UI display is paused
+            }
+
             // Process batched log updates (performance optimization)
             var logsToAdd = new List<LogEntry>();
             

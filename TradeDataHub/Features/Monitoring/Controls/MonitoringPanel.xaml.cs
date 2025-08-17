@@ -64,6 +64,16 @@ namespace TradeDataHub.Features.Monitoring.Controls
                     searchTextBox.TextChanged += LogSearchTextBox_TextChanged;
                 }
                 
+                // Initialize StartStopToggle to default 'Start' state (paused)
+                if (this.FindName("StartStopToggle") is System.Windows.Controls.Primitives.ToggleButton startStopToggle)
+                {
+                    startStopToggle.IsChecked = false; // Default to unchecked (Start/paused state)
+                    startStopToggle.Content = "Start";
+                    startStopToggle.ToolTip = "Start real-time log display";
+                    // Ensure the monitoring service starts in paused state
+                    _monitoringService.IsRealTimeDisplayEnabled = false;
+                }
+                
                 // Initialize other UI elements
                 UpdateStatusDisplay();
                 UpdateLogCounts();
@@ -208,6 +218,29 @@ namespace TradeDataHub.Features.Monitoring.Controls
             {
                 _isAutoScrollEnabled = autoScrollToggle.IsChecked ?? false;
                 _monitoringService.IsAutoScrollEnabled = _isAutoScrollEnabled;
+            }
+        }
+
+        private void StartStopToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.FindName("StartStopToggle") is System.Windows.Controls.Primitives.ToggleButton startStopToggle)
+            {
+                bool isStarted = startStopToggle.IsChecked ?? false;
+                
+                // Update the monitoring service to control real-time display
+                _monitoringService.IsRealTimeDisplayEnabled = isStarted;
+                
+                // Update button content and tooltip based on state
+                if (isStarted)
+                {
+                    startStopToggle.Content = "Stop";
+                    startStopToggle.ToolTip = "Stop real-time log display";
+                }
+                else
+                {
+                    startStopToggle.Content = "Start";
+                    startStopToggle.ToolTip = "Start real-time log display";
+                }
             }
         }
 
