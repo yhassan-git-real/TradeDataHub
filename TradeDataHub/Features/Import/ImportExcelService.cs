@@ -35,7 +35,20 @@ namespace TradeDataHub.Features.Import
             _logger = ModuleLoggerFactory.GetImportLogger();
             // Use cached configuration loading for better performance
             _settings = ConfigurationCacheService.GetImportSettings();
-            _format = ConfigurationCacheService.GetImportExcelFormatSettings();
+            
+            try
+            {
+                _format = ConfigurationCacheService.GetImportExcelFormatSettings();
+                if (_format == null)
+                {
+                    _logger.LogError("ImportExcelFormatSettings loaded as null, will use default formatting", null, "INIT");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to load ImportExcelFormatSettings: {ex.Message}, will use default formatting", ex, "INIT");
+                _format = null; // Will trigger default formatting
+            }
         }
 
         private ImportSettings LoadImportSettings()
@@ -187,53 +200,130 @@ namespace TradeDataHub.Features.Import
         {
             if (lastRow <= 1) return;
 
-            // Apply font settings to entire worksheet range at once (much faster than cell-by-cell)
-            var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
-            allCellsRange.Style.Font.Name = _format.FontName;
-            allCellsRange.Style.Font.Size = _format.FontSize;
-            allCellsRange.Style.WrapText = _format.WrapText;
-
-            // Apply column-specific formatting in batches
-            foreach (int dateCol in _format.DateColumns)
+            // Null check for format settings
+            if (_format == null)
             {
-                if (dateCol > 0 && dateCol <= colCount)
-                    worksheet.Column(dateCol).Style.Numberformat.Format = _format.DateFormat;
-            }
-            foreach (int textCol in _format.TextColumns)
-            {
-                if (textCol > 0 && textCol <= colCount)
-                    worksheet.Column(textCol).Style.Numberformat.Format = "@";
+                _logger.LogError("ImportExcelFormatSettings is null, applying default formatting", null, "FORMAT");
+                ApplyDefaultFormatting(worksheet, lastRow, colCount);
+                return;
             }
 
-            var borderStyle = (_format.BorderStyle?.Equals("none", StringComparison.OrdinalIgnoreCase) == true)
-                ? ExcelBorderStyle.None : ExcelBorderStyle.Thin;
-
-            // Apply header formatting to entire header row at once
-            var headerRange = worksheet.Cells[1,1,1,colCount];
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-            headerRange.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml(_format.HeaderBackgroundColor));
-            headerRange.Style.Border.Top.Style = borderStyle;
-            headerRange.Style.Border.Left.Style = borderStyle;
-            headerRange.Style.Border.Right.Style = borderStyle;
-            headerRange.Style.Border.Bottom.Style = borderStyle;
-
-            // Apply data formatting to entire data range at once
-            if (lastRow > 1)
+            try
             {
-                var dataRange = worksheet.Cells[2,1,lastRow,colCount];
-                dataRange.Style.Border.Top.Style = borderStyle;
-                dataRange.Style.Border.Left.Style = borderStyle;
-                dataRange.Style.Border.Right.Style = borderStyle;
-                dataRange.Style.Border.Bottom.Style = borderStyle;
+                // Apply font settings to entire worksheet range at once (much faster than cell-by-cell)
+                var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
+                allCellsRange.Style.Font.Name = _format.FontName ?? "Arial";
+                allCellsRange.Style.Font.Size = _format.FontSize > 0 ? _format.FontSize : 10;
+                allCellsRange.Style.WrapText = _format.WrapText;
+
+                // Apply column-specific formatting in batches
+                if (_format.DateColumns != null && _format.DateColumns.Length > 0)
+                {
+                    foreach (int dateCol in _format.DateColumns)
+                    {
+                        if (dateCol > 0 && dateCol <= colCount)
+                            worksheet.Column(dateCol).Style.Numberformat.Format = _format.DateFormat ?? "dd-MMM-yy";
+                    }
+                }
+                
+                if (_format.TextColumns != null && _format.TextColumns.Length > 0)
+                {
+                    foreach (int textCol in _format.TextColumns)
+                    {
+                        if (textCol > 0 && textCol <= colCount)
+                            worksheet.Column(textCol).Style.Numberformat.Format = "@";
+                    }
+                }
+
+                var borderStyle = (_format.BorderStyle?.Equals("none", StringComparison.OrdinalIgnoreCase) == true)
+                    ? ExcelBorderStyle.None : ExcelBorderStyle.Thin;
+
+                // Apply header formatting to entire header row at once
+                var headerRange = worksheet.Cells[1,1,1,colCount];
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                
+                // Safe color parsing with fallback
+                try
+                {
+                    var headerColor = !string.IsNullOrEmpty(_format.HeaderBackgroundColor) 
+                        ? ColorTranslator.FromHtml(_format.HeaderBackgroundColor)
+                        : Color.LightBlue;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(headerColor);
+                }
+                catch (Exception colorEx)
+                {
+                    _logger.LogError($"Invalid header background color '{_format.HeaderBackgroundColor}', using default", colorEx, "FORMAT");
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
+                }
+                
+                headerRange.Style.Border.Top.Style = borderStyle;
+                headerRange.Style.Border.Left.Style = borderStyle;
+                headerRange.Style.Border.Right.Style = borderStyle;
+                headerRange.Style.Border.Bottom.Style = borderStyle;
+
+                // Apply data formatting to entire data range at once
+                if (lastRow > 1)
+                {
+                    var dataRange = worksheet.Cells[2,1,lastRow,colCount];
+                    dataRange.Style.Border.Top.Style = borderStyle;
+                    dataRange.Style.Border.Left.Style = borderStyle;
+                    dataRange.Style.Border.Right.Style = borderStyle;
+                    dataRange.Style.Border.Bottom.Style = borderStyle;
+                }
+
+                // Auto-fit columns using sample data for performance
+                if (_format.AutoFitColumns)
+                {
+                    int sampleLimit = _format.AutoFitSampleRows > 0 ? _format.AutoFitSampleRows : 1000;
+                    int sampleEndRow = Math.Min(lastRow, sampleLimit);
+                    worksheet.Cells[1,1,sampleEndRow,colCount].AutoFitColumns();
+                }
             }
-
-            // Auto-fit columns using sample data for performance
-            if (_format.AutoFitColumns)
+            catch (Exception ex)
             {
-                int sampleLimit = _format.AutoFitSampleRows > 0 ? _format.AutoFitSampleRows : 1000;
-                int sampleEndRow = Math.Min(lastRow, sampleLimit);
-                worksheet.Cells[1,1,sampleEndRow,colCount].AutoFitColumns();
+                _logger.LogError($"Error applying formatting, falling back to default: {ex.Message}", ex, "FORMAT");
+                ApplyDefaultFormatting(worksheet, lastRow, colCount);
+            }
+        }
+
+        private void ApplyDefaultFormatting(OfficeOpenXml.ExcelWorksheet worksheet, int lastRow, int colCount)
+        {
+            try
+            {
+                // Apply basic default formatting
+                var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
+                allCellsRange.Style.Font.Name = "Arial";
+                allCellsRange.Style.Font.Size = 10;
+                allCellsRange.Style.WrapText = false;
+
+                // Apply header formatting
+                var headerRange = worksheet.Cells[1,1,1,colCount];
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                headerRange.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
+                headerRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                headerRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                headerRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                headerRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+
+                // Apply data formatting
+                if (lastRow > 1)
+                {
+                    var dataRange = worksheet.Cells[2,1,lastRow,colCount];
+                    dataRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                    dataRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                    dataRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                    dataRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                }
+
+                // Auto-fit columns
+                worksheet.Cells[1,1,Math.Min(lastRow, 1000),colCount].AutoFitColumns();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error applying default formatting: {ex.Message}", ex, "FORMAT");
+                // If even default formatting fails, continue without formatting
             }
         }
     }

@@ -53,17 +53,17 @@
                 <!-- Control Buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                             HorizontalAlignment="Right" Margin="0,0,0,0">
-                    <ToggleButton x:Name="StartStopToggle" Content="Start" Width="76" Height="36" 
+                    <ToggleButton x:Name="StartStopToggle" Content="Start" Width="80" 
                                   IsChecked="False" Click="StartStopToggle_Click"
                                   Style="{StaticResource ModernToggleButton}" 
-                                  Margin="0,0,8,0" FontSize="{StaticResource FontSize.XSmall}" FontWeight="SemiBold"
+                                  Margin="0,0,8,0" FontSize="12" FontWeight="SemiBold"
                                   ToolTip="Start/Stop real-time log display"/>
-                    <Button x:Name="ClearLogsButton" Content="Clear" Width="76" Height="36" 
+                    <Button x:Name="ClearLogsButton" Content="Clear" Width="80" 
                             Click="ClearLogsButton_Click" Style="{StaticResource NeutralButton}"
-                            Margin="0,0,8,0" FontSize="{StaticResource FontSize.XSmall}" FontWeight="SemiBold"/>
-                    <ToggleButton x:Name="AutoScrollToggle" Content="Auto" Width="76" Height="36" 
+                            Margin="0,0,8,0" FontSize="12" FontWeight="SemiBold"/>
+                    <ToggleButton x:Name="AutoScrollToggle" Content="Auto" Width="80" 
                                   IsChecked="True" Click="AutoScrollToggle_Click"
-                                  Style="{StaticResource ModernToggleButton}" FontSize="{StaticResource FontSize.XSmall}" FontWeight="SemiBold"/>
+                                  Style="{StaticResource ModernToggleButton}" FontSize="12" FontWeight="SemiBold"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -125,7 +125,7 @@
                         
                         <!-- Search TextBox -->
                         <TextBox x:Name="LogSearchTextBox" Grid.Column="1"
-                                 Text="Search logs..."
+                                 Text=""
                                  Style="{StaticResource ModernSearchTextBox}"
                                  GotFocus="LogSearchTextBox_GotFocus" 
                                  LostFocus="LogSearchTextBox_LostFocus"/>

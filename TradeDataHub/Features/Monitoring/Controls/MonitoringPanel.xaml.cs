@@ -62,6 +62,9 @@ namespace TradeDataHub.Features.Monitoring.Controls
                 if (this.FindName("LogSearchTextBox") is TextBox searchTextBox)
                 {
                     searchTextBox.TextChanged += LogSearchTextBox_TextChanged;
+                    // Initialize with placeholder text
+                    searchTextBox.Text = "Search logs...";
+                    searchTextBox.Foreground = System.Windows.Media.Brushes.Gray;
                 }
                 
                 // Initialize StartStopToggle to default 'Start' state (paused)
@@ -368,8 +371,16 @@ namespace TradeDataHub.Features.Monitoring.Controls
         {
             if (this.FindName("LogSearchTextBox") is TextBox logSearchTextBox)
             {
-                logSearchTextBox.Text = string.Empty;
+                logSearchTextBox.Text = "";
+                logSearchTextBox.Foreground = System.Windows.Media.Brushes.Black;
                 logSearchTextBox.Focus();
+                
+                // Clear the search filter
+                ApplyLogFilter("");
+                
+                // Hide the clear button
+                if (this.FindName("ClearSearchButton") is Button clearSearchButton)
+                    clearSearchButton.Visibility = Visibility.Collapsed;
             }
         }
 

@@ -36,19 +36,21 @@
     <SolidColorBrush x:Key="Brush.Info" Color="{StaticResource Color.Info}"/>
     <SolidColorBrush x:Key="Brush.Info.Light" Color="{StaticResource Color.Info.Light}"/>
 
-    <!-- Professional Gradient Backgrounds -->
+    <!-- Professional Gradient Backgrounds - Refined -->
     <LinearGradientBrush x:Key="Brush.Background.Professional" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#F8FBFF" Offset="0"/>
-        <GradientStop Color="#F0F4F8" Offset="1"/>
+        <GradientStop Color="#F8FAFC" Offset="0"/>
+        <GradientStop Color="#F1F5F9" Offset="0.5"/>
+        <GradientStop Color="#E2E8F0" Offset="1"/>
     </LinearGradientBrush>
     
     <LinearGradientBrush x:Key="Brush.Background.Corporate" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#FAFBFC" Offset="0"/>
+        <GradientStop Color="#FEFEFE" Offset="0"/>
+        <GradientStop Color="#F8F9FA" Offset="0.5"/>
         <GradientStop Color="#F1F3F4" Offset="1"/>
     </LinearGradientBrush>
 
-    <!-- Enhanced Card Background -->
-    <SolidColorBrush x:Key="Brush.Card.Background" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="Brush.Card.Border" Color="#E0E0E0"/>
+    <!-- Enhanced Card Background with subtle warmth -->
+    <SolidColorBrush x:Key="Brush.Card.Background" Color="#FDFDFD"/>
+    <SolidColorBrush x:Key="Brush.Card.Border" Color="#D1D5DB"/>
 
 </ResourceDictionary>
