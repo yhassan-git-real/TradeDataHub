@@ -4,18 +4,18 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="32" d:DesignWidth="200">
+             d:DesignHeight="44" d:DesignWidth="230">
     
     <Border Background="White" 
-            BorderBrush="#ABADB3" 
+            BorderBrush="#D1D5DB" 
             BorderThickness="1" 
             CornerRadius="6" 
-            Height="32">
+            Height="36">
         <Grid Margin="8,4">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="80"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="110"/>
             </Grid.ColumnDefinitions>
             
             <!-- Year ComboBox -->
@@ -23,33 +23,37 @@
                       Grid.Column="0"
                       SelectionChanged="YearComboBox_SelectionChanged"
                       ToolTip="Select Year"
-                      FontSize="13"
+                      FontSize="11"
                       FontFamily="Segoe UI"
+                      FontWeight="Medium"
+                      Foreground="#000000"
                       MaxDropDownHeight="200"
                       VerticalContentAlignment="Center"
                       BorderThickness="0"
                       Background="Transparent"
-                      Margin="0,0,4,0"/>
+                      Margin="4,0,4,0"/>
             
             <!-- Separator -->
             <Border Grid.Column="1" 
                     Width="1" 
-                    Background="#D0D0D0" 
+                    Background="#D1D5DB" 
                     VerticalAlignment="Stretch"
-                    Margin="4,2"/>
+                    Margin="6,1"/>
             
             <!-- Month ComboBox -->
             <ComboBox x:Name="MonthComboBox" 
                       Grid.Column="2"
                       SelectionChanged="MonthComboBox_SelectionChanged"
                       ToolTip="Select Month"
-                      FontSize="13"
+                      FontSize="11"
                       FontFamily="Segoe UI"
+                      FontWeight="Medium"
+                      Foreground="#000000"
                       MaxDropDownHeight="200"
                       VerticalContentAlignment="Center"
                       BorderThickness="0"
                       Background="Transparent"
-                      Margin="4,0,0,0"/>
+                      Margin="2,0,0,0"/>
         </Grid>
     </Border>
 </UserControl>

@@ -201,6 +201,7 @@
                     <ToggleButton x:Name="StartStopToggle" Content="Start" Width="76" Height="36" 
                                   IsChecked="False" Click="StartStopToggle_Click"
                                   Style="{StaticResource ModernToggleButton}" 
+                                  BorderBrush="#000000" BorderThickness="1"
                                   Margin="0,0,8,0" FontSize="11" FontWeight="SemiBold"
                                   ToolTip="Start/Stop real-time log display"/>
                     <Button x:Name="ClearLogsButton" Content="Clear" Width="76" Height="36" 
