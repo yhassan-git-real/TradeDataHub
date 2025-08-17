@@ -1,0 +1,183 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Foundation/Brushes.xaml"/>
+        <ResourceDictionary Source="../Foundation/Typography.xaml"/>
+        <ResourceDictionary Source="../Foundation/Tokens.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- YearMonthPicker Styles -->
+    <Style x:Key="YearMonthPickerContainer" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource Brush.Background}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Height" Value="32"/>
+    </Style>
+
+    <Style x:Key="YearMonthPickerComboBox" TargetType="ComboBox">
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="MaxDropDownHeight" Value="200"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+    </Style>
+
+    <Style x:Key="YearMonthPickerSeparator" TargetType="Border">
+        <Setter Property="Width" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource Brush.Border.Light}"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="Margin" Value="4,2"/>
+    </Style>
+
+    <!-- MonitoringPanel Styles -->
+    <Style x:Key="ModernStatusBadge" TargetType="Border">
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="MinWidth" Value="80"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Background" Value="{StaticResource Brush.Background.Secondary}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <!-- Column Header Style for ListView -->
+    <Style x:Key="ModernColumnHeader" TargetType="GridViewColumnHeader">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+        <Setter Property="FontWeight" Value="{StaticResource FontWeight.Bold}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="Background" Value="{StaticResource Brush.Background.Secondary}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    </Style>
+
+    <!-- Search Box Style -->
+    <Style x:Key="ModernSearchBox" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource Brush.Background}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Light}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="ModernSearchTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Small}"/>
+        <Setter Property="FontWeight" Value="{StaticResource FontWeight.Medium}"/>
+        <Setter Property="Padding" Value="8,0,0,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}"/>
+    </Style>
+
+    <!-- Expand/Collapse Button Style -->
+    <Style x:Key="ModernExpandCollapseButton" TargetType="Button">
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1" ScaleY="1"/>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <ContentPresenter/>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                       To="1.1"
+                                                       Duration="{StaticResource Animation.Fast}"
+                                                       EasingFunction="{StaticResource Ease.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                       To="1.1"
+                                                       Duration="{StaticResource Animation.Fast}"
+                                                       EasingFunction="{StaticResource Ease.Standard}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                       To="1.0"
+                                                       Duration="{StaticResource Animation.Fast}"
+                                                       EasingFunction="{StaticResource Ease.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                       To="1.0"
+                                                       Duration="{StaticResource Animation.Fast}"
+                                                       EasingFunction="{StaticResource Ease.Standard}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ModernExpandCollapseIcon" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource Brush.Background.Secondary}"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Width" Value="28"/>
+        <Setter Property="Height" Value="28"/>
+    </Style>
+
+    <!-- Clear Button Style for Search -->
+    <Style x:Key="ModernClearButton" TargetType="Button">
+        <Setter Property="Width" Value="20"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <ContentPresenter/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Log Level Badge Styles -->
+    <Style x:Key="LogLevelBadge" TargetType="Border">
+        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="MinWidth" Value="45"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Time Badge Style -->
+    <Style x:Key="TimeBadge" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource Brush.Background.Tertiary}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,3"/>
+    </Style>
+
+    <!-- Monospace Text Style for Logs -->
+    <Style x:Key="MonospaceText" TargetType="TextBlock" BasedOn="{StaticResource Typography.Caption}">
+        <Setter Property="FontFamily" Value="Consolas, monospace"/>
+        <Setter Property="FontWeight" Value="{StaticResource FontWeight.SemiBold}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}"/>
+    </Style>
+
+</ResourceDictionary>
