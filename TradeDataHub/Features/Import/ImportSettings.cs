@@ -21,26 +21,26 @@ namespace TradeDataHub.Features.Import
         public required string StoredProcedureName { get; set; }
         public required string ViewName { get; set; }
         public required string OrderByColumn { get; set; }
-        public string WorksheetName { get; set; } = "Import Data";
+        public required string WorksheetName { get; set; }
     }
 
     public class ImportFileSettings
     {
         public required string OutputDirectory { get; set; }
-        public string FileSuffix { get; set; } = "IMP";
+        public required string FileSuffix { get; set; }
     }
 
     public class ImportLoggingSettings
     {
-        public string OperationLabel { get; set; } = "Excel Import Generation";
-        public string LogFilePrefix { get; set; } = "ImportLog";
-        public string LogFileExtension { get; set; } = ".txt";
+        public required string OperationLabel { get; set; }
+        public required string LogFilePrefix { get; set; }
+        public required string LogFileExtension { get; set; }
     }
 
     public class ImportObjectsSettings
     {
-        public string DefaultViewName { get; set; } = "IMPDATA";
-        public string DefaultStoredProcedureName { get; set; } = "ImportJNPTData_New1";
+        public required string DefaultViewName { get; set; }
+        public required string DefaultStoredProcedureName { get; set; }
         public List<DbObjectOption> Views { get; set; } = new List<DbObjectOption>();
         public List<DbObjectOption> StoredProcedures { get; set; } = new List<DbObjectOption>();
     }

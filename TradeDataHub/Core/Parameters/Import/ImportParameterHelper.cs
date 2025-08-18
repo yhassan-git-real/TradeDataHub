@@ -13,6 +13,7 @@ namespace TradeDataHub.Core.Helpers
         public const string DEFAULT_DATE_FORMAT = "yyyyMM";
         public const int MIN_DATE_VALUE = 190001;
         public const int MAX_DATE_VALUE = 299912;
+        public const int MAX_EXCEL_ROWS = 1048575;
 
         public static class ImportParameters
         {

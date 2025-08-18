@@ -41,13 +41,13 @@ namespace TradeDataHub.Features.Import
                 _format = ConfigurationCacheService.GetImportExcelFormatSettings();
                 if (_format == null)
                 {
-                    _logger.LogError("ImportExcelFormatSettings loaded as null, will use default formatting", null, "INIT");
+                    throw new InvalidOperationException("ImportExcelFormatSettings loaded as null but is required");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to load ImportExcelFormatSettings: {ex.Message}, will use default formatting", ex, "INIT");
-                _format = null; // Will trigger default formatting
+                _logger.LogError($"Failed to load ImportExcelFormatSettings: {ex.Message}", ex, "INIT");
+                throw new InvalidOperationException("ImportExcelFormatSettings is required but failed to load", ex);
             }
         }
 
@@ -106,7 +106,7 @@ namespace TradeDataHub.Features.Import
                         _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, "No data - skipped", processId);
                         return new ImportExcelResult { Success = false, RowCount = 0, SkipReason = "NoData" };
                     }
-                    if (recordCount > 1048575)
+                    if (recordCount > ImportParameterHelper.MAX_EXCEL_ROWS)
                     {
                         ModuleSkippedDatasetLogger.LogImportSkippedDataset(0, recordCount, fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, "ExcelRowLimit");
                         _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, "Row limit - skipped", processId);
@@ -200,20 +200,12 @@ namespace TradeDataHub.Features.Import
         {
             if (lastRow <= 1) return;
 
-            // Null check for format settings
-            if (_format == null)
-            {
-                _logger.LogError("ImportExcelFormatSettings is null, applying default formatting", null, "FORMAT");
-                ApplyDefaultFormatting(worksheet, lastRow, colCount);
-                return;
-            }
-
             try
             {
                 // Apply font settings to entire worksheet range at once (much faster than cell-by-cell)
                 var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
-                allCellsRange.Style.Font.Name = _format.FontName ?? "Arial";
-                allCellsRange.Style.Font.Size = _format.FontSize > 0 ? _format.FontSize : 10;
+                allCellsRange.Style.Font.Name = _format.FontName;
+                allCellsRange.Style.Font.Size = _format.FontSize;
                 allCellsRange.Style.WrapText = _format.WrapText;
 
                 // Apply column-specific formatting in batches
@@ -222,7 +214,7 @@ namespace TradeDataHub.Features.Import
                     foreach (int dateCol in _format.DateColumns)
                     {
                         if (dateCol > 0 && dateCol <= colCount)
-                            worksheet.Column(dateCol).Style.Numberformat.Format = _format.DateFormat ?? "dd-MMM-yy";
+                            worksheet.Column(dateCol).Style.Numberformat.Format = _format.DateFormat;
                     }
                 }
                 
@@ -243,19 +235,9 @@ namespace TradeDataHub.Features.Import
                 headerRange.Style.Font.Bold = true;
                 headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
                 
-                // Safe color parsing with fallback
-                try
-                {
-                    var headerColor = !string.IsNullOrEmpty(_format.HeaderBackgroundColor) 
-                        ? ColorTranslator.FromHtml(_format.HeaderBackgroundColor)
-                        : Color.LightBlue;
-                    headerRange.Style.Fill.BackgroundColor.SetColor(headerColor);
-                }
-                catch (Exception colorEx)
-                {
-                    _logger.LogError($"Invalid header background color '{_format.HeaderBackgroundColor}', using default", colorEx, "FORMAT");
-                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
-                }
+                // Parse header color from configuration
+                var headerColor = ColorTranslator.FromHtml(_format.HeaderBackgroundColor);
+                headerRange.Style.Fill.BackgroundColor.SetColor(headerColor);
                 
                 headerRange.Style.Border.Top.Style = borderStyle;
                 headerRange.Style.Border.Left.Style = borderStyle;
@@ -275,56 +257,17 @@ namespace TradeDataHub.Features.Import
                 // Auto-fit columns using sample data for performance
                 if (_format.AutoFitColumns)
                 {
-                    int sampleLimit = _format.AutoFitSampleRows > 0 ? _format.AutoFitSampleRows : 1000;
-                    int sampleEndRow = Math.Min(lastRow, sampleLimit);
+                    int sampleEndRow = Math.Min(lastRow, _format.AutoFitSampleRows);
                     worksheet.Cells[1,1,sampleEndRow,colCount].AutoFitColumns();
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error applying formatting, falling back to default: {ex.Message}", ex, "FORMAT");
-                ApplyDefaultFormatting(worksheet, lastRow, colCount);
+                _logger.LogError($"Error applying formatting from JSON configuration: {ex.Message}", ex, "FORMAT");
+                throw; // Re-throw the exception since we no longer have fallback formatting
             }
         }
 
-        private void ApplyDefaultFormatting(OfficeOpenXml.ExcelWorksheet worksheet, int lastRow, int colCount)
-        {
-            try
-            {
-                // Apply basic default formatting
-                var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
-                allCellsRange.Style.Font.Name = "Arial";
-                allCellsRange.Style.Font.Size = 10;
-                allCellsRange.Style.WrapText = false;
 
-                // Apply header formatting
-                var headerRange = worksheet.Cells[1,1,1,colCount];
-                headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                headerRange.Style.Fill.BackgroundColor.SetColor(Color.LightBlue);
-                headerRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                headerRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                headerRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                headerRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-
-                // Apply data formatting
-                if (lastRow > 1)
-                {
-                    var dataRange = worksheet.Cells[2,1,lastRow,colCount];
-                    dataRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                    dataRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                    dataRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                    dataRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                }
-
-                // Auto-fit columns
-                worksheet.Cells[1,1,Math.Min(lastRow, 1000),colCount].AutoFitColumns();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error applying default formatting: {ex.Message}", ex, "FORMAT");
-                // If even default formatting fails, continue without formatting
-            }
-        }
     }
 }
