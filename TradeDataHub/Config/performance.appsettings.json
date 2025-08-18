@@ -1,0 +1,28 @@
+{
+  "PerformanceSettings": {
+    "ExcelProcessing": {
+      "ChunkSize": 50000,
+      "MaxMemoryUsageMB": 2048,
+      "EnableObjectPooling": false,
+      "DeferAutoFitColumns": false,
+      "MemoryPressureThreshold": 0.75,
+      "EnableProgressiveGC": false,
+      "GCCollectionInterval": 200000
+    },
+    "FileIO": {
+      "BufferSize": 131072,
+      "EnableCompression": false,
+      "AsyncFileOperations": true,
+      "TemporaryFileThreshold": 100000,
+      "MemoryStreamThreshold": 75000
+    },
+    "Logging": {
+      "BatchSize": 200,
+      "FlushIntervalMs": 3000,
+      "EnableHighPerformanceMode": false,
+      "LogLevelThreshold": "Info",
+      "EnableStringPooling": false
+    }
+  }
+}
+
