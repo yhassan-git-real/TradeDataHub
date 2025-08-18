@@ -88,7 +88,7 @@ public class ExportExcelService
 					_logger.LogProcessComplete("Excel Export Generation", reportTimer.Elapsed, "No data - skipped", processId);
 					return new ExcelResult { Success = false, SkipReason = SkipReason.NoData, RowCount = 0 };
 				}
-				if (recordCount > 1_048_575)
+				if (recordCount > ExportParameterHelper.MAX_EXCEL_ROWS)
 				{
 					string skippedFileName = Export_FileNameHelper.GenerateExportFileName(fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port);
 					ModuleSkippedDatasetLogger.LogExportSkippedDataset(combinationNumber, recordCount, fromMonth, toMonth, hsCode, product, iec, exporter, country, name, port, "RowLimit");
@@ -104,7 +104,7 @@ public class ExportExcelService
 				using var excelTimer = _logger.StartTimer("Excel Creation", processId);
 				using var package = new ExcelPackage();
 				var worksheetName = _exportSettings.Operation.WorksheetName;
-				var worksheet = package.Workbook.Worksheets.Add(string.IsNullOrWhiteSpace(worksheetName) ? "Export Data" : worksheetName);
+				var worksheet = package.Workbook.Worksheets.Add(worksheetName);
 
 				cancellationToken.ThrowIfCancellationRequested();
 
@@ -185,50 +185,57 @@ public class ExportExcelService
 	{
 		if (lastRow <= 1) return;
 
-		// Apply font settings to entire worksheet range at once (much faster than cell-by-cell)
-		var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
-		allCellsRange.Style.Font.Name = _formatSettings.FontName;
-		allCellsRange.Style.Font.Size = _formatSettings.FontSize;
-		allCellsRange.Style.WrapText = _formatSettings.WrapText;
-
-		// Apply column-specific formatting in batches
-		foreach (int dateCol in _formatSettings.DateColumns)
-			if (dateCol > 0 && dateCol <= colCount)
-				worksheet.Column(dateCol).Style.Numberformat.Format = _formatSettings.DateFormat;
-				
-		foreach (int textCol in _formatSettings.TextColumns)
-			if (textCol > 0 && textCol <= colCount)
-				worksheet.Column(textCol).Style.Numberformat.Format = "@";
-
-		var borderStyle = (_formatSettings.BorderStyle?.Equals("none", StringComparison.OrdinalIgnoreCase) == true)
-			? ExcelBorderStyle.None : ExcelBorderStyle.Thin;
-
-		// Apply header formatting to entire header row at once
-		var headerRange = worksheet.Cells[1, 1, 1, colCount];
-		headerRange.Style.Font.Bold = true;
-		headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-		headerRange.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml(_formatSettings.HeaderBackgroundColor));
-		headerRange.Style.Border.Top.Style = borderStyle;
-		headerRange.Style.Border.Left.Style = borderStyle;
-		headerRange.Style.Border.Right.Style = borderStyle;
-		headerRange.Style.Border.Bottom.Style = borderStyle;
-
-		// Apply data formatting to entire data range at once
-		if (lastRow > 1)
+		try
 		{
-			var dataRange = worksheet.Cells[2, 1, lastRow, colCount];
-			dataRange.Style.Border.Top.Style = borderStyle;
-			dataRange.Style.Border.Left.Style = borderStyle;
-			dataRange.Style.Border.Right.Style = borderStyle;
-			dataRange.Style.Border.Bottom.Style = borderStyle;
+			// Apply font settings to entire worksheet range at once (much faster than cell-by-cell)
+			var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
+			allCellsRange.Style.Font.Name = _formatSettings.FontName;
+			allCellsRange.Style.Font.Size = _formatSettings.FontSize;
+			allCellsRange.Style.WrapText = _formatSettings.WrapText;
+
+			// Apply column-specific formatting in batches
+			foreach (int dateCol in _formatSettings.DateColumns)
+				if (dateCol > 0 && dateCol <= colCount)
+					worksheet.Column(dateCol).Style.Numberformat.Format = _formatSettings.DateFormat;
+					
+			foreach (int textCol in _formatSettings.TextColumns)
+				if (textCol > 0 && textCol <= colCount)
+					worksheet.Column(textCol).Style.Numberformat.Format = "@";
+
+			var borderStyle = (_formatSettings.BorderStyle?.Equals("none", StringComparison.OrdinalIgnoreCase) == true)
+				? ExcelBorderStyle.None : ExcelBorderStyle.Thin;
+
+			// Apply header formatting to entire header row at once
+			var headerRange = worksheet.Cells[1, 1, 1, colCount];
+			headerRange.Style.Font.Bold = true;
+			headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+			headerRange.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml(_formatSettings.HeaderBackgroundColor));
+			headerRange.Style.Border.Top.Style = borderStyle;
+			headerRange.Style.Border.Left.Style = borderStyle;
+			headerRange.Style.Border.Right.Style = borderStyle;
+			headerRange.Style.Border.Bottom.Style = borderStyle;
+
+			// Apply data formatting to entire data range at once
+			if (lastRow > 1)
+			{
+				var dataRange = worksheet.Cells[2, 1, lastRow, colCount];
+				dataRange.Style.Border.Top.Style = borderStyle;
+				dataRange.Style.Border.Left.Style = borderStyle;
+				dataRange.Style.Border.Right.Style = borderStyle;
+				dataRange.Style.Border.Bottom.Style = borderStyle;
+			}
+
+			// Auto-fit columns using sample data for performance
+			if (_formatSettings.AutoFitColumns)
+			{
+				int sampleEndRow = Math.Min(lastRow, _formatSettings.AutoFitSampleRows);
+				worksheet.Cells[1, 1, sampleEndRow, colCount].AutoFitColumns();
+			}
 		}
-
-		// Auto-fit columns using sample data for performance
-		if (_formatSettings.AutoFitColumns)
+		catch (Exception ex)
 		{
-			int sampleLimit = _formatSettings.AutoFitSampleRows > 0 ? _formatSettings.AutoFitSampleRows : 1000;
-			int sampleEndRow = Math.Min(lastRow, sampleLimit);
-			worksheet.Cells[1, 1, sampleEndRow, colCount].AutoFitColumns();
+			_logger.LogError($"Error applying formatting from JSON configuration: {ex.Message}", ex, "FORMAT");
+			throw; // Re-throw the exception since we no longer have fallback formatting
 		}
 	}
 
