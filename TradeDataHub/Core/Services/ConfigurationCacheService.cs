@@ -204,10 +204,8 @@ namespace TradeDataHub.Core.Services
                 
                 return root.PerformanceSettings;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Log error and return defaults for graceful degradation
-                System.Diagnostics.Debug.WriteLine($"Failed to load performance settings: {ex.Message}");
                 return new PerformanceSettings
                 {
                     ExcelProcessing = new ExcelProcessingSettings(),

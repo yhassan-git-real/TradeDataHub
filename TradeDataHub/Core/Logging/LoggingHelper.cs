@@ -242,10 +242,8 @@ namespace TradeDataHub.Core.Logging
                     await File.AppendAllTextAsync(_currentLogFile, logEntries.ToString(), Encoding.UTF8);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Log to debug if file writing fails
-                System.Diagnostics.Debug.WriteLine($"Failed to write logs: {ex.Message}");
             }
             finally
             {
