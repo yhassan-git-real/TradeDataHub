@@ -94,10 +94,8 @@ namespace TradeDataHub.Core.Logging
                 
                 File.AppendAllText(logPath, logEntry.ToString());
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Don't break the main process if logging fails
-                System.Diagnostics.Debug.WriteLine($"Failed to log skipped dataset: {ex.Message}");
             }
         }
         
@@ -119,9 +117,8 @@ namespace TradeDataHub.Core.Logging
                 
                 File.AppendAllText(logPath, summary.ToString());
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to log processing summary: {ex.Message}");
             }
         }
     }

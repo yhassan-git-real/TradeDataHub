@@ -83,8 +83,11 @@ namespace TradeDataHub.Features.Monitoring.Controls
             }
             catch (Exception ex)
             {
-                // Log error but don't crash
-                System.Diagnostics.Debug.WriteLine($"Error initializing UI components: {ex.Message}");
+                // Log error but don't crash - UI should continue to function
+                _monitoringService?.AddLog(LogLevel.Error, 
+                    $"UI initialization failed: {ex.Message}", 
+                    "MonitoringPanel", 
+                    ex.ToString());
             }
         }
 
@@ -160,9 +163,8 @@ namespace TradeDataHub.Features.Monitoring.Controls
                     progressText.Visibility = showProgress ? Visibility.Visible : Visibility.Collapsed;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating status display: {ex.Message}");
             }
             
             // Update detailed information
@@ -176,9 +178,8 @@ namespace TradeDataHub.Features.Monitoring.Controls
                 if (this.FindName("LogCountText") is TextBlock logCountText)
                     logCountText.Text = $"{_monitoringService.LogEntries.Count} entries";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating log counts: {ex.Message}");
             }
         }
 
@@ -204,9 +205,8 @@ namespace TradeDataHub.Features.Monitoring.Controls
                         ? status.ElapsedTime 
                         : "00:00.000";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating detailed information: {ex.Message}");
             }
         }
 
@@ -298,9 +298,8 @@ namespace TradeDataHub.Features.Monitoring.Controls
                     rotateTransform.BeginAnimation(RotateTransform.AngleProperty, rotateAnimation);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error animating expand/collapse icon: {ex.Message}");
             }
         }
 

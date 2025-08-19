@@ -60,10 +60,8 @@ namespace TradeDataHub.Core.Services
                     e.Handled = true;
                     return true;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // Log the error but don't crash the application
-                    System.Diagnostics.Debug.WriteLine($"Error executing keyboard shortcut {shortcutKey}: {ex.Message}");
                     return false;
                 }
             }
