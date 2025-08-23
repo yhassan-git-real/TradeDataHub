@@ -3,76 +3,67 @@ using System.Linq;
 
 namespace TradeDataHub.Core.Helpers
 {
+    /// <summary>
+    /// File name helper for Export operations, utilizing shared functionality from BaseFileNameHelper.
+    /// Maintains backward compatibility with existing export functionality.
+    /// </summary>
     public static class Export_FileNameHelper
     {
+        /// <summary>
+        /// Sanitizes a file name by replacing invalid characters with underscores.
+        /// </summary>
+        /// <param name="fileName">The file name to sanitize</param>
+        /// <returns>Sanitized file name</returns>
         public static string SanitizeFileName(string fileName)
         {
-            char[] invalidChars = System.IO.Path.GetInvalidFileNameChars();
-            
-            foreach (char c in invalidChars)
-            {
-                fileName = fileName.Replace(c, '_');
-            }
-            
-            return fileName;
+            return BaseFileNameHelper.SanitizeFileName(fileName);
         }
 
+        /// <summary>
+        /// Converts YYYYMM format to MMMYY format for export files.
+        /// Maintains legacy behavior of returning "MMM" for invalid input.
+        /// </summary>
+        /// <param name="yyyymm">Date string in YYYYMM format</param>
+        /// <returns>Month abbreviation in MMMYY format</returns>
         public static string GetMonthAbbreviation(string yyyymm)
         {
-            if (yyyymm.Length != 6 || !int.TryParse(yyyymm, out _))
-            {
-                return "MMM";
-            }
-
-            int month = int.Parse(yyyymm.Substring(4, 2));
-            string year = yyyymm.Substring(2, 2);
-            
-            string monthAbbr = month switch
-            {
-                1 => "JAN", 2 => "FEB", 3 => "MAR", 4 => "APR",
-                5 => "MAY", 6 => "JUN", 7 => "JUL", 8 => "AUG",
-                9 => "SEP", 10 => "OCT", 11 => "NOV", 12 => "DEC",
-                _ => "MMM"
-            };
-
-            return $"{monthAbbr}{year}";
+            return BaseFileNameHelper.ConvertToMonthAbbreviation(yyyymm, "MMM");
         }
 
+        /// <summary>
+        /// Ensures a file name is unique by adding a timestamp if the file already exists.
+        /// </summary>
+        /// <param name="basePath">Directory path where the file will be created</param>
+        /// <param name="fileName">Proposed file name</param>
+        /// <returns>Unique file name</returns>
         public static string EnsureUniqueFileName(string basePath, string fileName)
         {
-            string fullPath = System.IO.Path.Combine(basePath, fileName);
-            
-            if (!System.IO.File.Exists(fullPath))
-            {
-                return fileName;
-            }
-
-            string nameWithoutExt = System.IO.Path.GetFileNameWithoutExtension(fileName);
-            string extension = System.IO.Path.GetExtension(fileName);
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            
-            return $"{nameWithoutExt}_{timestamp}{extension}";
+            return BaseFileNameHelper.EnsureUniqueFileName(basePath, fileName);
         }
 
+        /// <summary>
+        /// Generates a standardized export file name based on the provided parameters.
+        /// </summary>
+        /// <param name="fromMonth">Start month in YYYYMM format</param>
+        /// <param name="toMonth">End month in YYYYMM format</param>
+        /// <param name="hsCode">HS Code filter</param>
+        /// <param name="product">Product filter</param>
+        /// <param name="iec">IEC filter</param>
+        /// <param name="exporter">Exporter filter</param>
+        /// <param name="country">Country filter</param>
+        /// <param name="name">Name filter</param>
+        /// <param name="port">Port filter</param>
+        /// <returns>Generated export file name</returns>
         public static string GenerateExportFileName(string fromMonth, string toMonth, string hsCode, string product, string iec, string exporter, string country, string name, string port)
         {
-            string mon1 = GetMonthAbbreviation(fromMonth);
-            string mon2 = GetMonthAbbreviation(toMonth);
-            string mon = (mon1 == mon2) ? mon1 : $"{mon1}-{mon2}";
+            // Build month range segment using base helper with export-specific default
+            string monthRange = BaseFileNameHelper.BuildMonthRangeSegment(fromMonth, toMonth, "MMM");
 
-            // Use the same robust filtering logic as Import service
-            string[] parts = new string[] { hsCode, product, iec, exporter, country, name, port }
-                .Where(p => !string.IsNullOrWhiteSpace(p) && p != "%")
-                .Select(p => p.Replace(' ', '_'))
-                .ToArray();
+            // Build core file name from parameters
+            string[] parameters = { hsCode, product, iec, exporter, country, name, port };
+            string core = BaseFileNameHelper.BuildCoreFileName(parameters, "%", "ALL");
 
-            string fileName1 = string.Join("_", parts);
-            if (string.IsNullOrWhiteSpace(fileName1))
-            {
-                fileName1 = "ALL";
-            }
-
-            return $"{fileName1}_{mon}EXP.xlsx";
+            return $"{core}_{monthRange}EXP.xlsx";
         }
     }
 }
