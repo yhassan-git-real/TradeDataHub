@@ -3,51 +3,71 @@ using System.Text.RegularExpressions;
 
 namespace TradeDataHub.Core.Helpers
 {
+    /// <summary>
+    /// File name helper for Import operations, utilizing shared functionality from BaseFileNameHelper.
+    /// Maintains backward compatibility with existing import functionality.
+    /// </summary>
     public static class Import_FileNameHelper
     {
-        private static readonly Regex IllegalChars = new Regex("[\\\\/:*?\"<>|]", RegexOptions.Compiled);
-
+        /// <summary>
+        /// Generates a standardized import file name based on the provided parameters.
+        /// </summary>
+        /// <param name="fromMonth">Start month in YYYYMM format</param>
+        /// <param name="toMonth">End month in YYYYMM format</param>
+        /// <param name="hsCode">HS Code filter</param>
+        /// <param name="product">Product filter</param>
+        /// <param name="iec">IEC filter</param>
+        /// <param name="importer">Importer filter</param>
+        /// <param name="foreignCountry">Foreign country filter</param>
+        /// <param name="foreignName">Foreign name filter</param>
+        /// <param name="port">Port filter</param>
+        /// <param name="fileSuffix">File suffix (e.g., "IMP")</param>
+        /// <returns>Generated import file name</returns>
         public static string GenerateImportFileName(string fromMonth, string toMonth, string hsCode, string product,
             string iec, string importer, string foreignCountry, string foreignName, string port, string fileSuffix)
         {
-            string monthSegment = BuildMonthSegment(fromMonth, toMonth);
+            // Build month range segment using base helper with import-specific default
+            string monthSegment = BaseFileNameHelper.BuildMonthRangeSegment(fromMonth, toMonth, "UNK00");
 
-            string[] parts = new [] { hsCode, product, iec, importer, foreignCountry, foreignName, port }
-                .Where(p => !string.IsNullOrWhiteSpace(p) && p != ImportParameterHelper.WILDCARD)
-                .Select(Sanitize)
-                .ToArray();
+            // Build core file name from parameters using ImportParameterHelper.WILDCARD
+            string[] parameters = { hsCode, product, iec, importer, foreignCountry, foreignName, port };
+            string core = BaseFileNameHelper.BuildCoreFileName(parameters, ImportParameterHelper.WILDCARD, "ALL");
 
-            string core = string.Join("_", parts);
-            if (string.IsNullOrWhiteSpace(core)) core = "ALL";
-
-            string fileName = core + "_" + monthSegment + fileSuffix + ".xlsx";
-            fileName = fileName.Replace("__", "_");
-            return fileName;
+            return $"{core}_{monthSegment}{fileSuffix}.xlsx";
         }
 
+        /// <summary>
+        /// Legacy method: Builds month segment for backward compatibility.
+        /// Now delegates to BaseFileNameHelper for consistency.
+        /// </summary>
+        /// <param name="fromMonth">Start month in YYYYMM format</param>
+        /// <param name="toMonth">End month in YYYYMM format</param>
+        /// <returns>Month range string</returns>
         private static string BuildMonthSegment(string fromMonth, string toMonth)
         {
-            string seg1 = ConvertToMonYY(fromMonth);
-            string seg2 = ConvertToMonYY(toMonth);
-            return seg1 == seg2 ? seg1 : seg1 + "-" + seg2;
+            return BaseFileNameHelper.BuildMonthRangeSegment(fromMonth, toMonth, "UNK00");
         }
 
+        /// <summary>
+        /// Legacy method: Converts YYYYMM to MMMYY format for backward compatibility.
+        /// Now delegates to BaseFileNameHelper for consistency.
+        /// </summary>
+        /// <param name="yyyymm">Date string in YYYYMM format</param>
+        /// <returns>Month abbreviation in MMMYY format</returns>
         private static string ConvertToMonYY(string? yyyymm)
         {
-            if (string.IsNullOrWhiteSpace(yyyymm) || yyyymm.Length != 6) return "UNK00";
-            int year = int.Parse(yyyymm.Substring(0,4));
-            int month = int.Parse(yyyymm.Substring(4,2));
-            string[] mons = {"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"};
-            string mon = month >=1 && month <=12 ? mons[month-1] : "UNK";
-            return mon + (year % 100).ToString("D2");
+            return BaseFileNameHelper.ConvertToMonthAbbreviation(yyyymm ?? "", "UNK00");
         }
 
+        /// <summary>
+        /// Legacy method: Sanitizes parameter strings for backward compatibility.
+        /// Now delegates to BaseFileNameHelper for consistency.
+        /// </summary>
+        /// <param name="raw">Raw parameter string</param>
+        /// <returns>Sanitized parameter string</returns>
         private static string Sanitize(string raw)
         {
-            string s = raw.Trim();
-            s = s.Replace(' ', '_');
-            s = IllegalChars.Replace(s, "");
-            return s;
+            return BaseFileNameHelper.SanitizeParameter(raw);
         }
     }
 }

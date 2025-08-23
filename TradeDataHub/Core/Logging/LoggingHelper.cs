@@ -134,19 +134,19 @@ namespace TradeDataHub.Core.Logging
 
         public void LogProcessStart(string processName, string parameters, string processId)
         {
-            EnqueueLog(LogLevel.INFO, new string('=', 80), null, null);
+            EnqueueLog(LogLevel.INFO, new string('=', 100), null, null);
             EnqueueLog(LogLevel.INFO, $"🚀 PROCESS START: {processName}", null, processId);
             EnqueueLog(LogLevel.INFO, $"📋 Parameters: {parameters}", null, processId);
-            EnqueueLog(LogLevel.INFO, new string('-', 80), null, null);
+            EnqueueLog(LogLevel.INFO, new string('-', 100), null, null);
         }
 
         public void LogProcessComplete(string processName, TimeSpan elapsed, string result, string processId)
         {
-            EnqueueLog(LogLevel.INFO, new string('-', 80), null, null);
+            EnqueueLog(LogLevel.INFO, new string('-', 100), null, null);
             EnqueueLog(LogLevel.INFO, $"✅ PROCESS COMPLETE: {processName}", null, processId);
             EnqueueLog(LogLevel.INFO, $"⏱️  Total Time: {elapsed:mm\\:ss\\.fff}", null, processId);
             EnqueueLog(LogLevel.INFO, $"📊 Result: {result}", null, processId);
-            EnqueueLog(LogLevel.INFO, new string('=', 80), null, null);
+            EnqueueLog(LogLevel.INFO, new string('=', 100), null, null);
         }
 
         public void LogStep(string stepName, string details, string processId)
