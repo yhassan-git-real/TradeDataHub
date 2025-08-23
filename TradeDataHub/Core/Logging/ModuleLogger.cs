@@ -329,8 +329,9 @@ namespace TradeDataHub.Core.Logging
                     await File.AppendAllTextAsync(_currentLogFile, _logBuilder.ToString());
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Failed to flush logs: {ex.Message}");
             }
             finally
             {

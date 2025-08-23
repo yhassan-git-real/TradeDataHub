@@ -242,8 +242,10 @@ namespace TradeDataHub.Core.Logging
                 {
                     break; // Normal shutdown
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    // Log processing error to debug (avoid recursive logging)
+                    System.Diagnostics.Debug.WriteLine($"HighPerformanceLogger error: {ex.Message}");
                 }
             }
             
@@ -330,8 +332,9 @@ namespace TradeDataHub.Core.Logging
                                                        _performanceSettings.FileIO.BufferSize);
                     _currentWriter = new StreamWriter(_currentFileStream, Encoding.UTF8, _performanceSettings.FileIO.BufferSize);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"Failed to open log file: {ex.Message}");
                 }
             }
         }
@@ -350,8 +353,9 @@ namespace TradeDataHub.Core.Logging
                 _currentFileStream?.Dispose();
                 _currentFileStream = null;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Error closing log file: {ex.Message}");
             }
         }
 
@@ -411,8 +415,9 @@ namespace TradeDataHub.Core.Logging
                 
                 _cancellationTokenSource.Dispose();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Error disposing HighPerformanceLogger: {ex.Message}");
             }
         }
     }

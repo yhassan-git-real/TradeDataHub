@@ -134,6 +134,12 @@ namespace TradeDataHub.Core.Services
             var errorMsg = $"Error processing combination {combinationNumber}: {ex.Message}";
             _dispatcher.Invoke(() => monitoringService.UpdateStatus(StatusType.Error, errorMsg, operationType));
             monitoringService.AddLog(MonitoringLogLevel.Error, errorMsg, operationType);
+            
+            System.Diagnostics.Debug.WriteLine($"ERROR: {errorMsg}");
+            if (!string.IsNullOrEmpty(filterDetails))
+            {
+                System.Diagnostics.Debug.WriteLine($"Filters - {filterDetails}");
+            }
         }
 
         public void HandleCancellation(ProcessingCounters counters, MonitoringService monitoringService, string operationType)

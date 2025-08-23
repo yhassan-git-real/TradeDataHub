@@ -230,6 +230,9 @@ namespace TradeDataHub.Core.Services
             int sampleEndRow = Math.Min(lastRow, sampleRows);
             var sampleRange = worksheet.Cells[1, 1, sampleEndRow, colCount];
             
+            // Log AutoFit execution for debugging
+            System.Diagnostics.Debug.WriteLine($"Executing AutoFit: {colCount} columns, {sampleEndRow} sample rows");
+            
             sampleRange.AutoFitColumns();
         }
 
