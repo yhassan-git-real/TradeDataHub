@@ -5,13 +5,10 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 using TradeDataHub.Core.Helpers;
 using Microsoft.Extensions.Configuration;
 using TradeDataHub.Features.Monitoring.Services;
 using TradeDataHub.Features.Monitoring.Models;
-using TradeDataHub.Core.Services;
-using TradeDataHub.Config;
 
 namespace TradeDataHub.Core.Logging
 {
@@ -31,17 +28,9 @@ namespace TradeDataHub.Core.Logging
         private DateTime _currentLogDate = DateTime.MinValue;
         private bool _disposed = false;
         
-        // Performance optimization components
-        private readonly StringPool _stringPool;
-        private readonly PerformanceSettings _performanceSettings;
-        
-        // Enhanced timestamp caching for better performance
+        // Performance optimization: Cache DateTime.Now for reduced syscalls
         private DateTime _lastTimestampCache = DateTime.Now;
         private long _lastTickCount = Environment.TickCount64;
-        private readonly object _timestampLock = new object();
-        
-        // Pre-allocated StringBuilder for better performance
-        private readonly StringBuilder _logBuilder = new StringBuilder(8192);
 
         private class LogEntry
         {
@@ -59,10 +48,6 @@ namespace TradeDataHub.Core.Logging
             _modulePrefix = modulePrefix ?? throw new ArgumentNullException(nameof(modulePrefix));
             _logFileExtension = logFileExtension.StartsWith('.') ? logFileExtension : "." + logFileExtension;
             
-            // Initialize performance optimization components
-            _stringPool = StringPool.Instance;
-            _performanceSettings = ConfigurationCacheService.GetPerformanceSettings();
-            
             // Load shared database config for log directory
             var basePath = Directory.GetCurrentDirectory();
             var builder = new ConfigurationBuilder().SetBasePath(basePath)
@@ -71,8 +56,7 @@ namespace TradeDataHub.Core.Logging
             _logDirectory = cfg["DatabaseConfig:LogDirectory"] ?? Path.Combine(basePath, "Logs");
             Directory.CreateDirectory(_logDirectory);
 
-            // Use performance settings for flush interval
-            _flushIntervalSeconds = Math.Max(1, _performanceSettings.Logging.FlushIntervalMs / 1000);
+            _flushIntervalSeconds = 1;
             UpdateLogFileName();
             
             _flushTimer = new Timer(async _ => await FlushLogsAsync(), null,
@@ -84,26 +68,16 @@ namespace TradeDataHub.Core.Logging
             return $"P{Interlocked.Increment(ref _processCounter):D4}";
         }
 
-        // Enhanced performance optimization: Get timestamp with reduced DateTime.Now calls
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        // Performance optimization: Get timestamp with reduced DateTime.Now calls
         private DateTime GetOptimizedTimestamp()
         {
             var currentTicks = Environment.TickCount64;
-            
-            // Only update timestamp cache if more than 50ms have passed for higher precision
-            if (currentTicks - _lastTickCount > 50)
+            // Only call DateTime.Now if more than 100ms have passed
+            if (currentTicks - _lastTickCount > 100)
             {
-                lock (_timestampLock)
-                {
-                    if (currentTicks - _lastTickCount > 50) // Double-check pattern
-                    {
-                        _lastTimestampCache = DateTime.Now;
-                        _lastTickCount = currentTicks;
-                    }
-                }
+                _lastTimestampCache = DateTime.Now;
+                _lastTickCount = currentTicks;
             }
-            
-            // Return cached timestamp with tick-based offset
             return _lastTimestampCache.AddMilliseconds(currentTicks - _lastTickCount);
         }
 
@@ -140,34 +114,24 @@ namespace TradeDataHub.Core.Logging
 
         public void LogProcessStart(string processName, string parameters, string processId)
         {
-            var separator = _stringPool.GetPooled(new string('=', 80));
-            var dashSeparator = _stringPool.GetPooled(new string('-', 80));
-            var startMessage = _stringPool.GetPooledFormat("🚀 PROCESS START: {0}", processName);
-            var paramMessage = _stringPool.GetPooledFormat("📋 Parameters: {0}", parameters);
-            
-            EnqueueLog(LogLevel.INFO, separator, null, null);
-            EnqueueLog(LogLevel.INFO, startMessage, null, processId);
-            EnqueueLog(LogLevel.INFO, paramMessage, null, processId);
-            EnqueueLog(LogLevel.INFO, dashSeparator, null, null);
+            EnqueueLog(LogLevel.INFO, new string('=', 80), null, null);
+            EnqueueLog(LogLevel.INFO, $"🚀 PROCESS START: {processName}", null, processId);
+            EnqueueLog(LogLevel.INFO, $"📋 Parameters: {parameters}", null, processId);
+            EnqueueLog(LogLevel.INFO, new string('-', 80), null, null);
         }
 
         public void LogProcessComplete(string processName, TimeSpan elapsed, string result, string processId)
         {
-            var dashSeparator = _stringPool.GetPooled(new string('-', 80));
-            var separator = _stringPool.GetPooled(new string('=', 80));
-            var completeMessage = _stringPool.CreateProcessCompleteMessage(processName, elapsed, result);
-            
-            EnqueueLog(LogLevel.INFO, dashSeparator, null, null);
-            EnqueueLog(LogLevel.INFO, completeMessage, null, processId);
-            EnqueueLog(LogLevel.INFO, separator, null, null);
+            EnqueueLog(LogLevel.INFO, new string('-', 80), null, null);
+            EnqueueLog(LogLevel.INFO, $"✅ PROCESS COMPLETE: {processName}", null, processId);
+            EnqueueLog(LogLevel.INFO, $"⏱️  Total Time: {elapsed:mm\\:ss\\.fff}", null, processId);
+            EnqueueLog(LogLevel.INFO, $"📊 Result: {result}", null, processId);
+            EnqueueLog(LogLevel.INFO, new string('=', 80), null, null);
         }
 
         public void LogStep(string stepName, string details, string processId)
         {
-            var stepMessage = _performanceSettings.Logging.EnableStringPooling 
-                ? _stringPool.CreateStepMessage(stepName, details)
-                : $"➤ {stepName}: {details}";
-            EnqueueLog(LogLevel.INFO, $"  {stepMessage}", null, processId);
+            EnqueueLog(LogLevel.INFO, $"  ➤ {stepName}: {details}", null, processId);
         }
 
         public void LogDetailedParameters(string fromMonth, string toMonth, string hsCode, string product, 
@@ -185,14 +149,12 @@ namespace TradeDataHub.Core.Logging
 
         public void LogExcelFileCreationStart(string fileName, string processId)
         {
-            var message = _stringPool.GetPooledFormat("  📋 Creating Excel file: {0}", fileName);
-            EnqueueLog(LogLevel.INFO, message, null, processId);
+            EnqueueLog(LogLevel.INFO, $"  📋 Creating Excel file: {fileName}", null, processId);
         }
 
         public void LogExcelFileCreationComplete(string fileName, int recordCount, string processId)
         {
-            var message = _stringPool.GetPooledFormat("  ✅ Excel file created: {0} ({1:N0} records)", fileName, recordCount);
-            EnqueueLog(LogLevel.INFO, message, null, processId);
+            EnqueueLog(LogLevel.INFO, $"  ✅ Excel file created: {fileName} ({recordCount:N0} records)", null, processId);
         }
 
         public void LogStoredProcedure(string spName, string parameters, TimeSpan elapsed, string processId)
@@ -217,8 +179,7 @@ namespace TradeDataHub.Core.Logging
 
         public void LogExcelResult(string fileName, TimeSpan elapsed, long recordCount, string processId)
         {
-            var message = _stringPool.CreateFileResultMessage(fileName, elapsed, recordCount);
-            EnqueueLog(LogLevel.INFO, $"  {message}", null, processId);
+            EnqueueLog(LogLevel.INFO, $"  ✅ Excel Complete: {fileName} | ⏱️ {elapsed:mm\\:ss\\.fff} | 📊 {recordCount} records", null, processId);
         }
 
         public TimerHelper StartTimer(string operationName, string processId)
@@ -310,23 +271,16 @@ namespace TradeDataHub.Core.Logging
 
                 if (_logQueue.IsEmpty) return;
 
-                // Use pre-allocated StringBuilder for better performance
-                _logBuilder.Clear();
-                
-                var batchSize = _performanceSettings.Logging.BatchSize;
-                var entriesProcessed = 0;
-
-                // Process in batches for better memory management
-                while (_logQueue.TryDequeue(out var entry) && entriesProcessed < batchSize)
+                var logs = new StringBuilder();
+                while (_logQueue.TryDequeue(out var entry))
                 {
-                    FormatLogEntryOptimized(entry, _logBuilder);
-                    entriesProcessed++;
+                    var logLine = FormatLogEntry(entry);
+                    logs.AppendLine(logLine);
                 }
 
-                if (_logBuilder.Length > 0)
+                if (logs.Length > 0)
                 {
-                    // Use optimized file I/O with proper buffer size
-                    await File.AppendAllTextAsync(_currentLogFile, _logBuilder.ToString());
+                    await File.AppendAllTextAsync(_currentLogFile, logs.ToString());
                 }
             }
             catch (Exception ex)
@@ -339,36 +293,17 @@ namespace TradeDataHub.Core.Logging
             }
         }
 
-        /// <summary>
-        /// Optimized log entry formatting with StringBuilder for better performance
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void FormatLogEntryOptimized(LogEntry entry, StringBuilder sb)
+        private static string FormatLogEntry(LogEntry entry)
         {
-            sb.Append('[')
-              .Append(entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff"))
-              .Append("] ")
-              .Append(entry.Level.ToString());
-
-            if (!string.IsNullOrEmpty(entry.ProcessId))
-            {
-                sb.Append(" [").Append(entry.ProcessId).Append(']');
-            }
-
-            sb.Append(' ').AppendLine(entry.Message);
+            var processInfo = string.IsNullOrEmpty(entry.ProcessId) ? "" : $" [{entry.ProcessId}]";
+            var logMessage = $"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff}] {entry.Level}{processInfo} {entry.Message}";
 
             if (!string.IsNullOrEmpty(entry.StackTrace))
             {
-                sb.AppendLine(entry.StackTrace);
+                logMessage += Environment.NewLine + entry.StackTrace;
             }
-        }
 
-        // Keep original method for backward compatibility
-        private static string FormatLogEntry(LogEntry entry)
-        {
-            var sb = new StringBuilder(256);
-            FormatLogEntryOptimized(entry, sb);
-            return sb.ToString().TrimEnd();
+            return logMessage;
         }
 
         public void Dispose()

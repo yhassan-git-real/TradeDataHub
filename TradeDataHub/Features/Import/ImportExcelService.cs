@@ -8,7 +8,6 @@ using TradeDataHub.Core.Logging;
 using TradeDataHub.Core.Helpers;
 using TradeDataHub.Core.Services;
 using System.Threading;
-using System.Threading.Tasks;
 using TradeDataHub.Core.Cancellation;
 
 namespace TradeDataHub.Features.Import
@@ -27,8 +26,6 @@ namespace TradeDataHub.Features.Import
         private readonly ModuleLogger _logger;
         private readonly ImportSettings _settings;
         private readonly ImportExcelFormatSettings _format;
-        private readonly StreamingExcelProcessor _streamingProcessor;
-        private readonly ExcelObjectPoolManager _poolManager;
         
         // Public property to access import settings
         public ImportSettings ImportSettings => _settings;
@@ -52,10 +49,6 @@ namespace TradeDataHub.Features.Import
                 _logger.LogError($"Failed to load ImportExcelFormatSettings: {ex.Message}", ex, "INIT");
                 throw new InvalidOperationException("ImportExcelFormatSettings is required but failed to load", ex);
             }
-
-            // Initialize performance optimization components
-            _streamingProcessor = new StreamingExcelProcessor(_logger);
-            _poolManager = ExcelObjectPoolManager.Instance;
         }
 
         private ImportSettings LoadImportSettings()
@@ -78,7 +71,7 @@ namespace TradeDataHub.Features.Import
             return cfg.Get<ImportExcelFormatSettings>()!;
         }
 
-    public async Task<ImportExcelResult> CreateReportAsync(string fromMonth, string toMonth, string hsCode, string product,
+    public ImportExcelResult CreateReport(string fromMonth, string toMonth, string hsCode, string product,
             string iec, string importer, string country, string name, string port, CancellationToken cancellationToken = default,
             string? viewName = null, string? storedProcedureName = null)
         {
@@ -126,11 +119,7 @@ namespace TradeDataHub.Features.Import
                     _logger.LogExcelFileCreationStart(fileName, processId);
                     using var excelTimer = _logger.StartTimer("Excel Creation", processId);
 
-                    // Use pooled ExcelPackage for better performance
-                    var package = _poolManager.GetExcelPackage();
-                    
-                    try
-                    {
+                    using var package = new ExcelPackage();
                     var worksheet = package.Workbook.Worksheets.Add(_settings.Database.WorksheetName);
 
                     cancellationToken.ThrowIfCancellationRequested();
@@ -139,18 +128,14 @@ namespace TradeDataHub.Features.Import
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                        // Add headers using optimized method
-                        _streamingProcessor.AddHeaders(reader, worksheet);
+                    // Add headers first
+                    for (int col = 0; col < fieldCount; col++)
+                        worksheet.Cells[1, col + 1].Value = reader.GetName(col);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                        // Load data using streaming processor for optimal memory usage
-                        var streamingSuccess = _streamingProcessor.LoadDataFromReaderOptimized(reader, worksheet, recordCount, cancellationToken);
-                        
-                        if (!streamingSuccess)
-                        {
-                            throw new InvalidOperationException("Streaming data load failed");
-                        }
+                    // Load data from reader
+                    worksheet.Cells[2, 1].LoadFromDataReader(reader, false);
                     
                     cancellationToken.ThrowIfCancellationRequested();
 
@@ -165,33 +150,18 @@ namespace TradeDataHub.Features.Import
                     partialFilePath = outputPath; // Track for cleanup if cancelled
 
                     using var saveTimer = _logger.StartTimer("File Save", processId);
-                        
-                        // Use performance settings to determine optimal save strategy
-                        var performanceSettings = ConfigurationCacheService.GetPerformanceSettings();
-                        bool useMemoryStream = recordCount < performanceSettings.FileIO.MemoryStreamThreshold;
-                        
-                        if (useMemoryStream)
-                        {
-                            // Memory stream approach for smaller files
+                    // Use memory stream for better performance with smaller files
+                    if (recordCount < 50000) // Use memory stream for smaller datasets
+                    {
                         using var memoryStream = new MemoryStream();
                         package.SaveAs(memoryStream);
-                            
-                            if (performanceSettings.FileIO.AsyncFileOperations)
-                            {
-                                await File.WriteAllBytesAsync(outputPath, memoryStream.ToArray(), cancellationToken);
+                        File.WriteAllBytes(outputPath, memoryStream.ToArray());
                     }
                     else
                     {
-                                File.WriteAllBytes(outputPath, memoryStream.ToArray());
-                            }
-                        }
-                        else
-                        {
-                            // Direct file save for larger datasets with optimized buffer
-                            using var fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None, performanceSettings.FileIO.BufferSize);
-                            package.SaveAs(fileStream);
-                        }
-                        
+                        // For larger datasets, use direct file save
+                        package.SaveAs(new FileInfo(outputPath));
+                    }
                     _logger.LogFileSave("Completed", saveTimer.Elapsed, processId);
                     saveTimer.Dispose();
 
@@ -199,14 +169,9 @@ namespace TradeDataHub.Features.Import
 
                     _logger.LogExcelResult(fileName, excelTimer.Elapsed, recordCount, processId);
                     excelTimer.Dispose();
+                    _logger.LogProcessComplete(_settings.Logging.OperationLabel, totalTimer.Elapsed, $"Success - {fileName}", processId);
 
                     return new ImportExcelResult { Success = true, FileName = fileName, RowCount = recordCount };
-                    }
-                    finally
-                    {
-                        // Return package to pool for reuse
-                        _poolManager.ReturnExcelPackage(package);
-                    }
                 }
                 finally
                 {
@@ -231,45 +196,69 @@ namespace TradeDataHub.Features.Import
             }
         }
 
-        /// <summary>
-        /// Synchronous wrapper for backward compatibility - delegates to async implementation
-        /// </summary>
-        public ImportExcelResult CreateReport(string fromMonth, string toMonth, string hsCode, string product,
-            string iec, string importer, string country, string name, string port, CancellationToken cancellationToken = default,
-            string? viewName = null, string? storedProcedureName = null)
-        {
-            return CreateReportAsync(fromMonth, toMonth, hsCode, product, iec, importer, country, name, port, cancellationToken, viewName, storedProcedureName).GetAwaiter().GetResult();
-        }
-
         private void ApplyOptimizedFormatting(OfficeOpenXml.ExcelWorksheet worksheet, int lastRow, int colCount)
         {
             if (lastRow <= 1) return;
 
             try
             {
-                // Apply font settings using optimized pool manager
+                // Apply font settings to entire worksheet range at once (much faster than cell-by-cell)
                 var allCellsRange = worksheet.Cells[1, 1, lastRow, colCount];
-                _poolManager.ApplyOptimizedRangeFormatting(allCellsRange, _format.FontName, _format.FontSize, _format.WrapText);
+                allCellsRange.Style.Font.Name = _format.FontName;
+                allCellsRange.Style.Font.Size = _format.FontSize;
+                allCellsRange.Style.WrapText = _format.WrapText;
 
-                // Apply column-specific formatting using pool manager
-                _poolManager.ApplyColumnFormatting(worksheet, _format.DateColumns, _format.DateFormat, _format.TextColumns, colCount);
-
-                // Apply header formatting using cached objects
-                var headerRange = worksheet.Cells[1, 1, 1, colCount];
-                _poolManager.ApplyHeaderFormatting(headerRange, _format.HeaderBackgroundColor, _format.BorderStyle);
-
-                // Apply data formatting using cached border styles
-                if (lastRow > 1)
+                // Apply column-specific formatting in batches
+                if (_format.DateColumns != null && _format.DateColumns.Length > 0)
                 {
-                    var dataRange = worksheet.Cells[2, 1, lastRow, colCount];
-                    _poolManager.ApplyDataBorderFormatting(dataRange, _format.BorderStyle);
+                    foreach (int dateCol in _format.DateColumns)
+                    {
+                        if (dateCol > 0 && dateCol <= colCount)
+                            worksheet.Column(dateCol).Style.Numberformat.Format = _format.DateFormat;
+                    }
+                }
+                
+                if (_format.TextColumns != null && _format.TextColumns.Length > 0)
+                {
+                    foreach (int textCol in _format.TextColumns)
+                    {
+                        if (textCol > 0 && textCol <= colCount)
+                            worksheet.Column(textCol).Style.Numberformat.Format = "@";
+                    }
                 }
 
-                // Optimized AutoFit using deferred execution if enabled
-                var performanceSettings = ConfigurationCacheService.GetPerformanceSettings();
-                if (_format.AutoFitColumns && !performanceSettings.ExcelProcessing.DeferAutoFitColumns)
+                var borderStyle = (_format.BorderStyle?.Equals("none", StringComparison.OrdinalIgnoreCase) == true)
+                    ? ExcelBorderStyle.None : ExcelBorderStyle.Thin;
+
+                // Apply header formatting to entire header row at once
+                var headerRange = worksheet.Cells[1,1,1,colCount];
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                
+                // Parse header color from configuration
+                var headerColor = ColorTranslator.FromHtml(_format.HeaderBackgroundColor);
+                headerRange.Style.Fill.BackgroundColor.SetColor(headerColor);
+                
+                headerRange.Style.Border.Top.Style = borderStyle;
+                headerRange.Style.Border.Left.Style = borderStyle;
+                headerRange.Style.Border.Right.Style = borderStyle;
+                headerRange.Style.Border.Bottom.Style = borderStyle;
+
+                // Apply data formatting to entire data range at once
+                if (lastRow > 1)
                 {
-                    _poolManager.PerformOptimizedAutoFit(worksheet, lastRow, colCount, _format.AutoFitSampleRows);
+                    var dataRange = worksheet.Cells[2,1,lastRow,colCount];
+                    dataRange.Style.Border.Top.Style = borderStyle;
+                    dataRange.Style.Border.Left.Style = borderStyle;
+                    dataRange.Style.Border.Right.Style = borderStyle;
+                    dataRange.Style.Border.Bottom.Style = borderStyle;
+                }
+
+                // Auto-fit columns using sample data for performance
+                if (_format.AutoFitColumns)
+                {
+                    int sampleEndRow = Math.Min(lastRow, _format.AutoFitSampleRows);
+                    worksheet.Cells[1,1,sampleEndRow,colCount].AutoFitColumns();
                 }
             }
             catch (Exception ex)

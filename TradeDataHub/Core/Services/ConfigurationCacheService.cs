@@ -63,15 +63,6 @@ namespace TradeDataHub.Core.Services
         }
 
         /// <summary>
-        /// Get or load PerformanceSettings with caching
-        /// </summary>
-        public static PerformanceSettings GetPerformanceSettings()
-        {
-            const string cacheKey = "PerformanceSettings";
-            return (PerformanceSettings)_configCache.GetOrAdd(cacheKey, _ => LoadPerformanceSettings());
-        }
-
-        /// <summary>
         /// Clear configuration cache (useful for testing or configuration updates)
         /// </summary>
         public static void ClearCache()
@@ -173,47 +164,6 @@ namespace TradeDataHub.Core.Services
             catch (Exception ex)
             {
                 throw new InvalidOperationException($"Error loading ImportExcelFormatSettings from {json}: {ex.Message}", ex);
-            }
-        }
-
-        private static PerformanceSettings LoadPerformanceSettings()
-        {
-            const string json = "Config/performance.appsettings.json";
-            
-            // Return default settings if config file doesn't exist (for backward compatibility)
-            if (!File.Exists(json))
-            {
-                return new PerformanceSettings
-                {
-                    ExcelProcessing = new ExcelProcessingSettings(),
-                    FileIO = new FileIOSettings(),
-                    Logging = new LoggingSettings()
-                };
-            }
-            
-            try
-            {
-                var builder = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile(json, false);
-                var cfg = builder.Build();
-                var root = cfg.Get<PerformanceSettingsRoot>();
-                
-                if (root == null)
-                    throw new InvalidOperationException("Failed to bind PerformanceSettingsRoot");
-                
-                return root.PerformanceSettings;
-            }
-            catch (Exception ex)
-            {
-                // Log error and return defaults for graceful degradation
-                System.Diagnostics.Debug.WriteLine($"Failed to load performance settings: {ex.Message}");
-                return new PerformanceSettings
-                {
-                    ExcelProcessing = new ExcelProcessingSettings(),
-                    FileIO = new FileIOSettings(),
-                    Logging = new LoggingSettings()
-                };
             }
         }
 
