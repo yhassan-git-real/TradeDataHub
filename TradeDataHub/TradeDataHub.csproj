@@ -18,6 +18,15 @@
     <Version>1.0.0</Version>
     <FileVersion>1.0.0.0</FileVersion>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    
+    <!-- Fix for interceptors feature -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.Extensions.Configuration.Binder.SourceGeneration</InterceptorsNamespaces>
+    
+    <!-- Publishing configuration -->
+    <PublishAot>false</PublishAot>
+    <PublishTrimmed>false</PublishTrimmed>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
